@@ -17,7 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.TutorUi
@@ -27,6 +30,7 @@ import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.NavyTint
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 private val bookingDates = listOf(
@@ -119,7 +123,7 @@ fun BookingFlowScreen(
                                 Text(
                                     slot,
                                     modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    textAlign = TextAlign.Center,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                                     fontSize = 13.sp
@@ -284,7 +288,7 @@ fun BookingRequestSentScreen(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Your request was submitted and synched with your calendar. Most tutors reply in less than 2 hours.",
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 12.dp)
         )
@@ -336,7 +340,7 @@ fun BookingConfirmationScreen(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Your tutor accepted! Get ready for your session at the location below.",
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -416,7 +420,7 @@ fun BookingDeclinedScreen(
                 Text(
                     "\"$declineNote\"",
                     fontSize = 13.sp,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    fontStyle = FontStyle.Italic,
                     color = NavySecondary
                 )
             }
@@ -440,5 +444,68 @@ fun BookingDeclinedScreen(
         ) {
             Text("Find Another Tutor", fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookingFlowScreenPreview() {
+    TutorBridgeTheme {
+        BookingFlowScreen(
+            uiState = TutorBridgeUiState(),
+            onSelectSlot = {},
+            onSelectLocation = {},
+            onSelectDate = {},
+            onNext = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ReviewBookingScreenPreview() {
+    TutorBridgeTheme {
+        ReviewBookingScreen(
+            uiState = TutorBridgeUiState(),
+            onConfirm = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookingRequestSentScreenPreview() {
+    TutorBridgeTheme {
+        BookingRequestSentScreen(
+            onSimulateAccepted = {},
+            onSimulateDeclined = {},
+            onViewCalendar = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookingConfirmationScreenPreview() {
+    TutorBridgeTheme {
+        BookingConfirmationScreen(
+            uiState = TutorBridgeUiState(),
+            onGoToCalendar = {},
+            onBackToDashboard = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookingDeclinedScreenPreview() {
+    TutorBridgeTheme {
+        BookingDeclinedScreen(
+            declineNote = "Sorry, I have an unexpected faculty meeting at this hour.",
+            onPickAnotherSlot = {},
+            onFindAnotherTutor = {}
+        )
     }
 }

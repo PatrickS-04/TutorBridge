@@ -16,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -194,5 +196,16 @@ private fun QuickAction(icon: androidx.compose.ui.graphics.vector.ImageVector, l
             Spacer(modifier = Modifier.height(6.dp))
             Text(label, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StudentHomeScreenPreview() {
+    TutorBridgeTheme {
+        StudentHomeScreen(
+            uiState = TutorBridgeUiState(),
+            onNavigate = {}
+        )
     }
 }

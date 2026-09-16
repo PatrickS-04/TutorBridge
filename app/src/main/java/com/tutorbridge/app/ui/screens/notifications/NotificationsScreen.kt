@@ -14,10 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavyTint
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -86,5 +88,16 @@ fun NotificationsScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun NotificationsScreenPreview() {
+    TutorBridgeTheme {
+        NotificationsScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {}
+        )
     }
 }

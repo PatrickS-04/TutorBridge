@@ -12,10 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -122,5 +124,17 @@ private fun ProfileInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector
             Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TutorProfileScreenPreview() {
+    TutorBridgeTheme {
+        TutorProfileScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {},
+            onBookSession = {}
+        )
     }
 }

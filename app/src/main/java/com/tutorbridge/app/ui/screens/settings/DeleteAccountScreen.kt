@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -152,5 +154,17 @@ private fun PurgeBullet(text: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("•", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
         Text(text, fontSize = 13.sp)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DeleteAccountScreenPreview() {
+    TutorBridgeTheme {
+        DeleteAccountScreen(
+            uiState = TutorBridgeUiState(),
+            onConfirmDelete = {},
+            onCancel = {}
+        )
     }
 }

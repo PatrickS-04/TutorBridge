@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.StudentRequestUi
@@ -22,6 +23,7 @@ import com.tutorbridge.app.data.model.TutorApplicant
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -140,5 +142,17 @@ private fun ApplicantCard(applicant: TutorApplicant, onAccept: () -> Unit) {
                 Text("Accept & Match", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RequestDetailScreenPreview() {
+    TutorBridgeTheme {
+        RequestDetailScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {},
+            onAcceptApplicant = { _, _ -> }
+        )
     }
 }

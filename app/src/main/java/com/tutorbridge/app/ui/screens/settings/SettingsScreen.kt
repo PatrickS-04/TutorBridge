@@ -13,11 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -255,5 +257,20 @@ private fun SettingsCheckRow(
             Text(label, fontWeight = FontWeight.Medium, fontSize = 14.sp)
         }
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    TutorBridgeTheme {
+        SettingsScreen(
+            uiState = TutorBridgeUiState(),
+            onToggleDark = {},
+            onToggleOffline = {},
+            onSelectLanguage = {},
+            onDeleteAccountClick = {},
+            onSignOut = {}
+        )
     }
 }

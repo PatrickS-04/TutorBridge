@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -160,6 +162,17 @@ private fun SegTabAvail(label: String, selected: Boolean, modifier: Modifier, on
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = if (selected) NavySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TutorAvailabilityScreenPreview() {
+    TutorBridgeTheme {
+        TutorAvailabilityScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {}
         )
     }
 }

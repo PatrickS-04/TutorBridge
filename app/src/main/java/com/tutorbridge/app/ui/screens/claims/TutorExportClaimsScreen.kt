@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.ClaimStatus
@@ -25,6 +26,7 @@ import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -271,6 +273,17 @@ private fun StatBlock(label: String, value: String, emphasized: Boolean = false)
             fontWeight = FontWeight.Bold,
             fontSize = if (emphasized) 16.sp else 15.sp,
             color = if (emphasized) CrimsonPrimary else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TutorExportClaimsScreenPreview() {
+    TutorBridgeTheme {
+        TutorExportClaimsScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {}
         )
     }
 }

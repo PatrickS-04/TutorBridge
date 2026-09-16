@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -256,5 +258,19 @@ fun CalendarScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CalendarScreenPreview() {
+    TutorBridgeTheme {
+        CalendarScreen(
+            uiState = TutorBridgeUiState(),
+            onSelectDate = {},
+            onFilterChange = {},
+            onAddEvent = {},
+            onNavigateToPrep = {}
+        )
     }
 }

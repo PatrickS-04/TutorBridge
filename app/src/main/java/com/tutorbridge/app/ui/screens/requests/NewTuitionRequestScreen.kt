@@ -14,11 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 private val stepTitles = listOf("Subject", "Level", "Time Window", "Venue", "Notes")
@@ -156,5 +158,24 @@ fun NewTuitionRequestScreen(
                 Text(if (step < totalSteps) "Next Step" else "Submit Request", fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun NewTuitionRequestScreenPreview() {
+    TutorBridgeTheme {
+        NewTuitionRequestScreen(
+            uiState = TutorBridgeUiState(),
+            onBack = {},
+            onNext = {},
+            onPrevious = {},
+            onSubjectChange = {},
+            onLevelChange = {},
+            onTimeWindowChange = {},
+            onVenueChange = {},
+            onNotesChange = {},
+            onSubmit = {}
+        )
     }
 }

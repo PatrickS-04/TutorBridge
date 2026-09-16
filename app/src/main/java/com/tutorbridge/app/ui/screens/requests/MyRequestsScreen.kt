@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.RequestStatus
@@ -26,6 +27,7 @@ import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -58,7 +60,7 @@ fun MyRequestsScreen(
                 onClick = onNewRequest,
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
@@ -148,5 +150,17 @@ private fun StatusBadge(status: RequestStatus) {
     }
     Badge(containerColor = bg) {
         Text(label, color = fg, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MyRequestsScreenPreview() {
+    TutorBridgeTheme {
+        MyRequestsScreen(
+            uiState = TutorBridgeUiState(),
+            onNewRequest = {},
+            onSelectRequest = {}
+        )
     }
 }

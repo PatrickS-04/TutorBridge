@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.RequestStatus
@@ -22,6 +23,7 @@ import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 @Composable
@@ -151,5 +153,16 @@ private fun MyApplicationCard(req: StudentRequestUi) {
                 Text("Offered", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 11.sp)
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TutorRequestsBoardScreenPreview() {
+    TutorBridgeTheme {
+        TutorRequestsBoardScreen(
+            uiState = TutorBridgeUiState(),
+            onAcceptAndOffer = {}
+        )
     }
 }
