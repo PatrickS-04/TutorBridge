@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "796334323808",
+    "project_id": "tutorbridge-13808",
+    "storage_bucket": "tutorbridge-13808.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796334323808:android:d24bcc7a4b447813b9ab05",
+        "android_client_info": {
+          "package_name": "com.tutorbridge.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": ""
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
