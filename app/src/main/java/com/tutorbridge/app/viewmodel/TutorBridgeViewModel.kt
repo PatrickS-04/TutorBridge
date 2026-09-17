@@ -1,7 +1,9 @@
 package com.tutorbridge.app.viewmodel
 
+import androidx.browser.trusted.Token
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.GoogleAuthProvider
 import com.tutorbridge.app.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +52,24 @@ class TutorBridgeViewModel : ViewModel() {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
             }
         }
+    }
+
+    fun signInWithGoogle(idToken: String) {
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        viewModelScope.launch {
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                Firebase.auth.signInWithCredential(credential).await()
+                _uiState.update { it.copy(isAuthLoading = false) }
+                completeAuth()
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Google Sign-In Failed") }
+            }
+        }
+    }
+
+    fun setAuthError(message: String) {
+        _uiState.update { it.copy(authErrorMessage = message) }
     }
 
     fun completeAuth() {

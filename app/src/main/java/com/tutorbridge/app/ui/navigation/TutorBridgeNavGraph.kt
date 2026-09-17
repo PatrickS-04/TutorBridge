@@ -118,6 +118,8 @@ fun TutorBridgeNavGraph(
                     onRoleSelect = { viewModel.selectRole(it) },
                     onSignIn = { email, password -> viewModel.signIn(email, password) },
                     onSignUp = { email, password -> viewModel.signUp(email, password) },
+                    onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
+                    onGoogleSignInError = { message -> viewModel.setAuthError(message) },
                     onToggleAuthMode = {viewModel.setAuthMode(
                         if (uiState.authMode == AuthMode.SIGN_IN) {
                             AuthMode.SIGN_UP

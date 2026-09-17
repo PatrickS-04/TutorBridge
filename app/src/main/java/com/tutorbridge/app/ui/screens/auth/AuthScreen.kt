@@ -15,18 +15,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.AuthMode
+import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+import kotlinx.coroutines.launch
+import com.tutorbridge.app.R
 
 @Composable
 fun AuthScreen(
@@ -34,6 +38,8 @@ fun AuthScreen(
     onRoleSelect: (UserRole) -> Unit,
     onSignIn: (String, String) -> Unit,
     onSignUp: (String, String) -> Unit,
+    onGoogleSignIn: (String) -> Unit,
+    onGoogleSignInError: (String) -> Unit,
     onToggleAuthMode: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -41,6 +47,8 @@ fun AuthScreen(
     // Role is inferred from the email pattern in the real prototype;
     // default to student unless the user has already picked tutor elsewhere in the app.
     val role = uiState.role ?: UserRole.STUDENT
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -195,7 +203,14 @@ fun AuthScreen(
 
         OutlinedButton(
             onClick = {
-                onRoleSelect(role)
+                scope.launch {
+                    try {
+                        val idToken = GoogleAuthentication.idTokenRequest(context, context.getString(R.string.google_web_client_id))
+                        onGoogleSignIn(idToken)
+                    } catch (exception: Exception) {
+                        onGoogleSignInError(exception.message ?: "Google Sign-In failed or was cancelled")
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
@@ -225,6 +240,8 @@ fun AuthScreenPreview() {
             onRoleSelect = {},
             onSignIn = { _, _ -> },
             onSignUp = {_, _ -> },
+            onGoogleSignIn = {_ -> },
+            onGoogleSignInError = {_ -> },
             onToggleAuthMode = {}
         )
     }
