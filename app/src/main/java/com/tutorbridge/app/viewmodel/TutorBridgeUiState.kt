@@ -7,6 +7,8 @@ data class TutorBridgeUiState(
     val currentRoute: String = "splash",
     val role: UserRole? = null,
     val authMode: AuthMode = AuthMode.SIGN_IN,
+    val isAuthLoading: Boolean = false,
+    val authErrorMessage: String? = null,
     val institutionName: String = "University of Cape Town (UCT)",
     val userName: String = "Liam Naidoo",
     val userEmail: String = "ndxlia003@myuct.ac.za",

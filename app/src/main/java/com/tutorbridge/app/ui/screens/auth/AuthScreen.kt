@@ -14,11 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
@@ -30,7 +32,9 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 fun AuthScreen(
     uiState: TutorBridgeUiState,
     onRoleSelect: (UserRole) -> Unit,
-    onAuthSuccess: () -> Unit
+    onSignIn: (String, String) -> Unit,
+    onSignUp: (String, String) -> Unit,
+    onToggleAuthMode: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -143,13 +147,48 @@ fun AuthScreen(
         Button(
             onClick = {
                 onRoleSelect(role)
-                onAuthSuccess()
+                if (uiState.authMode == AuthMode.SIGN_UP) {
+                    onSignUp(email, password)
+                }
+                else {
+                    onSignIn(email, password)
+                }
             },
+            enabled = !uiState.isAuthLoading && email.isNotBlank() && password.isNotBlank(),
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
-            Text("Continue with Institutional Login →", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+            if (uiState.isAuthLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+            }
+            else {
+                Text(
+                    if (uiState.authMode == AuthMode.SIGN_UP) {
+                        "Create Account"
+                    }
+                    else {
+                        "Continue with Institutional Login ->"
+                    }, fontWeight = FontWeight.Bold, fontSize = 13.5.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        TextButton(onClick = onToggleAuthMode) {
+            Text(
+                if (uiState.authMode == AuthMode.SIGN_UP) {
+                    "Already have an Account? Sign In"
+                }
+                else {
+                    "New to TutorBridge? Create an Account"
+                }, fontSize = 12.sp
+            )
+        }
+
+        uiState.authErrorMessage?.let { message ->
+            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 11.5.sp, textAlign = TextAlign.Center)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -157,7 +196,6 @@ fun AuthScreen(
         OutlinedButton(
             onClick = {
                 onRoleSelect(role)
-                onAuthSuccess()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
@@ -185,7 +223,9 @@ fun AuthScreenPreview() {
         AuthScreen(
             uiState = TutorBridgeUiState(),
             onRoleSelect = {},
-            onAuthSuccess = {}
+            onSignIn = { _, _ -> },
+            onSignUp = {_, _ -> },
+            onToggleAuthMode = {}
         )
     }
 }

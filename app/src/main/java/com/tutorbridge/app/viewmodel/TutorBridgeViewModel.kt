@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 class TutorBridgeViewModel : ViewModel() {
 
@@ -20,7 +23,33 @@ class TutorBridgeViewModel : ViewModel() {
     }
 
     fun setAuthMode(mode: AuthMode) {
-        _uiState.update { it.copy(authMode = mode) }
+        _uiState.update { it.copy(authMode = mode, authErrorMessage = null) }
+    }
+
+    fun signUp(email: String, password: String) {
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        viewModelScope.launch {
+            try {
+                Firebase.auth.createUserWithEmailAndPassword(email, password).await()
+                _uiState.update { it.copy(isAuthLoading = false) }
+                completeAuth()
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not create an account") }
+            }
+        }
+    }
+
+    fun signIn(email: String, password: String) {
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        viewModelScope.launch {
+            try {
+                Firebase.auth.signInWithEmailAndPassword(email, password).await()
+                _uiState.update { it.copy(isAuthLoading = false) }
+                completeAuth()
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
+            }
+        }
     }
 
     fun completeAuth() {
