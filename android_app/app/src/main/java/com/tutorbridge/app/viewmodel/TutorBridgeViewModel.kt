@@ -1,41 +1,92 @@
 package com.tutorbridge.app.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.GoogleAuthProvider
+import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.data.repository.AuthRepository
+import com.tutorbridge.app.data.repository.AuthResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import com.google.firebase.auth.auth
-import com.google.firebase.Firebase
-import kotlinx.coroutines.tasks.await
 
-class TutorBridgeViewModel : ViewModel() {
+class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
+
+    init {
+        RetrofitInstance.init(application)
+    }
+
+    private val authRepository = AuthRepository(RetrofitInstance.authApi, RetrofitInstance.tokenManager)
 
     private val _uiState = MutableStateFlow(TutorBridgeUiState())
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
 
+    init {
+        // Resume an existing backend session (a stored refresh token) instead
+        // of forcing sign-in again on every cold start. We don't know the
+        // user's role/profile yet without calling GET /users/me - that call
+        // (and populating the rest of userName/role from it) is part of the
+        // next pass that wires screens to real data. For now this just skips
+        // past the auth screen; it defaults to the student destination.
+        if (authRepository.hasSession()) {
+            _uiState.update { it.copy(currentRoute = "student_home") }
+        }
+        loadInstitutions()
+    }
+
+    private fun loadInstitutions() {
+        viewModelScope.launch {
+            val institutions = authRepository.listInstitutions()
+            _uiState.update { state ->
+                state.copy(
+                    institutionOptions = institutions,
+                    selectedSignupInstitutionId = state.selectedSignupInstitutionId ?: institutions.firstOrNull()?.id,
+                    institutionName = institutions.firstOrNull()?.name ?: state.institutionName
+                )
+            }
+        }
+    }
+
     fun selectRole(role: UserRole) {
         _uiState.update { it.copy(role = role) }
+    }
+
+    fun selectSignupInstitution(id: String) {
+        val name = _uiState.value.institutionOptions.firstOrNull { it.id == id }?.name
+        _uiState.update { it.copy(selectedSignupInstitutionId = id, institutionName = name ?: it.institutionName) }
     }
 
     fun setAuthMode(mode: AuthMode) {
         _uiState.update { it.copy(authMode = mode, authErrorMessage = null) }
     }
 
-    fun signUp(email: String, password: String) {
+    fun signUp(fullName: String, email: String, password: String) {
+        val institutionId = _uiState.value.selectedSignupInstitutionId
+        if (institutionId == null) {
+            _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
+            return
+        }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
-            try {
-                Firebase.auth.createUserWithEmailAndPassword(email, password).await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
-            } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not create an account") }
+            when (val result = authRepository.register(email, password, fullName, institutionId)) {
+                is AuthResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isAuthLoading = false,
+                            userEmail = email,
+                            userName = fullName,
+                            role = roleFromBackend(result.user.role)
+                        )
+                    }
+                    completeAuth()
+                }
+                is AuthResult.Failure -> {
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+                }
             }
         }
     }
@@ -43,29 +94,45 @@ class TutorBridgeViewModel : ViewModel() {
     fun signIn(email: String, password: String) {
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
-            try {
-                Firebase.auth.signInWithEmailAndPassword(email, password).await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
-            } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
+            when (val result = authRepository.login(email, password)) {
+                is AuthResult.Success -> {
+                    _uiState.update {
+                        it.copy(isAuthLoading = false, userEmail = email, role = roleFromBackend(result.user.role))
+                    }
+                    completeAuth()
+                }
+                is AuthResult.Failure -> {
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+                }
             }
         }
     }
 
+    /**
+     * [idToken] is the raw Google ID token from Credential Manager
+     * (GoogleAuthentication.idTokenRequest) - it is sent straight to the
+     * backend's POST /auth/sso/google rather than through Firebase Auth.
+     * Firebase is no longer the session of record; the backend's own
+     * access/refresh tokens are.
+     */
     fun signInWithGoogle(idToken: String) {
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
-            try {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                Firebase.auth.signInWithCredential(credential).await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
-            } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Google Sign-In Failed") }
+            val institutionId = _uiState.value.selectedSignupInstitutionId
+            when (val result = authRepository.loginWithGoogle(idToken, institutionId, fullName = null)) {
+                is AuthResult.Success -> {
+                    _uiState.update { it.copy(isAuthLoading = false, role = roleFromBackend(result.user.role)) }
+                    completeAuth()
+                }
+                is AuthResult.Failure -> {
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+                }
             }
         }
     }
+
+    private fun roleFromBackend(backendRole: String): UserRole =
+        if (backendRole == "TUTOR") UserRole.TUTOR else UserRole.STUDENT
 
     fun setAuthError(message: String) {
         _uiState.update { it.copy(authErrorMessage = message) }
@@ -75,6 +142,14 @@ class TutorBridgeViewModel : ViewModel() {
         _uiState.update { state ->
             val nextDestination = if (state.role == UserRole.TUTOR) "tutor_home" else "student_home"
             state.copy(currentRoute = nextDestination)
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.logout()
+            _uiState.update { TutorBridgeUiState() }
+            loadInstitutions()
         }
     }
 
@@ -301,18 +376,12 @@ class TutorBridgeViewModel : ViewModel() {
     }
 
     fun deleteStudentAccount(onComplete: () -> Unit) {
+        // DELETE /users/me is part of the data-wiring pass, not this one -
+        // for now this still only clears local/session state.
         viewModelScope.launch {
-            _uiState.update { state ->
-                state.copy(
-                    role = null,
-                    userName = "Liam Naidoo",
-                    myRequests = emptyList(),
-                    calendarEvents = state.calendarEvents.filter { it.participantRole == "tutor" },
-                    currentRoute = "auth",
-                    deleteConfirmChecked = false,
-                    deleteConfirmText = ""
-                )
-            }
+            authRepository.logout()
+            _uiState.update { TutorBridgeUiState() }
+            loadInstitutions()
             onComplete()
         }
     }

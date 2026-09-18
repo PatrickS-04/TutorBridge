@@ -51,17 +51,31 @@ async function issueTokenPair(user: {
 router.post(
   "/sso/:provider",
   asyncHandler(async (req, res) => {
-    const { idToken } = req.body;
+    const { idToken, institutionId, fullName } = req.body;
     if (!idToken) return res.status(400).json(apiError("VALIDATION_ERROR", "idToken is required", "idToken"));
 
-    const decoded = jwt.decode(idToken) as { email?: string; sub?: string } | null;
+    const decoded = jwt.decode(idToken) as { email?: string; sub?: string; name?: string } | null;
     if (!decoded?.email) {
       return res.status(401).json(apiError("INVALID_TOKEN", "Could not verify SSO token"));
     }
 
     let user = await User.findOne({ email: decoded.email.toLowerCase() });
+
     if (!user) {
-      return res.status(404).json(apiError("NOT_FOUND", "No account for this SSO identity"));
+      if (!institutionId) {
+        return res
+          .status(404)
+          .json(apiError("NOT_FOUND", "No account for this SSO identity; institutionId is required to create one", "institutionId"));
+      }
+      user = await User.create({
+        institutionId,
+        role: UserRole.GUARDIAN_LEARNER,
+        fullName: fullName || decoded.name || decoded.email.split("@")[0],
+        email: decoded.email.toLowerCase(),
+        authProvider: AuthProvider.GOOGLE,
+        verificationStatus: VerificationStatus.UNVERIFIED,
+        profileCompleteness: 20,
+      });
     }
 
     const tokens = await issueTokenPair({

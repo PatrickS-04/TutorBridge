@@ -10,6 +10,10 @@ data class TutorBridgeUiState(
     val isAuthLoading: Boolean = false,
     val authErrorMessage: String? = null,
     val institutionName: String = "University of Cape Town (UCT)",
+    val institutionOptions: List<InstitutionSummary> = emptyList(),
+    // Named distinctly from `selectedInstitutionId` below, which is an
+    // unrelated, pre-existing field for the tutor claims screen.
+    val selectedSignupInstitutionId: String? = null,
     val userName: String = "Liam Naidoo",
     val userEmail: String = "ndxlia003@myuct.ac.za",
     val userStaffId: String = "",

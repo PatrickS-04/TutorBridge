@@ -32,23 +32,35 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import kotlinx.coroutines.launch
 import com.tutorbridge.app.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
     uiState: TutorBridgeUiState,
     onRoleSelect: (UserRole) -> Unit,
+    onInstitutionSelect: (String) -> Unit,
     onSignIn: (String, String) -> Unit,
-    onSignUp: (String, String) -> Unit,
+    onSignUp: (String, String, String) -> Unit, // fullName, email, password
     onGoogleSignIn: (String) -> Unit,
     onGoogleSignInError: (String) -> Unit,
     onToggleAuthMode: () -> Unit
 ) {
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var institutionDropdownExpanded by remember { mutableStateOf(false) }
     // Role is inferred from the email pattern in the real prototype;
     // default to student unless the user has already picked tutor elsewhere in the app.
     val role = uiState.role ?: UserRole.STUDENT
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val isSignUp = uiState.authMode == AuthMode.SIGN_UP
+    val selectedInstitutionName = uiState.institutionOptions
+        .firstOrNull { it.id == uiState.selectedSignupInstitutionId }
+        ?.name ?: uiState.institutionName
+
+    val canSubmit = !uiState.isAuthLoading && email.isNotBlank() && password.isNotBlank() &&
+        (!isSignUp || (fullName.isNotBlank() && uiState.selectedSignupInstitutionId != null))
 
     Column(
         modifier = Modifier
@@ -82,16 +94,41 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Institutional Partner
+        // Institutional Partner - now a real dropdown backed by GET /reference/institutions.
+        // Only matters for sign-up (first-time SSO also uses it); sign-in resolves
+        // the institution from the existing account server-side.
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("INSTITUTIONAL PARTNER", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                value = uiState.institutionName,
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
-            )
+            ExposedDropdownMenuBox(
+                expanded = institutionDropdownExpanded,
+                onExpandedChange = { institutionDropdownExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedInstitutionName,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = institutionDropdownExpanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                ExposedDropdownMenu(
+                    expanded = institutionDropdownExpanded,
+                    onDismissRequest = { institutionDropdownExpanded = false }
+                ) {
+                    if (uiState.institutionOptions.isEmpty()) {
+                        DropdownMenuItem(text = { Text("Loading institutions…") }, onClick = {}, enabled = false)
+                    }
+                    uiState.institutionOptions.forEach { institution ->
+                        DropdownMenuItem(
+                            text = { Text(institution.name) },
+                            onClick = {
+                                onInstitutionSelect(institution.id)
+                                institutionDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -124,6 +161,21 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isSignUp) {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Full Name", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it },
+                    placeholder = { Text("e.g. Liam Naidoo", fontSize = 11.5.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Campus Email or Staff ID", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
@@ -155,29 +207,23 @@ fun AuthScreen(
         Button(
             onClick = {
                 onRoleSelect(role)
-                if (uiState.authMode == AuthMode.SIGN_UP) {
-                    onSignUp(email, password)
-                }
-                else {
+                if (isSignUp) {
+                    onSignUp(fullName, email, password)
+                } else {
                     onSignIn(email, password)
                 }
             },
-            enabled = !uiState.isAuthLoading && email.isNotBlank() && password.isNotBlank(),
+            enabled = canSubmit,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
             if (uiState.isAuthLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-            }
-            else {
+            } else {
                 Text(
-                    if (uiState.authMode == AuthMode.SIGN_UP) {
-                        "Create Account"
-                    }
-                    else {
-                        "Continue with Institutional Login ->"
-                    }, fontWeight = FontWeight.Bold, fontSize = 13.5.sp
+                    if (isSignUp) "Create Account" else "Continue with Institutional Login ->",
+                    fontWeight = FontWeight.Bold, fontSize = 13.5.sp
                 )
             }
         }
@@ -186,12 +232,8 @@ fun AuthScreen(
 
         TextButton(onClick = onToggleAuthMode) {
             Text(
-                if (uiState.authMode == AuthMode.SIGN_UP) {
-                    "Already have an Account? Sign In"
-                }
-                else {
-                    "New to TutorBridge? Create an Account"
-                }, fontSize = 12.sp
+                if (isSignUp) "Already have an Account? Sign In" else "New to TutorBridge? Create an Account",
+                fontSize = 12.sp
             )
         }
 
@@ -238,10 +280,11 @@ fun AuthScreenPreview() {
         AuthScreen(
             uiState = TutorBridgeUiState(),
             onRoleSelect = {},
+            onInstitutionSelect = {},
             onSignIn = { _, _ -> },
-            onSignUp = {_, _ -> },
-            onGoogleSignIn = {_ -> },
-            onGoogleSignInError = {_ -> },
+            onSignUp = { _, _, _ -> },
+            onGoogleSignIn = { _ -> },
+            onGoogleSignInError = { _ -> },
             onToggleAuthMode = {}
         )
     }

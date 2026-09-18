@@ -1,9 +1,23 @@
 import { Router } from "express";
-import { Subject, Province, Area } from "../models";
+import { Subject, Province, Area, Institution } from "../models";
 import { asyncHandler } from "../utils/asyncHandler";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
+
+// Deliberately NOT behind `authenticate`: the sign-up screen needs to show a
+// list of institutions before the user has any token to authenticate with.
+// (This endpoint didn't exist before - registration had no way to get a
+// real institutionId without it.)
+router.get(
+  "/institutions",
+  asyncHandler(async (_req, res) => {
+    const institutions = await Institution.find().where("status").equals("ACTIVE").sort({ name: 1 });
+    res.set("Cache-Control", "public, max-age=3600");
+    res.status(200).json(institutions.map((i) => ({ id: i._id, name: i.name })));
+  })
+);
+
 router.use(authenticate);
 
 router.get(
