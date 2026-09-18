@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.ui.navigation.TutorBridgeNavGraph
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
@@ -19,7 +20,7 @@ import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
  * TutorBridge - Peer Tutoring Platform for South African Universities
  * Native Android Application with Jetpack Compose & Material 3 MVVM Architecture.
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val viewModel: TutorBridgeViewModel by viewModels()
 

@@ -206,6 +206,7 @@ fun AuthScreen(
                 scope.launch {
                     try {
                         val idToken = GoogleAuthentication.idTokenRequest(context, context.getString(R.string.google_web_client_id))
+                        onRoleSelect(role)
                         onGoogleSignIn(idToken)
                     } catch (exception: Exception) {
                         onGoogleSignInError(exception.message ?: "Google Sign-In failed or was cancelled")

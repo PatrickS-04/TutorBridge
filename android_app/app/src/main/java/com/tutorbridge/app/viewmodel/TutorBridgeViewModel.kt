@@ -1,5 +1,7 @@
 package com.tutorbridge.app.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.GoogleAuthProvider
@@ -14,10 +16,17 @@ import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
 import kotlinx.coroutines.tasks.await
 
-class TutorBridgeViewModel : ViewModel() {
+class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(TutorBridgeUiState())
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
+
+    init {
+        if (Firebase.auth.currentUser != null) {
+            val lastRole = AppPreferences(getApplication()).getLastRole() ?: UserRole.STUDENT
+            _uiState.update { it.copy(role = lastRole, currentRoute = "biometric_lock") }
+        }
+    }
 
     fun selectRole(role: UserRole) {
         _uiState.update { it.copy(role = role) }
@@ -72,10 +81,18 @@ class TutorBridgeViewModel : ViewModel() {
     }
 
     fun completeAuth() {
+        val role = _uiState.value.role ?: UserRole.STUDENT
+        AppPreferences(getApplication()).saveLastRole(role)
         _uiState.update { state ->
             val nextDestination = if (state.role == UserRole.TUTOR) "tutor_home" else "student_home"
-            state.copy(currentRoute = nextDestination)
+            state.copy(role = role, currentRoute = nextDestination)
         }
+    }
+
+    fun signOut() {
+        Firebase.auth.signOut()
+        AppPreferences(getApplication()).clear()
+        _uiState.update { TutorBridgeUiState() }
     }
 
     fun navigateTo(route: String) {

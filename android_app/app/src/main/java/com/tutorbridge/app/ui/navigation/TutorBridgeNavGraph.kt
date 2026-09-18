@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.navigation
 
+import android.hardware.biometrics.BiometricManager
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -7,9 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.data.model.AuthMode
+import com.tutorbridge.app.data.model.BiometricAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
+import com.tutorbridge.app.ui.screens.auth.BiometricScreen
 import com.tutorbridge.app.ui.screens.availability.TutorAvailabilityScreen
 import com.tutorbridge.app.ui.screens.booking.BookingConfirmationScreen
 import com.tutorbridge.app.ui.screens.booking.BookingDeclinedScreen
@@ -129,6 +134,23 @@ fun TutorBridgeNavGraph(
                         }
                     )}
                 )
+                "biometric_lock" -> {
+                    val activity = LocalContext.current as FragmentActivity
+                    BiometricScreen(
+                        onUnlockClick = {
+                            val biometricManager = BiometricAuthentication(activity)
+                            if (biometricManager.canAuthenticate()) {
+                                biometricManager.authenticate(
+                                    onSuccess = { viewModel.completeAuth() },
+                                    onFailure = {}
+                                )
+                            } else {
+                                viewModel.completeAuth()
+                            }
+                        },
+                        onSignInDifferently = { viewModel.signOut() }
+                    )
+                }
                 "student_home" -> StudentHomeScreen(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) }
@@ -257,8 +279,7 @@ fun TutorBridgeNavGraph(
                     onSelectLanguage = { viewModel.setLanguage(it) },
                     onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
                     onSignOut = {
-                        viewModel.selectRole(UserRole.STUDENT)
-                        viewModel.navigateTo("auth")
+                        viewModel.signOut()
                     },
                     onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
                     onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
