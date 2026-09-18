@@ -118,6 +118,8 @@ data class TuitionRequestDto(
     val availability: List<AvailabilityDto> = emptyList(),
     val status: String = "OPEN",
     val applicationCount: Int = 0,
+    /** Added by GET /tuition-requests for the student's own board. */
+    val matchedTutorName: String? = null,
     val createdAt: String? = null
 )
 

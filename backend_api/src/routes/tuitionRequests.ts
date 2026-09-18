@@ -60,7 +60,27 @@ router.get(
     if (req.query.mine === "true") filter.studentId = req.auth!.userId;
 
     const result = await paginate(TuitionRequest, filter, req, ["subjectId", "areaId", "studentId"]);
-    res.status(200).json(result);
+
+    // A matched request is only useful with the tutor's name on it. One query
+    // for the page rather than one per request.
+    const accepted = await Application.find({
+      tuitionRequestId: { $in: result.data.map((request) => request._id) },
+      status: ApplicationStatus.ACCEPTED,
+    }).populate("tutorId");
+    const tutorByRequest = new Map(
+      accepted.map((application) => [
+        String(application.tuitionRequestId),
+        (application.tutorId as any)?.fullName ?? "",
+      ])
+    );
+
+    res.status(200).json({
+      ...result,
+      data: result.data.map((request) => ({
+        ...request.toObject(),
+        matchedTutorName: tutorByRequest.get(String(request._id)) ?? "",
+      })),
+    });
   })
 );
 

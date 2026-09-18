@@ -185,7 +185,9 @@ fun TuitionRequestDto.toRequestUi(): StudentRequestUi = StudentRequestUi(
         else -> RequestStatus.OPEN
     },
     timestamp = relativeTime(createdAt),
-    preferredVenue = areaId?.name.orEmpty()
+    preferredVenue = areaId?.name.orEmpty(),
+    matchedTutorName = matchedTutorName.orEmpty(),
+    applicantCount = applicationCount
 )
 
 /** A booking as the calendar renders it - [selfIsTutor] decides whose name is shown. */

@@ -71,6 +71,8 @@ data class StudentRequestUi(
     val timestamp: String,
     val preferredVenue: String,
     val matchedTutorName: String = "",
+    /** How many tutors applied; the applicants themselves load on the detail screen. */
+    val applicantCount: Int = 0,
     val applicants: List<TutorApplicant> = emptyList()
 )
 
