@@ -121,6 +121,7 @@ fun TutorBridgeNavGraph(
                 "auth" -> AuthScreen(
                     uiState = uiState,
                     onRoleSelect = { viewModel.selectRole(it) },
+                    onInstitutionSelect = { name -> viewModel.setInstitutionName(name) },
                     onSignIn = { email, password -> viewModel.signIn(email, password) },
                     onSignUp = { email, password -> viewModel.signUp(email, password) },
                     onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },

@@ -32,16 +32,44 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import kotlinx.coroutines.launch
 import com.tutorbridge.app.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
     uiState: TutorBridgeUiState,
     onRoleSelect: (UserRole) -> Unit,
+    onInstitutionSelect: (String) -> Unit,
     onSignIn: (String, String) -> Unit,
     onSignUp: (String, String) -> Unit,
     onGoogleSignIn: (String) -> Unit,
     onGoogleSignInError: (String) -> Unit,
     onToggleAuthMode: () -> Unit
 ) {
+    val optionsOfInstitutions = listOf(
+        "UCT (University of Cape Town)",
+        "Stellies (Stellenbosch University)",
+        "CPUT (Cape Peninsula University of Technology)",
+        "TUKS/UJ (University of Johannesburg)",
+        "UP (University of Pretoria)",
+        "WITS (University of the Witwatersrand)",
+        "UKZN (University of Kwa-Zulu Natal)",
+        "NWU (North West University)",
+        "UWC (University of Western Cape)",
+        "UFS (University of Free State)",
+        "Rhodes University",
+        "UNISA (University of South Africa)",
+        "University of Limpopo",
+        "University of Fort Hare",
+        "University of Mpumalanga",
+        "Boston City Campus",
+        "Eduvos",
+        "MANCOSA",
+        "Damelin",
+        "Milpark Education",
+        "Rosebank College",
+        "Emeris University",
+        "SACAP"
+    )
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     // Role is inferred from the email pattern in the real prototype;
@@ -85,13 +113,36 @@ fun AuthScreen(
         // Institutional Partner
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("INSTITUTIONAL PARTNER", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                value = uiState.institutionName,
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
-            )
+            var institutionExpandedMenu by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = institutionExpandedMenu,
+                onExpandedChange = { institutionExpandedMenu = it }
+            ) {
+                OutlinedTextField(
+                    value = uiState.institutionName,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = institutionExpandedMenu) },
+                    modifier = Modifier.fillMaxWidth()
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                ExposedDropdownMenu(
+                    expanded = institutionExpandedMenu,
+                    onDismissRequest = { institutionExpandedMenu = false }
+                ) {
+                    optionsOfInstitutions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                onInstitutionSelect(option)
+                                institutionExpandedMenu = false
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -239,6 +290,7 @@ fun AuthScreenPreview() {
         AuthScreen(
             uiState = TutorBridgeUiState(),
             onRoleSelect = {},
+            onInstitutionSelect = {},
             onSignIn = { _, _ -> },
             onSignUp = {_, _ -> },
             onGoogleSignIn = {_ -> },

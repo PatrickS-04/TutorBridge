@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.tasks.await
 
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
@@ -30,6 +31,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun selectRole(role: UserRole) {
         _uiState.update { it.copy(role = role) }
+    }
+
+    fun setInstitutionName(name: String) {
+        _uiState.update { it.copy(institutionName = name) }
     }
 
     fun setAuthMode(mode: AuthMode) {
@@ -82,10 +87,13 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun completeAuth() {
         val role = _uiState.value.role ?: UserRole.STUDENT
+        val user = Firebase.auth.currentUser
         AppPreferences(getApplication()).saveLastRole(role)
         _uiState.update { state ->
             val nextDestination = if (state.role == UserRole.TUTOR) "tutor_home" else "student_home"
-            state.copy(role = role, currentRoute = nextDestination)
+            state.copy(role = role, currentRoute = nextDestination, userName = user?.displayName ?:
+                user?.email?.substringBefore("@") ?: state.userName,
+                userEmail = user?.email ?: state.userEmail)
         }
     }
 
@@ -318,19 +326,23 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun deleteStudentAccount(onComplete: () -> Unit) {
+        val user = Firebase.auth.currentUser
+        if (user == null) {
+            _uiState.update { it.copy(authErrorMessage = "No signed-in user found - Please log in again") }
+            return
+        }
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
-            _uiState.update { state ->
-                state.copy(
-                    role = null,
-                    userName = "Liam Naidoo",
-                    myRequests = emptyList(),
-                    calendarEvents = state.calendarEvents.filter { it.participantRole == "tutor" },
-                    currentRoute = "auth",
-                    deleteConfirmChecked = false,
-                    deleteConfirmText = ""
-                )
+            try {
+                user.delete().await()
+                AppPreferences(getApplication()).clear()
+                _uiState.update { TutorBridgeUiState() }
+                onComplete()
+            } catch (exception: FirebaseAuthRecentLoginRequiredException) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and log back in before deleting your account") }
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not delete account") }
             }
-            onComplete()
         }
     }
 

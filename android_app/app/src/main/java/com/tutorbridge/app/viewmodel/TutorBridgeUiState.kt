@@ -9,7 +9,7 @@ data class TutorBridgeUiState(
     val authMode: AuthMode = AuthMode.SIGN_IN,
     val isAuthLoading: Boolean = false,
     val authErrorMessage: String? = null,
-    val institutionName: String = "University of Cape Town (UCT)",
+    val institutionName: String = "",
     val userName: String = "Liam Naidoo",
     val userEmail: String = "ndxlia003@myuct.ac.za",
     val userStaffId: String = "",
@@ -73,7 +73,7 @@ data class TutorBridgeUiState(
     val lastDeclineNote: String = "Sorry, I have an unexpected faculty meeting at this hour. Please select an alternate slot tomorrow or next week!",
 
     // Delete account
-    val deleteAccountReason: String = "Graduated / Completed Course",
+    val deleteAccountReason: String = "",
     val deleteConfirmChecked: Boolean = false,
     val deleteConfirmText: String = ""
 )
