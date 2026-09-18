@@ -11,12 +11,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.google.firebase.BuildConfig
 import com.tutorbridge.app.ui.navigation.TutorBridgeNavGraph
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 /**
  * TutorBridge - Peer Tutoring Platform for South African Universities
