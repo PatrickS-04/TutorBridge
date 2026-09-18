@@ -84,6 +84,4 @@ dependencies {
     //Biometric
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("com.google.code.gson:gson:2.11.0")
-    //Secure token storage (backend access/refresh tokens)
-    implementation("androidx.security:security-crypto:1.1.0")
 }

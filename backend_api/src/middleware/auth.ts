@@ -1,6 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { UserRole } from "../models";
+import admin from "firebase-admin";
+import { User, UserRole } from "../models";
+
+export interface FirebaseIdentity {
+  uid: string;
+  email?: string;
+  name?: string;
+  /** "password", "google.com", ... - straight from the Firebase token. */
+  signInProvider?: string;
+}
 
 export interface AuthClaims {
   userId: string;
@@ -9,33 +17,78 @@ export interface AuthClaims {
 }
 
 export interface AuthRequest extends Request {
+  firebase?: FirebaseIdentity;
   auth?: AuthClaims;
 }
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || "dev-secret-this-should-change";
+// Firebase is TutorBridge's identity provider: the app signs in with the
+// Firebase SDK and sends the resulting ID token as the bearer. Credentials
+// are read from GOOGLE_APPLICATION_CREDENTIALS (path to a service-account
+// JSON) - see .env.
+if (admin.apps.length === 0) {
+  admin.initializeApp({ credential: admin.credential.applicationDefault() });
+}
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+function unauthenticated(res: Response, code: string, message: string) {
+  return res.status(401).json({ error: { code, message, field: null } });
+}
+
+/**
+ * Verifies the Firebase ID token and nothing else. Use this for routes that
+ * must work before a TutorBridge profile exists - i.e. POST /auth/bootstrap.
+ */
+export async function verifyFirebase(req: AuthRequest, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({
-      error: { code: "UNAUTHENTICATED", message: "Missing bearer token", field: null },
-    });
+    return unauthenticated(res, "UNAUTHENTICATED", "Missing bearer token");
   }
 
-  const token = header.slice("Bearer ".length);
   try {
-    const payload = jwt.verify(token, ACCESS_TOKEN_SECRET) as AuthClaims;
-    req.auth = {
-      userId: payload.userId,
-      institutionId: payload.institutionId,
-      role: payload.role,
+    const decoded = await admin.auth().verifyIdToken(header.slice("Bearer ".length));
+    req.firebase = {
+      uid: decoded.uid,
+      email: decoded.email,
+      name: decoded.name,
+      signInProvider: decoded.firebase?.sign_in_provider,
     };
     next();
   } catch {
-    return res.status(401).json({
-      error: { code: "INVALID_TOKEN", message: "Access token is invalid or expired", field: null },
-    });
+    return unauthenticated(res, "INVALID_TOKEN", "Firebase ID token is invalid or expired");
   }
+}
+
+/**
+ * Verifies the Firebase ID token, then resolves it to this user's TutorBridge
+ * profile so routes can keep reading req.auth.userId / institutionId / role.
+ *
+ * ponytail: one User lookup per authenticated request; add a uid -> claims
+ * cache (or put the claims in Firebase custom claims) if it ever shows up in
+ * profiling.
+ */
+export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+  verifyFirebase(req, res, async () => {
+    try {
+      const user = await User.findOne({ firebaseUid: req.firebase!.uid });
+      if (!user) {
+        return res.status(403).json({
+          error: {
+            code: "NO_PROFILE",
+            message: "No TutorBridge profile for this account; call POST /auth/bootstrap first",
+            field: null,
+          },
+        });
+      }
+
+      req.auth = {
+        userId: String(user._id),
+        institutionId: String(user.institutionId),
+        role: user.role,
+      };
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
 }
 
 export function requireRole(...roles: UserRole[]) {
@@ -47,8 +100,4 @@ export function requireRole(...roles: UserRole[]) {
     }
     next();
   };
-}
-
-export function signAccessToken(claims: AuthClaims): string {
-  return jwt.sign(claims, ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 }

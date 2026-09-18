@@ -1,24 +1,35 @@
 package com.tutorbridge.app.Retrofit
 
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Attaches "Authorization: Bearer <accessToken>" to every request made
- * through the authenticated Retrofit client. Requests to auth.ts endpoints
- * (register/login/sso/refresh) go through a separate, plain client and never
- * see this interceptor - they don't need a token to work.
+ * Attaches the signed-in user's Firebase ID token as the bearer, which is
+ * what backend_api's `authenticate` middleware verifies.
+ *
+ * There is no refresh endpoint or stored refresh token to manage: the
+ * Firebase SDK caches the ID token and mints a fresh one when it is close to
+ * expiry, which is what getIdToken(false) returns here. Requests made while
+ * signed out go through unauthenticated and the backend answers 401.
  */
-class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
+class AuthInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val original = chain.request()
-        val token = tokenManager.getAccessToken()
+        val user = Firebase.auth.currentUser ?: return chain.proceed(chain.request())
+
+        // Interceptors run off the main thread, so blocking here is fine.
+        val token = try {
+            Tasks.await(user.getIdToken(false))?.token
+        } catch (exception: Exception) {
+            null
+        }
+
         val request = if (token != null) {
-            original.newBuilder()
-                .header("Authorization", "Bearer $token")
-                .build()
+            chain.request().newBuilder().header("Authorization", "Bearer $token").build()
         } else {
-            original
+            chain.request()
         }
         return chain.proceed(request)
     }

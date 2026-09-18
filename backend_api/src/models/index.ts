@@ -5,7 +5,6 @@ export * from "./Province";
 export * from "./Area";
 export * from "./Subject";
 export * from "./User";
-export * from "./RefreshToken";
 export * from "./UserSettings";
 export * from "./VerificationDocument";
 export * from "./TuitionRequest";

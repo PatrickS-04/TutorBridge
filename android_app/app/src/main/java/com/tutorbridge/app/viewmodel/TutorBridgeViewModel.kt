@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.data.repository.AuthRepository
+import com.tutorbridge.app.data.repository.AuthResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,11 +22,7 @@ import kotlinx.coroutines.tasks.await
 
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
-    init {
-        RetrofitInstance.init(application)
-    }
-
-    private val authRepository = AuthRepository(RetrofitInstance.authApi, RetrofitInstance.tokenManager)
+    private val authRepository = AuthRepository(RetrofitInstance.authApi)
 
     private val _uiState = MutableStateFlow(TutorBridgeUiState())
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
@@ -73,7 +70,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun signUp(fullName: String, email: String, password: String) {
-        if (_uiState.value.selectedSignupInstitutionId == null) {
+        val institutionId = _uiState.value.selectedSignupInstitutionId
+        if (institutionId == null) {
             _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
             return
         }
@@ -83,8 +81,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 Firebase.auth.createUserWithEmailAndPassword(email, password).await()
                 val profileUpdate = UserProfileChangeRequest.Builder().setDisplayName(fullName).build()
                 Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
+                finishSignIn(institutionId, fullName)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not create an account") }
             }
@@ -96,8 +93,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 Firebase.auth.signInWithEmailAndPassword(email, password).await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
+                finishSignIn(institutionId = null, fullName = null)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
             }
@@ -115,13 +111,41 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 Firebase.auth.signInWithCredential(credential).await()
-                _uiState.update { it.copy(isAuthLoading = false) }
-                completeAuth()
+                finishSignIn(_uiState.value.selectedSignupInstitutionId, fullName = null)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Google Sign-In Failed") }
             }
         }
     }
+
+    /**
+     * Firebase has authenticated the user; now resolve their TutorBridge
+     * profile so we know their role and institution. A failure here means the
+     * Firebase account is real but the backend profile could not be created
+     * or read, so we surface it rather than dropping the user into the app
+     * with a default role.
+     */
+    private suspend fun finishSignIn(institutionId: String?, fullName: String?) {
+        when (val result = authRepository.bootstrapProfile(institutionId, fullName)) {
+            is AuthResult.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isAuthLoading = false,
+                        role = roleFromBackend(result.profile.role),
+                        userName = result.profile.fullName
+                    )
+                }
+                completeAuth()
+            }
+            is AuthResult.Failure -> {
+                Firebase.auth.signOut()
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+            }
+        }
+    }
+
+    private fun roleFromBackend(backendRole: String): UserRole =
+        if (backendRole == "TUTOR") UserRole.TUTOR else UserRole.STUDENT
 
     fun setAuthError(message: String) {
         _uiState.update { it.copy(authErrorMessage = message) }

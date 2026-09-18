@@ -1,6 +1,5 @@
 package com.tutorbridge.app.Retrofit
 
-import android.content.Context
 import com.tutorbridge.app.Apiinterface.AuthApi
 import com.tutorbridge.app.Apiinterface.TaskApi
 import okhttp3.OkHttpClient
@@ -20,62 +19,30 @@ object RetrofitInstance {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
-    lateinit var tokenManager: TokenManager
-        private set
-
-    private var initialized = false
-
-    /**
-     * Call once before touching [authApi] or [api] - TutorBridgeViewModel
-     * does this in its init block via getApplication(). Safe to call more
-     * than once.
-     */
-    fun init(context: Context) {
-        if (initialized) return
-        tokenManager = TokenManager(context.applicationContext)
-        initialized = true
-    }
-
-    /** Client for auth.ts endpoints - these never send or need a Bearer token. */
-    private val plainClient: OkHttpClient by lazy {
+    // One client for everything: AuthInterceptor attaches the Firebase ID
+    // token when somebody is signed in and is a no-op when nobody is, so the
+    // public endpoints (GET /reference/institutions) work through it too.
+    private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(AuthInterceptor())
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
     }
 
-    private val plainRetrofit: Retrofit by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(plainClient)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    val authApi: AuthApi by lazy { plainRetrofit.create(AuthApi::class.java) }
-
-    /** Client for everything else - attaches the access token and auto-refreshes it on a 401. */
-    private val authedClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(AuthInterceptor(tokenManager))
-            .authenticator(TokenAuthenticator(tokenManager, authApi))
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .build()
-    }
-
-    private val authedRetrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(authedClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+    val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
 
     // Kept for the existing (currently unused) Task stub. Real endpoints
     // (bookings, tuition-requests, etc.) get their own Retrofit interfaces
     // added here as screens are wired to the database in the next pass.
-    val api: TaskApi by lazy { authedRetrofit.create(TaskApi::class.java) }
+    val api: TaskApi by lazy { retrofit.create(TaskApi::class.java) }
 }

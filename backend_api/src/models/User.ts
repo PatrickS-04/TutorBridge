@@ -38,7 +38,7 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, select: false },
     authProvider: { type: String, enum: Object.values(AuthProvider), required: true },
-    firebaseUid: { type: String },
+    firebaseUid: { type: String, unique: true, sparse: true, index: true },
     phoneNumber: { type: String, trim: true },
     profilePhotoUrl: { type: String },
     bio: { type: String, maxlength: 1000 },
