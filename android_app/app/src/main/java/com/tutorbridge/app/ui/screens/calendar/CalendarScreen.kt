@@ -38,7 +38,6 @@ fun CalendarScreen(
     uiState: TutorBridgeUiState,
     onSelectDate: (LocalDate) -> Unit,
     onFilterChange: (String) -> Unit,
-    onAddEvent: (CalendarEventUi) -> Unit,
     onNavigateToPrep: () -> Unit
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
@@ -269,7 +268,6 @@ fun CalendarScreenPreview() {
             uiState = TutorBridgeUiState(),
             onSelectDate = {},
             onFilterChange = {},
-            onAddEvent = {},
             onNavigateToPrep = {}
         )
     }

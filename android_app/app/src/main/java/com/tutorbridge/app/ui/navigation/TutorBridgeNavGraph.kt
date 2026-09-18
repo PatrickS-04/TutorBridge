@@ -6,6 +6,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -71,7 +73,18 @@ fun TutorBridgeNavGraph(
     val currentItems = if (uiState.role == UserRole.TUTOR) tutorNavItems else studentNavItems
     val showBottomBar = uiState.role != null && uiState.currentRoute in (studentRoutesWithBottomBar + tutorRoutesWithBottomBar)
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Anything the server refused or could not answer.
+    LaunchedEffect(uiState.dataErrorMessage) {
+        uiState.dataErrorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissDataError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
@@ -159,8 +172,8 @@ fun TutorBridgeNavGraph(
                 "tutor_home" -> TutorHomeScreen(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) },
-                    onAcceptBooking = { viewModel.acceptTutorBooking() },
-                    onDeclineBooking = { viewModel.declineTutorBooking() }
+                    onAcceptBooking = { bookingId -> viewModel.acceptTutorBooking(bookingId) },
+                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) }
                 )
                 "find_tutors" -> FindTutorsScreen(
                     uiState = uiState,
@@ -188,8 +201,7 @@ fun TutorBridgeNavGraph(
                     onBack = { viewModel.navigateTo("booking_flow") }
                 )
                 "booking_sent" -> BookingRequestSentScreen(
-                    onSimulateAccepted = { uiState.selectedTutor?.let { viewModel.simulateAccepted(it) } },
-                    onSimulateDeclined = { viewModel.simulateDeclined() },
+                    onCheckStatus = { viewModel.checkBookingStatus() },
                     onViewCalendar = { viewModel.navigateTo("calendar") }
                 )
                 "booking_confirmed" -> BookingConfirmationScreen(
@@ -206,7 +218,6 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
-                    onAddEvent = { viewModel.addCalendarEvent(it) },
                     onNavigateToPrep = { viewModel.navigateTo("session_prep") }
                 )
 
@@ -221,10 +232,11 @@ fun TutorBridgeNavGraph(
                     onBack = { viewModel.navigateTo("my_requests") },
                     onNext = { viewModel.updateDraftStep(uiState.requestDraft.step + 1) },
                     onPrevious = { viewModel.updateDraftStep(uiState.requestDraft.step - 1) },
-                    onSubjectChange = { viewModel.updateDraftSubject(it) },
+                    onSelectSubject = { id, name -> viewModel.selectDraftSubject(id, name) },
                     onLevelChange = { viewModel.updateDraftLevel(it) },
-                    onTimeWindowChange = { viewModel.updateDraftTimeWindow(it) },
-                    onVenueChange = { viewModel.updateDraftVenue(it) },
+                    onToggleDay = { viewModel.toggleDraftDay(it) },
+                    onHoursChange = { start, end -> viewModel.updateDraftHours(start, end) },
+                    onSelectArea = { id, name -> viewModel.selectDraftArea(id, name) },
                     onNotesChange = { viewModel.updateDraftNotes(it) },
                     onSubmit = { viewModel.submitTuitionRequest() }
                 )

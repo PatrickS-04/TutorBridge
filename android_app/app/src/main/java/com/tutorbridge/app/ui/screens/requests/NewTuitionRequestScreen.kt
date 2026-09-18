@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.screens.requests
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,24 +22,31 @@ import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
+import com.tutorbridge.app.data.model.NamedIdDto
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 
 private val stepTitles = listOf("Subject", "Level", "Time Window", "Venue", "Notes")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewTuitionRequestScreen(
     uiState: TutorBridgeUiState,
     onBack: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
-    onSubjectChange: (String) -> Unit,
+    onSelectSubject: (String, String) -> Unit,
     onLevelChange: (String) -> Unit,
-    onTimeWindowChange: (String) -> Unit,
-    onVenueChange: (String) -> Unit,
+    onToggleDay: (DayOfWeek) -> Unit,
+    onHoursChange: (String, String) -> Unit,
+    onSelectArea: (String, String) -> Unit,
     onNotesChange: (String) -> Unit,
     onSubmit: () -> Unit
 ) {
-    val step = uiState.requestDraft.step
+    val draft = uiState.requestDraft
+    val step = draft.step
     val totalSteps = 5
 
     Column(
@@ -75,18 +83,17 @@ fun NewTuitionRequestScreen(
         when (step) {
             1 -> {
                 Text("What subject or course do you need help with?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                OutlinedTextField(
-                    value = uiState.requestDraft.subject,
-                    onValueChange = onSubjectChange,
-                    placeholder = { Text("e.g. Algebra II, Organic Chemistry, Jetpack Compose") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp)
+                PickerField(
+                    label = draft.subject,
+                    placeholder = "Choose a subject",
+                    options = uiState.subjectOptions,
+                    onSelect = onSelectSubject
                 )
             }
             2 -> {
                 Text("What level is this course?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 OutlinedTextField(
-                    value = uiState.requestDraft.level,
+                    value = draft.level,
                     onValueChange = onLevelChange,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp)
@@ -94,26 +101,59 @@ fun NewTuitionRequestScreen(
             }
             3 -> {
                 Text("When are you generally available?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                OutlinedTextField(
-                    value = uiState.requestDraft.timeWindow,
-                    onValueChange = onTimeWindowChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DayOfWeek.entries.forEach { day ->
+                        val selected = draft.days.contains(day)
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(if (selected) CrimsonPrimary else MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { onToggleDay(day) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                day.getDisplayName(TextStyle.NARROW, Locale.ENGLISH),
+                                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = draft.startTime,
+                        onValueChange = { onHoursChange(it, draft.endTime) },
+                        label = { Text("From (HH:mm)", fontSize = 11.sp) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = draft.endTime,
+                        onValueChange = { onHoursChange(draft.startTime, it) },
+                        label = { Text("To (HH:mm)", fontSize = 11.sp) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                }
             }
             4 -> {
-                Text("Preferred campus venue", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                OutlinedTextField(
-                    value = uiState.requestDraft.preferredVenue,
-                    onValueChange = onVenueChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp)
+                Text("Preferred campus area", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                PickerField(
+                    label = draft.preferredVenue,
+                    placeholder = "Choose a campus area",
+                    options = uiState.areaOptions,
+                    onSelect = onSelectArea
                 )
             }
             5 -> {
                 Text("Notes & Topic Details for Mentors", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 OutlinedTextField(
-                    value = uiState.requestDraft.notes,
+                    value = draft.notes,
                     onValueChange = onNotesChange,
                     placeholder = { Text("Need help with limits and derivatives") },
                     modifier = Modifier.fillMaxWidth().height(140.dp),
@@ -133,7 +173,7 @@ fun NewTuitionRequestScreen(
         ) {
             Icon(Icons.Default.Bookmark, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
             Text(
-                "Draft autosaved locally — you can exit anytime and continue later even without Wi-Fi.",
+                "Your request goes to every verified tutor for this subject at your institution.",
                 fontSize = 11.sp,
                 color = NavySecondary
             )
@@ -149,13 +189,57 @@ fun NewTuitionRequestScreen(
                     shape = RoundedCornerShape(25.dp)
                 ) { Text("Back", fontWeight = FontWeight.Bold) }
             }
+            val canContinue = when (step) {
+                1 -> draft.subjectId.isNotBlank()
+                4 -> draft.areaId.isNotBlank()
+                else -> true
+            }
             Button(
                 onClick = if (step < totalSteps) onNext else onSubmit,
+                enabled = canContinue && !uiState.isRefreshing,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
             ) {
                 Text(if (step < totalSteps) "Next Step" else "Submit Request", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/** A read-only field that opens the reference-data list it is given. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PickerField(
+    label: String,
+    placeholder: String,
+    options: List<NamedIdDto>,
+    onSelect: (String, String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = label,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text(placeholder) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            shape = RoundedCornerShape(14.dp)
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (options.isEmpty()) {
+                DropdownMenuItem(text = { Text("Nothing to choose from yet") }, onClick = {}, enabled = false)
+            }
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.name) },
+                    onClick = {
+                        onSelect(option.id, option.name)
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -170,10 +254,11 @@ fun NewTuitionRequestScreenPreview() {
             onBack = {},
             onNext = {},
             onPrevious = {},
-            onSubjectChange = {},
+            onSelectSubject = { _, _ -> },
             onLevelChange = {},
-            onTimeWindowChange = {},
-            onVenueChange = {},
+            onToggleDay = {},
+            onHoursChange = { _, _ -> },
+            onSelectArea = { _, _ -> },
             onNotesChange = {},
             onSubmit = {}
         )
