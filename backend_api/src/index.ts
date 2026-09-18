@@ -1,16 +1,34 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { connectDB } from "./db";
-import taskRoutes from "./routes/tasks";
+import mongoose from "mongoose";
+import { registerRoutes } from "./routes";
 
 dotenv.config();
-connectDB();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use("/api/tasks", taskRoutes);
+async function main() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("MONGODB_URI is not set");
+  await mongoose.connect(uri);
+  console.log("MongoDB connected");
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
+
+  registerRoutes(app);
+
+  // Conventional error body for anything that reaches here unhandled.
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error(err);
+    res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Something went wrong", field: null } });
+  });
+
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => console.log(`TutorBridge API listening on port ${port}`));
+}
+
+main().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});
