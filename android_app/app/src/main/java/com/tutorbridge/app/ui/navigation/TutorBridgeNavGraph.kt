@@ -121,9 +121,9 @@ fun TutorBridgeNavGraph(
                 "auth" -> AuthScreen(
                     uiState = uiState,
                     onRoleSelect = { viewModel.selectRole(it) },
-                    onInstitutionSelect = { name -> viewModel.setInstitutionName(name) },
+                    onInstitutionSelect = { id -> viewModel.selectSignupInstitution(id) },
                     onSignIn = { email, password -> viewModel.signIn(email, password) },
-                    onSignUp = { email, password -> viewModel.signUp(email, password) },
+                    onSignUp = { fullName, email, password -> viewModel.signUp(fullName, email, password) },
                     onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
                     onGoogleSignInError = { message -> viewModel.setAuthError(message) },
                     onToggleAuthMode = {viewModel.setAuthMode(
@@ -279,9 +279,7 @@ fun TutorBridgeNavGraph(
                     onToggleOffline = { viewModel.toggleOfflineMode(it) },
                     onSelectLanguage = { viewModel.setLanguage(it) },
                     onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
-                    onSignOut = {
-                        viewModel.signOut()
-                    },
+                    onSignOut = { viewModel.signOut() },
                     onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
                     onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
                     onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },

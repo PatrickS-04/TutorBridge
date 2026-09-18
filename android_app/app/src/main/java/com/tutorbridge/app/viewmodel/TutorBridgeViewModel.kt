@@ -2,10 +2,10 @@ package com.tutorbridge.app.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.GoogleAuthProvider
+import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,11 +13,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import com.google.firebase.auth.auth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.tasks.await
 
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
+
+    init {
+        RetrofitInstance.init(application)
+    }
+
+    private val authRepository = AuthRepository(RetrofitInstance.authApi, RetrofitInstance.tokenManager)
 
     private val _uiState = MutableStateFlow(TutorBridgeUiState())
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
@@ -35,25 +43,46 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             }
             _uiState.update { it.copy(biometricEnabled = enabledBiometric) }
         }
+        loadInstitutions()
+    }
+
+    private fun loadInstitutions() {
+        viewModelScope.launch {
+            val institutions = authRepository.listInstitutions()
+            _uiState.update { state ->
+                state.copy(
+                    institutionOptions = institutions,
+                    selectedSignupInstitutionId = state.selectedSignupInstitutionId ?: institutions.firstOrNull()?.id,
+                    institutionName = institutions.firstOrNull()?.name ?: state.institutionName
+                )
+            }
+        }
     }
 
     fun selectRole(role: UserRole) {
         _uiState.update { it.copy(role = role) }
     }
 
-    fun setInstitutionName(name: String) {
-        _uiState.update { it.copy(institutionName = name) }
+    fun selectSignupInstitution(id: String) {
+        val name = _uiState.value.institutionOptions.firstOrNull { it.id == id }?.name
+        _uiState.update { it.copy(selectedSignupInstitutionId = id, institutionName = name ?: it.institutionName) }
     }
 
     fun setAuthMode(mode: AuthMode) {
         _uiState.update { it.copy(authMode = mode, authErrorMessage = null) }
     }
 
-    fun signUp(email: String, password: String) {
+    fun signUp(fullName: String, email: String, password: String) {
+        if (_uiState.value.selectedSignupInstitutionId == null) {
+            _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
+            return
+        }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
             try {
                 Firebase.auth.createUserWithEmailAndPassword(email, password).await()
+                val profileUpdate = UserProfileChangeRequest.Builder().setDisplayName(fullName).build()
+                Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
                 _uiState.update { it.copy(isAuthLoading = false) }
                 completeAuth()
             } catch (exception: Exception) {
@@ -75,6 +104,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /**
+     * [idToken] is the raw Google ID token from Credential Manager
+     * (GoogleAuthentication.idTokenRequest), exchanged for a Firebase
+     * session. Firebase is the session of record for TutorBridge.
+     */
     fun signInWithGoogle(idToken: String) {
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
