@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Model } from "mongoose";
+import { Model, PopulateOptions } from "mongoose";
 
 const PAGE_SIZE = 20;
 
@@ -7,7 +7,7 @@ export async function paginate<T>(
   model: Model<T>,
   filter: Record<string, unknown>,
   req: Request,
-  populate?: string | string[]
+  populate?: string | string[] | PopulateOptions | PopulateOptions[]
 ) {
   const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
   const skip = (page - 1) * PAGE_SIZE;

@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { Application, TuitionRequest, UserRole, ApplicationStatus, TuitionRequestStatus } from "../models";
+import {
+  Application,
+  TuitionRequest,
+  UserRole,
+  ApplicationStatus,
+  TuitionRequestStatus,
+  NotificationCategory,
+} from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, requireRole, AuthRequest } from "../middleware/auth";
+import { notify } from "../utils/notify";
 
 const router = Router();
 router.use(authenticate);
@@ -11,7 +19,12 @@ router.get(
   "/mine",
   requireRole(UserRole.TUTOR),
   asyncHandler(async (req: AuthRequest, res) => {
-    const result = await paginate(Application, { tutorId: req.auth!.userId }, req, "tuitionRequestId");
+    // Nested populate: the tutor's applications list shows the subject and
+    // the student behind each request it applied to.
+    const result = await paginate(Application, { tutorId: req.auth!.userId }, req, {
+      path: "tuitionRequestId",
+      populate: [{ path: "subjectId" }, { path: "studentId" }],
+    });
     res.status(200).json(result);
   })
 );
@@ -44,6 +57,17 @@ router.put(
         $set: { status: TuitionRequestStatus.MATCHED },
       });
     }
+
+    notify(
+      req.auth!.institutionId,
+      String(application.tutorId),
+      NotificationCategory.APPLICATION,
+      decision === "accept" ? "Your application was accepted" : "Your application was declined",
+      decision === "accept"
+        ? "The student accepted your offer - agree a time to lock in the booking."
+        : "The student went with another tutor this time.",
+      `tutorbridge://applications/${application._id}`
+    );
 
     res.status(200).json({ id: application._id, status: application.status });
   })

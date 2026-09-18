@@ -13,6 +13,7 @@ import notificationTokenRoutes from "./notificationTokens";
 import referenceRoutes from "./reference";
 import calendarRoutes from "./calendar";
 import timesheetRoutes from "./timesheets";
+import notificationRoutes from "./notifications";
 
 export function registerRoutes(app: Express) {
   app.use("/auth", authRoutes);
@@ -26,6 +27,7 @@ export function registerRoutes(app: Express) {
   app.use("/reference", referenceRoutes);
   app.use("/calendar", calendarRoutes);
   app.use("/timesheets", timesheetRoutes);
+  app.use("/notifications", notificationRoutes);
 
   app.use("/admin/subjects", createCrudRouter(Subject));
   app.use("/admin/provinces", createCrudRouter(Province));

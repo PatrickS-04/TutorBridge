@@ -71,7 +71,12 @@ fun StudentHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Badge(containerColor = CrimsonPrimary) {
-                            Text("Next Session • 10:30 AM", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+                            Text(
+                                nextEvent?.let { "Next Session • ${it.startTime}" } ?: "No sessions booked",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.5.sp
+                            )
                         }
                         Text("Prep & Room →", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                     }
@@ -80,16 +85,30 @@ fun StudentHomeScreen(
                         Box(
                             modifier = Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
-                        ) { Text("TM", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
-                        Column {
-                            Text(nextEvent?.participantName ?: "Thabo Mokoena", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        ) {
                             Text(
-                                "${nextEvent?.subject ?: "MAM1000W Calculus"} & Vector Proofs",
+                                nextEvent?.participantName.orEmpty().split(" ").mapNotNull { part ->
+                                    part.firstOrNull()?.uppercase()
+                                }.take(2).joinToString(""),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                        Column {
+                            Text(
+                                nextEvent?.participantName ?: "Book your first session",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Text(
+                                nextEvent?.subject.orEmpty(),
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 12.sp
                             )
                             Text(
-                                "Upper Campus — Leslie Social Sciences 2.10",
+                                nextEvent?.location.orEmpty(),
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 11.sp
                             )
@@ -164,13 +183,19 @@ fun StudentHomeScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                            if (tutor.matchPercent > 0) {
+                                Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
+                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                         Text("${tutor.subject} (${tutor.courseCode})", fontSize = 11.5.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Text(
-                            "${if (tutor.activeNow) "Active now" else "Active today"} • ★ ${tutor.rating}" + (if (tutor.verified) " • ✓ Verified" else ""),
+                            listOfNotNull(
+                                if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else null,
+                                if (tutor.reviewsCount > 0) "★ ${tutor.rating}" else null,
+                                if (tutor.verified) "✓ Verified" else null
+                            ).joinToString(" • "),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

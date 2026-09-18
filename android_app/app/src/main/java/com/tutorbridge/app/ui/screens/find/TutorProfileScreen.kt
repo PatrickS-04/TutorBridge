@@ -60,7 +60,11 @@ fun TutorProfileScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("🏛", fontSize = 12.sp)
-                    Text("${tutor.department} • ${tutor.staffOrTutorId}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        listOf(tutor.department, tutor.staffOrTutorId).filter { it.isNotBlank() }.joinToString(" • "),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -71,7 +75,10 @@ fun TutorProfileScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "★ ${tutor.rating} Rating  •  ${if (tutor.activeToday) "Active today" else "Active now"}",
+                    listOfNotNull(
+                        if (tutor.reviewsCount > 0) "★ ${tutor.rating} Rating" else null,
+                        if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else "Not available today"
+                    ).joinToString("  •  "),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

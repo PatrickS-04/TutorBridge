@@ -1,9 +1,7 @@
 package com.tutorbridge.app.data.repository
 
-import com.google.gson.Gson
 import com.tutorbridge.app.Apiinterface.AuthApi
 import com.tutorbridge.app.data.model.*
-import retrofit2.Response
 
 sealed class AuthResult {
     data class Success(val profile: ProfileResponse) : AuthResult()
@@ -29,7 +27,7 @@ class AuthRepository(private val authApi: AuthApi) {
             if (response.isSuccessful && body != null) {
                 AuthResult.Success(body)
             } else {
-                AuthResult.Failure(parseError(response))
+                AuthResult.Failure(parseApiError(response))
             }
         } catch (e: Exception) {
             AuthResult.Failure(e.message ?: "Could not reach the server")
@@ -42,16 +40,6 @@ class AuthRepository(private val authApi: AuthApi) {
             if (response.isSuccessful) response.body().orEmpty() else emptyList()
         } catch (e: Exception) {
             emptyList()
-        }
-    }
-
-    private fun <T> parseError(response: Response<T>): String {
-        val raw = response.errorBody()?.string()
-        return try {
-            Gson().fromJson(raw, ApiErrorBody::class.java)?.error?.message
-                ?: "Something went wrong (${response.code()})"
-        } catch (e: Exception) {
-            "Something went wrong (${response.code()})"
         }
     }
 }

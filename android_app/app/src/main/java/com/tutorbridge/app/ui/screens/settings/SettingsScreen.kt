@@ -85,12 +85,12 @@ fun SettingsScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isTutor) "Prof. Clara Vance" else uiState.userName,
+                            text = uiState.userName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
                         Text(
-                            text = if (isTutor) "clara.vance@uct.ac.za" else uiState.userEmail,
+                            text = uiState.userEmail,
                             fontSize = 12.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

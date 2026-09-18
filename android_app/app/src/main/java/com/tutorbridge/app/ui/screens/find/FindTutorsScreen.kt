@@ -104,24 +104,36 @@ fun FindTutorsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                            // No match scoring behind this yet - shown only when there is one.
+                            if (tutor.matchPercent > 0) {
+                                Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
+                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                         Text("${tutor.subject}\n(${tutor.courseCode})", fontSize = 11.5.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                if (tutor.activeNow) "Active now" else "Active today",
+                                when {
+                                    tutor.activeNow -> "Active now"
+                                    tutor.activeToday -> "Active today"
+                                    else -> "Not available today"
+                                },
                                 fontSize = 11.sp,
                                 color = if (tutor.activeNow) EmeraldSuccess else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text("  •  ★ ${tutor.rating}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            // Ratings only appear once there are reviews behind them.
+                            if (tutor.reviewsCount > 0) {
+                                Text("  •  ★ ${tutor.rating}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                            Text(tutor.staffOrTutorId, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                        if (tutor.staffOrTutorId.isNotBlank()) {
+                            Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                                Text(tutor.staffOrTutorId, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

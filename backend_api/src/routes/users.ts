@@ -1,17 +1,59 @@
 import { Router } from "express";
 import multer from "multer";
-import { User, UserSettings, VerificationDocument, VerificationStatus, DocumentType } from "../models";
+import { Booking, BookingStatus, User, UserRole, UserSettings, VerificationDocument, VerificationStatus, DocumentType } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
+import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 router.use(authenticate);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+/**
+ * Bookable tutors at the caller's institution - what the Find a Tutor screen
+ * lists. Mirrors User.isBookable(): tutor, verified, not pending deletion.
+ * (`deletionScheduledFor: null` also matches documents where the field is absent.)
+ */
+router.get(
+  "/tutors",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const result = await paginate(
+      User,
+      {
+        institutionId: req.auth!.institutionId,
+        role: UserRole.TUTOR,
+        verificationStatus: VerificationStatus.VERIFIED,
+        deletionScheduledFor: null,
+      },
+      req,
+      ["subjectIds", "areaId"]
+    );
+
+    // Sessions actually taught, for the "Total Consultations" figure. One
+    // grouped count for the whole page rather than a query per tutor.
+    const ids = result.data.map((tutor) => tutor._id);
+    const completed = await Booking.aggregate<{ _id: unknown; count: number }>([
+      { $match: { tutorId: { $in: ids }, status: BookingStatus.COMPLETED } },
+      { $group: { _id: "$tutorId", count: { $sum: 1 } } },
+    ]);
+    const countByTutor = new Map(completed.map((row) => [String(row._id), row.count]));
+
+    res.status(200).json({
+      ...result,
+      data: result.data.map((tutor) => ({
+        ...tutor.toObject(),
+        completedSessions: countByTutor.get(String(tutor._id)) ?? 0,
+      })),
+    });
+  })
+);
+
 router.get(
   "/me",
   asyncHandler(async (req: AuthRequest, res) => {
-    const user = await User.findById(req.auth!.userId).populate("subjectIds");
+    // areaId is populated as well so the client reads one shape for a user
+    // whether it came from here or from GET /users/tutors.
+    const user = await User.findById(req.auth!.userId).populate(["subjectIds", "areaId"]);
     if (!user) return res.status(404).json(apiError("NOT_FOUND", "User not found"));
     res.status(200).json(user);
   })
@@ -20,10 +62,17 @@ router.get(
 router.put(
   "/me",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { fullName, bio, hourlyRate, subjectIds, areaId, gradeLevel, availability } = req.body;
+    const { fullName, bio, hourlyRate, subjectIds, areaId, gradeLevel, availability, department } = req.body;
+    // Only overwrite what the caller actually sent - the availability screen
+    // PUTs availability alone and must not blank out the rest of the profile.
+    const updates = Object.fromEntries(
+      Object.entries({ fullName, bio, hourlyRate, subjectIds, areaId, gradeLevel, availability, department }).filter(
+        ([, value]) => value !== undefined
+      )
+    );
     const user = await User.findByIdAndUpdate(
       req.auth!.userId,
-      { $set: { fullName, bio, hourlyRate, subjectIds, areaId, gradeLevel, availability } },
+      { $set: updates },
       { new: true, runValidators: true }
     );
     if (!user) return res.status(404).json(apiError("NOT_FOUND", "User not found"));

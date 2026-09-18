@@ -36,8 +36,33 @@ fun TutorExportClaimsScreen(
     onSelectInstitution: (String) -> Unit = {},
     onSelectClaimPeriod: (String) -> Unit = {}
 ) {
-    val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId } ?: uiState.institutions.first()
-    val period = institution.claimPeriods.find { it.id == uiState.selectedClaimPeriodId } ?: institution.claimPeriods.first()
+    val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId }
+        ?: uiState.institutions.firstOrNull()
+    val period = institution?.claimPeriods?.find { it.id == uiState.selectedClaimPeriodId }
+        ?: institution?.claimPeriods?.firstOrNull()
+
+    // Nothing claimable yet: no completed sessions on record.
+    if (institution == null || period == null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("No claim periods yet", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "Completed sessions show up here as claimable hours.",
+                fontSize = 12.5.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            TextButton(onClick = onBack) { Text("Back") }
+        }
+        return
+    }
 
     LazyColumn(
         modifier = Modifier

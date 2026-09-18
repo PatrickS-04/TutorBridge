@@ -51,7 +51,7 @@ router.post(
   "/me/tutors",
   requireRole(UserRole.INSTITUTION_ADMIN),
   asyncHandler(async (req: AuthRequest, res) => {
-    const { fullName, email, subjectIds } = req.body;
+    const { fullName, email, subjectIds, department, staffNumber, hourlyRate } = req.body;
     if (!fullName || !email) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "fullName and email are required"));
     }
@@ -70,6 +70,9 @@ router.post(
       passwordHash,
       authProvider: AuthProvider.PASSWORD,
       subjectIds: subjectIds ?? [],
+      department,
+      staffNumber,
+      hourlyRate,
       verificationStatus: VerificationStatus.VERIFIED,
       mustChangePassword: true,
       createdBy: req.auth!.userId,

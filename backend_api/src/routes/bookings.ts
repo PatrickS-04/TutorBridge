@@ -1,8 +1,20 @@
 import { Router } from "express";
-import { Booking, Application, ApplicationStatus, BookingStatus, UserRole } from "../models";
+import {
+  Booking,
+  Application,
+  Subject,
+  User,
+  ApplicationStatus,
+  BookingStatus,
+  LessonMode,
+  UserRole,
+  VerificationStatus,
+  NotificationCategory,
+} from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { notify } from "../utils/notify";
 
 const router = Router();
 router.use(authenticate);
@@ -39,6 +51,81 @@ router.post(
       status: BookingStatus.REQUESTED,
       agreedRatePerHour: application.proposedRate,
     });
+
+    res.status(201).json({
+      id: booking._id,
+      status: booking.status,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+    });
+  })
+);
+
+/**
+ * Book a tutor straight from their profile. The application-driven flow above
+ * still exists for requests that went through the board; this is the "Find a
+ * Tutor -> pick a slot" path, so the booking simply has no application behind it.
+ */
+router.post(
+  "/direct",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { tutorId, subjectId, startTime, endTime, mode, location } = req.body;
+    if (!tutorId || !startTime || !endTime) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "tutorId, startTime, and endTime are required"));
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "endTime must be a valid time after startTime", "endTime"));
+    }
+
+    const tutor = await User.findOne({
+      _id: tutorId,
+      institutionId: req.auth!.institutionId,
+      role: UserRole.TUTOR,
+      verificationStatus: VerificationStatus.VERIFIED,
+      deletionScheduledFor: null,
+    }).populate("subjectIds");
+    if (!tutor) return res.status(404).json(apiError("NOT_FOUND", "Bookable tutor not found"));
+
+    const clash = await Booking.findOne({
+      tutorId: tutor._id,
+      status: BookingStatus.CONFIRMED,
+      startTime: { $lt: end },
+      endTime: { $gt: start },
+    });
+    if (clash) {
+      return res
+        .status(409)
+        .json(apiError("SLOT_CONFLICT", "That slot is already taken - please pick another", "startTime"));
+    }
+
+    const subject = subjectId ? await Subject.findById(subjectId) : null;
+    const subjectName =
+      subject?.name ?? (tutor.subjectIds as any[])[0]?.name ?? "Tuition session";
+
+    const booking = await Booking.create({
+      institutionId: req.auth!.institutionId,
+      tutorId: tutor._id,
+      studentId: req.auth!.userId,
+      subjectName,
+      startTime: start,
+      endTime: end,
+      mode: mode ?? LessonMode.IN_PERSON,
+      location,
+      status: BookingStatus.REQUESTED,
+      agreedRatePerHour: tutor.hourlyRate ?? 0,
+    });
+
+    notify(
+      req.auth!.institutionId,
+      String(tutor._id),
+      NotificationCategory.BOOKING,
+      "New student booking",
+      `${subjectName} on ${start.toISOString().slice(0, 10)} - confirm or decline it.`,
+      `tutorbridge://bookings/${booking._id}`
+    );
 
     res.status(201).json({
       id: booking._id,
@@ -86,6 +173,15 @@ router.put(
     booking.addressDisclosed = true;
     await booking.save();
 
+    notify(
+      req.auth!.institutionId,
+      String(booking.studentId),
+      NotificationCategory.BOOKING,
+      "Session confirmed",
+      `${booking.subjectName} is confirmed for ${booking.startTime.toISOString().slice(0, 16).replace("T", " ")}.`,
+      `tutorbridge://bookings/${booking._id}`
+    );
+
     res.status(200).json({
       id: booking._id,
       status: booking.status,
@@ -115,6 +211,18 @@ router.put(
     booking.cancellationReason = reason;
     await booking.save();
 
+    // Whoever did not press cancel is the one who needs telling.
+    const otherParty =
+      String(booking.tutorId) === req.auth!.userId ? booking.studentId : booking.tutorId;
+    notify(
+      req.auth!.institutionId,
+      String(otherParty),
+      NotificationCategory.BOOKING,
+      "Session cancelled",
+      reason ? `${booking.subjectName}: ${reason}` : `${booking.subjectName} was cancelled.`,
+      `tutorbridge://bookings/${booking._id}`
+    );
+
     res.status(200).json({
       id: booking._id,
       status: booking.status,
@@ -132,7 +240,7 @@ router.get(
         ? { institutionId: req.auth!.institutionId, tutorId: req.auth!.userId }
         : { institutionId: req.auth!.institutionId, studentId: req.auth!.userId };
 
-    const result = await paginate(Booking, filter, req);
+    const result = await paginate(Booking, filter, req, ["tutorId", "studentId"]);
     res.status(200).json(result);
   })
 );

@@ -1,7 +1,7 @@
 package com.tutorbridge.app.Retrofit
 
 import com.tutorbridge.app.Apiinterface.AuthApi
-import com.tutorbridge.app.Apiinterface.TaskApi
+import com.tutorbridge.app.Apiinterface.TutorBridgeApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -41,8 +41,6 @@ object RetrofitInstance {
 
     val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
 
-    // Kept for the existing (currently unused) Task stub. Real endpoints
-    // (bookings, tuition-requests, etc.) get their own Retrofit interfaces
-    // added here as screens are wired to the database in the next pass.
-    val api: TaskApi by lazy { retrofit.create(TaskApi::class.java) }
+    /** Everything the signed-in app reads and writes. */
+    val tutorBridgeApi: TutorBridgeApi by lazy { retrofit.create(TutorBridgeApi::class.java) }
 }

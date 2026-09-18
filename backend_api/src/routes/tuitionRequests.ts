@@ -1,8 +1,17 @@
 import { Router } from "express";
-import { TuitionRequest, Application, User, UserRole, TuitionRequestStatus, ApplicationStatus } from "../models";
+import {
+  TuitionRequest,
+  Application,
+  User,
+  UserRole,
+  TuitionRequestStatus,
+  ApplicationStatus,
+  NotificationCategory,
+} from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, requireRole, AuthRequest } from "../middleware/auth";
+import { notify } from "../utils/notify";
 
 const router = Router();
 router.use(authenticate);
@@ -45,9 +54,12 @@ router.get(
     if (req.query.subjectId) filter.subjectId = req.query.subjectId;
     if (req.query.areaId) filter.areaId = req.query.areaId;
     if (req.query.status) filter.status = req.query.status;
-    else filter.status = TuitionRequestStatus.OPEN;
+    // mine=true is the student's own board, which shows every status. Without
+    // it this is the tutor board, which only ever shows open requests.
+    else if (req.query.mine !== "true") filter.status = TuitionRequestStatus.OPEN;
+    if (req.query.mine === "true") filter.studentId = req.auth!.userId;
 
-    const result = await paginate(TuitionRequest, filter, req, ["subjectId", "areaId"]);
+    const result = await paginate(TuitionRequest, filter, req, ["subjectId", "areaId", "studentId"]);
     res.status(200).json(result);
   })
 );
@@ -58,7 +70,7 @@ router.get(
     const tuitionRequest = await TuitionRequest.findOne({
       _id: req.params.id,
       institutionId: req.auth!.institutionId,
-    }).populate(["subjectId", "areaId"]);
+    }).populate(["subjectId", "areaId", "studentId"]);
     if (!tuitionRequest) return res.status(404).json(apiError("NOT_FOUND", "Tuition request not found"));
     res.status(200).json(tuitionRequest);
   })
@@ -118,6 +130,15 @@ router.post(
 
     tuitionRequest.applicationCount += 1;
     await tuitionRequest.save();
+
+    notify(
+      req.auth!.institutionId,
+      String(tuitionRequest.studentId),
+      NotificationCategory.APPLICATION,
+      "New tutor application",
+      `${tutor.fullName} offered to take your tuition request.`,
+      `tutorbridge://requests/${tuitionRequest._id}`
+    );
 
     res.status(201).json({
       id: application._id,

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Booking, UserRole, BookingStatus } from "../models";
+import { Booking, User, UserRole, BookingStatus } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
@@ -33,6 +33,76 @@ router.get(
       totalEarnings: round1(totalEarnings),
       currency: "ZAR",
       sessionCount: bookings.length,
+    });
+  })
+);
+
+/**
+ * The claims screen shows several pay periods at once, each with the sessions
+ * behind it, so this returns the last [count] months in one call instead of
+ * making the app loop over /summary. Periods are derived from completed
+ * bookings - there is no claims collection - so the current month is the
+ * working draft and everything before it is closed.
+ */
+router.get(
+  "/periods",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const count = Math.min(12, Math.max(1, parseInt(String(req.query.count ?? "3"), 10) || 3));
+    const tutorId = req.auth!.role === UserRole.TUTOR ? req.auth!.userId : String(req.query.tutorId ?? "");
+    if (!tutorId) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "tutorId is required for non-tutors", "tutorId"));
+    }
+
+    const now = new Date();
+    const oldest = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (count - 1), 1));
+
+    const [tutor, bookings] = await Promise.all([
+      User.findById(tutorId),
+      Booking.find({ tutorId, status: BookingStatus.COMPLETED, startTime: { $gte: oldest } })
+        .populate("studentId")
+        .sort({ startTime: -1 }),
+    ]);
+
+    const periods = [];
+    for (let monthsBack = 0; monthsBack < count; monthsBack++) {
+      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsBack, 1));
+      const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsBack + 1, 1));
+
+      const sessions = bookings
+        .filter((b) => b.startTime >= monthStart && b.startTime < monthEnd)
+        .map((b) => {
+          const student = b.studentId as any;
+          const hours = hoursBetween(b.startTime, b.endTime);
+          return {
+            id: b._id,
+            subjectName: b.subjectName,
+            date: b.startTime.toISOString().slice(0, 10),
+            startTime: b.startTime,
+            endTime: b.endTime,
+            studentName: student?.fullName ?? "",
+            location: b.location ?? "",
+            hours: round1(hours),
+            amount: round1(hours * b.agreedRatePerHour),
+          };
+        });
+
+      periods.push({
+        id: monthStart.toISOString().slice(0, 7),
+        month: monthStart.toISOString().slice(0, 7),
+        isCurrent: monthsBack === 0,
+        totalHours: round1(sessions.reduce((sum, s) => sum + s.hours, 0)),
+        claimValue: round1(sessions.reduce((sum, s) => sum + s.amount, 0)),
+        sessionCount: sessions.length,
+        sessions,
+      });
+    }
+
+    res.status(200).json({
+      currency: "ZAR",
+      ratePerHour: tutor?.hourlyRate ?? 0,
+      staffNumber: tutor?.staffNumber ?? "",
+      department: tutor?.department ?? "",
+      periods,
     });
   })
 );

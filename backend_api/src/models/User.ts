@@ -19,6 +19,10 @@ export interface IUser extends Document {
   subjectIds: Types.ObjectId[];
   areaId?: Types.ObjectId;
   gradeLevel?: string;
+  /** Faculty/department and staff number, set by the institution admin when it
+   * provisions a tutor. The tutor profile and claims screens show both. */
+  department?: string;
+  staffNumber?: string;
   availability: IAvailabilitySlot[];
   verificationStatus: VerificationStatus;
   profileCompleteness: number;
@@ -46,6 +50,8 @@ const UserSchema = new Schema<IUser>(
     subjectIds: [{ type: Schema.Types.ObjectId, ref: "Subject" }],
     areaId: { type: Schema.Types.ObjectId, ref: "Area" },
     gradeLevel: { type: String },
+    department: { type: String, trim: true },
+    staffNumber: { type: String, trim: true },
     availability: { type: [AvailabilitySlotSchema], default: [] },
     verificationStatus: {
       type: String,
