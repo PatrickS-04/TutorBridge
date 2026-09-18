@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.availability.TutorAvailabilityScreen
@@ -115,7 +116,18 @@ fun TutorBridgeNavGraph(
                 "auth" -> AuthScreen(
                     uiState = uiState,
                     onRoleSelect = { viewModel.selectRole(it) },
-                    onAuthSuccess = { viewModel.completeAuth() }
+                    onSignIn = { email, password -> viewModel.signIn(email, password) },
+                    onSignUp = { email, password -> viewModel.signUp(email, password) },
+                    onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
+                    onGoogleSignInError = { message -> viewModel.setAuthError(message) },
+                    onToggleAuthMode = {viewModel.setAuthMode(
+                        if (uiState.authMode == AuthMode.SIGN_IN) {
+                            AuthMode.SIGN_UP
+                        }
+                        else {
+                            AuthMode.SIGN_IN
+                        }
+                    )}
                 )
                 "student_home" -> StudentHomeScreen(
                     uiState = uiState,

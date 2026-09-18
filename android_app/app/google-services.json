@@ -12,7 +12,12 @@
           "package_name": "com.tutorbridge.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "796334323808-hmd6b11hmdjac41cbikfnvtooivo98bf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCLxruuBEGw4ORzlpC-n8fbgRJtAC1T_Js"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "796334323808-hmd6b11hmdjac41cbikfnvtooivo98bf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
