@@ -17,7 +17,14 @@ class AppPreferences(context: Context) {
         preferences.edit().clear().apply()
     }
 
+    fun enableBiometricSaved(enabled: Boolean) {
+        preferences.edit().putBoolean(BIOMETRIC_ENABLED_KEY, enabled).apply()
+    }
+
+    fun getEnabledBiometric(): Boolean = preferences.getBoolean(BIOMETRIC_ENABLED_KEY, false)
+
     private companion object {
         const val LAST_ROLE_KEY = "last_role"
+        const val BIOMETRIC_ENABLED_KEY = "biometric_enabled"
     }
 }

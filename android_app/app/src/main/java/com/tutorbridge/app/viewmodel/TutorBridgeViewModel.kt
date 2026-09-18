@@ -23,9 +23,17 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
 
     init {
-        if (Firebase.auth.currentUser != null) {
+        val preferences = AppPreferences(getApplication())
+        val enabledBiometric = preferences.getEnabledBiometric()
+
+        if (Firebase.auth.currentUser != null && enabledBiometric) {
             val lastRole = AppPreferences(getApplication()).getLastRole() ?: UserRole.STUDENT
-            _uiState.update { it.copy(role = lastRole, currentRoute = "biometric_lock") }
+            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, currentRoute = "biometric_lock") }
+        } else {
+            if (Firebase.auth.currentUser != null) {
+                Firebase.auth.signOut()
+            }
+            _uiState.update { it.copy(biometricEnabled = enabledBiometric) }
         }
     }
 
@@ -373,6 +381,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleBiometric(enabled: Boolean) {
+        AppPreferences(getApplication()).enableBiometricSaved(enabled)
         _uiState.update { it.copy(biometricEnabled = enabled) }
     }
 }
