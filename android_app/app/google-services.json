@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "796334323808-4jehorufrr7v8nuh3jj9c8k8m8qgue3s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tutorbridge.app",
+            "certificate_hash": "032fbe678a2ba410bccfdc34299a253999fe3f36"
+          }
+        },
+        {
           "client_id": "796334323808-hmd6b11hmdjac41cbikfnvtooivo98bf.apps.googleusercontent.com",
           "client_type": 3
         }
