@@ -100,4 +100,13 @@ interface TutorBridgeApi {
 
     @GET("timesheets/periods")
     suspend fun claimPeriods(@Query("count") count: Int = 3): Response<TimesheetPeriodsDto>
+
+    // ==================== PUSH TOKENS ====================
+
+    @POST("notification-tokens")
+    suspend fun registerPushToken(@Body body: RegisterPushTokenRequest): Response<Map<String, Any>>
+
+    @DELETE("notification-tokens/{token}")
+    suspend fun unregisterPushToken(@Path("token") token: String): Response<Unit>
+
 }

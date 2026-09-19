@@ -229,3 +229,7 @@ data class TimesheetPeriodsDto(
     val department: String = "",
     val periods: List<TimesheetPeriodDto> = emptyList()
 )
+
+// ==================== PUSH TOKENS ====================
+
+data class RegisterPushTokenRequest(val token: String, val platform: String = "android")

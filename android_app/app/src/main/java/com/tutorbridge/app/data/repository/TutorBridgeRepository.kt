@@ -110,6 +110,18 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     suspend fun markNotificationRead(id: String): Result<Unit> = call { api.markNotificationRead(id) }.map { }
 
+    suspend fun registerPushToken(token: String): Result<Unit> =
+        call { api.registerPushToken(RegisterPushTokenRequest(token)) }.map { }
+
+    // DELETE answers 204 with no body, which `call` treats as a failure, so check isSuccessful directly.
+    suspend fun unregisterPushToken(token: String): Result<Unit> = try {
+        val response = api.unregisterPushToken(token)
+        if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(IllegalStateException(parseApiError(response)))
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
+
     // ==================== CLAIMS ====================
 
     suspend fun claims(institutionName: String): Result<List<InstitutionUi>> =
