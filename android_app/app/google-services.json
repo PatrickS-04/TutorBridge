@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "796334323808-ccf9jn0vrgslm0dudk77922q051a7dhg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tutorbridge.app",
+            "certificate_hash": "eda1baab1dd7a26aab0324228ef939c2f917b2ca"
+          }
+        },
+        {
           "client_id": "796334323808-hmd6b11hmdjac41cbikfnvtooivo98bf.apps.googleusercontent.com",
           "client_type": 3
         }

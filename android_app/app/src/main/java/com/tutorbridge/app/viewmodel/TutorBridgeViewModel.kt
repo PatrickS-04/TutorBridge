@@ -96,7 +96,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
             try {
-                Firebase.auth.createUserWithEmailAndPassword(email, password).await()
+                Firebase.auth.createUserWithEmailAndPassword(email.trim(), password).await()
                 val profileUpdate = UserProfileChangeRequest.Builder().setDisplayName(fullName).build()
                 Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
                 finishSignIn(institutionId, fullName)
@@ -110,7 +110,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
             try {
-                Firebase.auth.signInWithEmailAndPassword(email, password).await()
+                Firebase.auth.signInWithEmailAndPassword(email.trim(), password).await()
                 finishSignIn(institutionId = null, fullName = null)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
