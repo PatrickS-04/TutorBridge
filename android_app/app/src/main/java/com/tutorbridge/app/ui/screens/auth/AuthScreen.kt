@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -94,44 +96,46 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Institutional Partner - now a real dropdown backed by GET /reference/institutions.
-        // Only matters for sign-up (first-time SSO also uses it); sign-in resolves
-        // the institution from the existing account server-side.
-        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("INSTITUTIONAL PARTNER", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ExposedDropdownMenuBox(
-                expanded = institutionDropdownExpanded,
-                onExpandedChange = { institutionDropdownExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = selectedInstitutionName,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = institutionDropdownExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                ExposedDropdownMenu(
+        // Institutional Partner - a real dropdown backed by GET /reference/institutions.
+        // Sign-up only: an existing account already carries its institution, which
+        // the server resolves on sign-in.
+        if (isSignUp) {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("INSTITUTIONAL PARTNER", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ExposedDropdownMenuBox(
                     expanded = institutionDropdownExpanded,
-                    onDismissRequest = { institutionDropdownExpanded = false }
+                    onExpandedChange = { institutionDropdownExpanded = it }
                 ) {
-                    if (uiState.institutionOptions.isEmpty()) {
-                        DropdownMenuItem(text = { Text("Loading institutions…") }, onClick = {}, enabled = false)
-                    }
-                    uiState.institutionOptions.forEach { institution ->
-                        DropdownMenuItem(
-                            text = { Text(institution.name) },
-                            onClick = {
-                                onInstitutionSelect(institution.id)
-                                institutionDropdownExpanded = false
-                            }
-                        )
+                    OutlinedTextField(
+                        value = selectedInstitutionName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = institutionDropdownExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = institutionDropdownExpanded,
+                        onDismissRequest = { institutionDropdownExpanded = false }
+                    ) {
+                        if (uiState.institutionOptions.isEmpty()) {
+                            DropdownMenuItem(text = { Text("Loading institutions…") }, onClick = {}, enabled = false)
+                        }
+                        uiState.institutionOptions.forEach { institution ->
+                            DropdownMenuItem(
+                                text = { Text(institution.name) },
+                                onClick = {
+                                    onInstitutionSelect(institution.id)
+                                    institutionDropdownExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Role-sorted access info card
         Card(
@@ -146,7 +150,7 @@ fun AuthScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Students: Sign in with your campus Google or student email to book tutors & join sessions.",
+                    "Students: Sign in with your campus Google account to book tutors & join sessions.",
                     fontSize = 11.5.sp,
                     color = NavySecondary
                 )
@@ -177,7 +181,7 @@ fun AuthScreen(
         }
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Campus Email or Staff ID", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Campus Email", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -191,7 +195,7 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Password / SSO Token", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Password", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -222,7 +226,7 @@ fun AuthScreen(
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
             } else {
                 Text(
-                    if (isSignUp) "Create Account" else "Continue with Institutional Login ->",
+                    if (isSignUp) "Create Account" else "Login",
                     fontWeight = FontWeight.Bold, fontSize = 13.5.sp
                 )
             }
@@ -255,10 +259,12 @@ fun AuthScreen(
                     }
                 }
             },
+            enabled = !uiState.isAuthLoading,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
-            Text("G  ", fontWeight = FontWeight.Black, fontSize = 15.sp, color = CrimsonPrimary)
+            Image(painter = painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Text("Continue with Google Account", fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
 
