@@ -1,6 +1,7 @@
 package com.tutorbridge.app.Retrofit
 
 import com.tutorbridge.app.Apiinterface.AuthApi
+import com.tutorbridge.app.BuildConfig
 import com.tutorbridge.app.Apiinterface.TutorBridgeApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -10,10 +11,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
 
-    // 10.0.2.2 = the host machine's localhost, as seen from the Android
-    // emulator, matching backend_api running locally on :5000. Point this at
-    // the deployed Azure App Service URL for a physical device / release build.
-    private const val BASE_URL = "http://10.0.2.2:5000/"
+    // Set API_BASE_URL in local.properties; defaults to the emulator loopback.
+    private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

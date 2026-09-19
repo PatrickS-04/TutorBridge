@@ -19,11 +19,23 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // The Maps SDK reads its key from the manifest; local.properties keeps it out of git.
-        manifestPlaceholders["MAPS_API_KEY"] = Properties().apply {
+        // local.properties keeps machine-specific values out of git.
+        val localProperties = Properties().apply {
             rootProject.file("local.properties").takeIf { it.exists() }
                 ?.inputStream()?.use { load(it) }
-        }.getProperty("MAPS_API_KEY", "")
+        }
+
+        // The Maps SDK reads its key from the manifest.
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
+
+        // 10.0.2.2 is the emulator's alias for the host's localhost and is
+        // unroutable from a physical device, which needs the dev machine's LAN
+        // IP (or the deployed URL) set as API_BASE_URL in local.properties.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")}\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -47,6 +59,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
