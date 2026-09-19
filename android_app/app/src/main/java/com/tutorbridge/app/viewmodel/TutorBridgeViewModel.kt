@@ -29,6 +29,10 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeoutOrNull
 
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -178,12 +182,32 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         refreshAll()
     }
 
+    private var pendingDeepLink: String? = null
+
+    /** Called by MainActivity when a notification is tapped. */
+    fun openDeepLink(link: String) {
+        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock")
+        if (insideApp) routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
+        else pendingDeepLink = link   // cold start: replayed once the user is through sign-in / biometrics
+    }
+
+    private fun consumePendingDeepLink() {
+        val link = pendingDeepLink ?: return
+        pendingDeepLink = null
+        routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
+    }
+
     fun signOut() {
-        Firebase.auth.signOut()
-        AppPreferences(getApplication()).clear()
-        lastBookingId = null
-        _uiState.update { TutorBridgeUiState() }
-        loadInstitutions()
+        viewModelScope.launch {
+            // Timeout so a bad connection can't leave the user stuck on "Sign out".
+            withTimeoutOrNull(3_000) { unregisterPushToken() }
+            Firebase.auth.signOut()          // only after the DELETE
+            AppPreferences(getApplication()).clear()
+            lastBookingId = null
+            pendingDeepLink = null           // added in C5
+            _uiState.update { TutorBridgeUiState() }
+            loadInstitutions()
+        }
     }
 
     fun navigateTo(route: String) {
@@ -763,4 +787,30 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             .atTime(LocalTime.parse(state.selectedSlot, DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)))
             .atZone(ZoneId.systemDefault())
     }.getOrNull()
+
+    // ==================== PUSH ====================
+
+    // Runs on every sign-in and biometric unlock. The backend upserts by token, so repeats are harmless.
+    private fun registerPushToken() {
+        viewModelScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                repository.registerPushToken(token).getOrThrow()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { Log.w("Push", "Could not register push token", e) }
+        }
+    }
+
+    // Needs a signed-in Firebase user: AuthInterceptor reads the ID token from it.
+    private suspend fun unregisterPushToken() {
+        try {
+            val messaging = FirebaseMessaging.getInstance()
+            repository.unregisterPushToken(messaging.token.await())
+            // Also invalidate it locally: if the server call failed, the next push
+            // returns "not registered" and the backend prunes it.
+            messaging.deleteToken().await()
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) { Log.w("Push", "Could not unregister push token", e) }
+    }
+
 }
