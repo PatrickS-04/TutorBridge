@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
+import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
@@ -285,18 +286,30 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") }
                 )
-                "settings" -> SettingsScreen(
-                    uiState = uiState,
-                    onToggleDark = { viewModel.toggleDarkTheme(it) },
-                    onToggleOffline = { viewModel.toggleOfflineMode(it) },
-                    onSelectLanguage = { viewModel.setLanguage(it) },
-                    onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
-                    onSignOut = { viewModel.signOut() },
-                    onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
-                    onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
-                    onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
-                    onToggleBiometric = { viewModel.toggleBiometric(it) }
-                )
+                "settings" -> {
+                    val linkCalendar = GoogleAuthentication.rememberCalendarAuthorizer(
+                        onAuthCode = { authCode -> viewModel.linkCalendar(authCode) },
+                        onError = { message -> viewModel.setCalendarMessage(message) }
+                    )
+                    // Only tutors see the row, so only they need the status.
+                    LaunchedEffect(uiState.role) {
+                        if (uiState.role == UserRole.TUTOR) viewModel.refreshCalendarLink()
+                    }
+                    SettingsScreen(
+                        uiState = uiState,
+                        onToggleDark = { viewModel.toggleDarkTheme(it) },
+                        onToggleOffline = { viewModel.toggleOfflineMode(it) },
+                        onSelectLanguage = { viewModel.setLanguage(it) },
+                        onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
+                        onSignOut = { viewModel.signOut() },
+                        onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
+                        onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
+                        onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
+                        onToggleBiometric = { viewModel.toggleBiometric(it) },
+                        onLinkCalendar = linkCalendar,
+                        onUnlinkCalendar = { viewModel.unlinkCalendar() }
+                    )
+                }
                 "delete_account" -> DeleteAccountScreen(
                     uiState = uiState,
                     onConfirmDelete = {

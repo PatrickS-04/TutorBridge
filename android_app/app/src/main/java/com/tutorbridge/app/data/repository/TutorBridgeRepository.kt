@@ -122,6 +122,22 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
         Result.failure(exception)
     }
 
+    // ==================== GOOGLE CALENDAR ====================
+
+    suspend fun calendarLink(): Result<CalendarLinkDto> = call { api.calendarLink() }
+
+    suspend fun linkCalendar(authCode: String): Result<CalendarLinkDto> =
+        call { api.linkCalendar(LinkCalendarRequest(authCode)) }
+
+    // 204, no body - same reason as unregisterPushToken above.
+    suspend fun unlinkCalendar(): Result<Unit> = try {
+        val response = api.unlinkCalendar()
+        if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(IllegalStateException(parseApiError(response)))
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
+
     // ==================== CLAIMS ====================
 
     suspend fun claims(institutionName: String): Result<List<InstitutionUi>> =

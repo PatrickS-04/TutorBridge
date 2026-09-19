@@ -34,6 +34,13 @@ data class TutorBridgeUiState(
     val smsFallbackEnabled: Boolean = false,
     val biometricEnabled: Boolean = false,
 
+    // Google Calendar: linked once, then every confirmed booking is written there.
+    val calendarLinked: Boolean = false,
+    val calendarAccountEmail: String? = null,
+    val isCalendarLinking: Boolean = false,
+    /** Outcome of the last link/unlink attempt, shown under the row. */
+    val calendarMessage: String? = null,
+
     /** Set when a background refresh or a write to the server failed. */
     val dataErrorMessage: String? = null,
     val isRefreshing: Boolean = false,

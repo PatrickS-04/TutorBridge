@@ -98,6 +98,9 @@ dependencies {
     implementation("androidx.credentials:credentials:1.6.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
+    // Sign-in gives an ID token; the calendar scope and its offline auth code
+    // come from the authorisation API, which lives here.
+    implementation("com.google.android.gms:play-services-auth:21.1.1")
     //feat-notification but still falls under firebase
     implementation("com.google.firebase:firebase-messaging")
     //MongoDB

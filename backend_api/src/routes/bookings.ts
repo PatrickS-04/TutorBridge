@@ -15,6 +15,7 @@ import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
+import { syncBookingCreated, syncBookingCancelled } from "../utils/googleCalendar";
 
 const router = Router();
 router.use(authenticate);
@@ -173,6 +174,9 @@ router.put(
     booking.addressDisclosed = true;
     await booking.save();
 
+    //The session is on: put it in the tutor's Google Calendar and invite the student.
+    syncBookingCreated(booking);
+
     notify(
       req.auth!.institutionId,
       String(booking.studentId),
@@ -210,6 +214,8 @@ router.put(
     booking.cancelledBy = req.auth!.userId as any;
     booking.cancellationReason = reason;
     await booking.save();
+
+    syncBookingCancelled(booking);
 
     // Whoever did not press cancel is the one who needs telling.
     const otherParty =

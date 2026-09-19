@@ -33,7 +33,9 @@ fun SettingsScreen(
     onToggleBookingUpdates: (Boolean) -> Unit = {},
     onToggleSessionReminders: (Boolean) -> Unit = {},
     onToggleSmsFallback: (Boolean) -> Unit = {},
-    onToggleBiometric: (Boolean) -> Unit = {}
+    onToggleBiometric: (Boolean) -> Unit = {},
+    onLinkCalendar: () -> Unit = {},
+    onUnlinkCalendar: () -> Unit = {}
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
 
@@ -130,6 +132,42 @@ fun SettingsScreen(
                         checked = uiState.sessionRemindersEnabled,
                         onCheckedChange = onToggleSessionReminders
                     )
+                }
+            }
+        }
+
+        // Google Calendar Card - tutors only: the event is written to the
+        // tutor's calendar when they confirm, and the student is invited to it.
+        if (isTutor) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column {
+                        SettingsRow(
+                            icon = Icons.Default.CalendarMonth,
+                            label = "Google Calendar",
+                            trailing = {
+                                when {
+                                    uiState.isCalendarLinking -> CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                    uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar) { Text("Disconnect") }
+                                    else -> TextButton(onClick = onLinkCalendar) { Text("Connect") }
+                                }
+                            },
+                            onClick = {}
+                        )
+                        val status = uiState.calendarMessage
+                            ?: uiState.calendarAccountEmail?.let { "Connected as $it" }
+                            ?: "Confirmed sessions are added to your calendar automatically."
+                        Text(
+                            text = status,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
+                        )
+                    }
                 }
             }
         }

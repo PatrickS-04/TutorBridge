@@ -101,6 +101,17 @@ interface TutorBridgeApi {
     @GET("timesheets/periods")
     suspend fun claimPeriods(@Query("count") count: Int = 3): Response<TimesheetPeriodsDto>
 
+    // ==================== GOOGLE CALENDAR ====================
+
+    @GET("calendar/link")
+    suspend fun calendarLink(): Response<CalendarLinkDto>
+
+    @POST("calendar/link")
+    suspend fun linkCalendar(@Body body: LinkCalendarRequest): Response<CalendarLinkDto>
+
+    @DELETE("calendar/link")
+    suspend fun unlinkCalendar(): Response<Unit>
+
     // ==================== PUSH TOKENS ====================
 
     @POST("notification-tokens")

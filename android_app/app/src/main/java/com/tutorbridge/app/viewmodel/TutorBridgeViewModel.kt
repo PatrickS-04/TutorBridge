@@ -761,6 +761,64 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         saveSettings(UpdateSettingsRequest(biometricEntry = enabled))
     }
 
+    // ==================== GOOGLE CALENDAR ====================
+
+    fun refreshCalendarLink() {
+        viewModelScope.launch {
+            repository.calendarLink().onSuccess { link ->
+                _uiState.update {
+                    it.copy(calendarLinked = link.linked, calendarAccountEmail = link.googleAccountEmail)
+                }
+            }
+        }
+    }
+
+    /** Called with the auth code from GoogleAuthentication.rememberCalendarAuthorizer. */
+    fun linkCalendar(authCode: String) {
+        _uiState.update { it.copy(isCalendarLinking = true, calendarMessage = null) }
+        viewModelScope.launch {
+            repository.linkCalendar(authCode)
+                .onSuccess { link ->
+                    _uiState.update {
+                        it.copy(
+                            isCalendarLinking = false,
+                            calendarLinked = link.linked,
+                            calendarAccountEmail = link.googleAccountEmail,
+                            calendarMessage = "Confirmed sessions will now appear in Google Calendar."
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCalendarLinking = false,
+                            calendarMessage = error.message ?: "Could not link Google Calendar"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun unlinkCalendar() {
+        viewModelScope.launch {
+            repository.unlinkCalendar()
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            calendarLinked = false,
+                            calendarAccountEmail = null,
+                            calendarMessage = "Google Calendar disconnected."
+                        )
+                    }
+                }
+                .onFailure { error -> reportError(error) }
+        }
+    }
+
+    fun setCalendarMessage(message: String?) {
+        _uiState.update { it.copy(isCalendarLinking = false, calendarMessage = message) }
+    }
+
     private fun saveNotificationPreferences() {
         val state = _uiState.value
         saveSettings(
