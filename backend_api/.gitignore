@@ -7,6 +7,7 @@ pnpm-debug.log*
 
 # Environment variables
 .env
+.env.bak
 .env.local
 .env.development
 .env.production
@@ -56,3 +57,6 @@ Thumbs.db
 # Database
 *.sqlite
 *.sqlite3
+# Firebase service account key
+*firebase-adminsdk*.json
+serviceAccount*.json
