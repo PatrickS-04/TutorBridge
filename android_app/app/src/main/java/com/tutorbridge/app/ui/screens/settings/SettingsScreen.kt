@@ -230,8 +230,10 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = NavySecondary
+                    // Navy text on the dark navy surface is all but invisible, so dark
+                    // mode gets the brand crimson behind it instead.
+                    containerColor = if (uiState.isDarkTheme) CrimsonPrimary else MaterialTheme.colorScheme.surface,
+                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else NavySecondary
                 )
             ) {
                 Icon(Icons.Default.Logout, contentDescription = "Sign Out")

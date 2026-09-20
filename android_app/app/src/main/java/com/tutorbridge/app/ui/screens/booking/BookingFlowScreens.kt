@@ -1,9 +1,5 @@
 package com.tutorbridge.app.ui.screens.booking
 
-import android.content.Context
-import android.content.Intent
-import android.location.Geocoder
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -20,25 +16,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.maps.GoogleMapOptions
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
 import com.tutorbridge.app.data.model.TutorUi
 import com.tutorbridge.app.data.repository.slotsOn
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.tutorbridge.app.ui.components.VenueLink
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -130,7 +116,10 @@ fun BookingFlowScreen(
 
         if (slots.isEmpty()) {
             Text(
-                "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
+                if (tutor.windows.isEmpty())
+                    "${tutor.name.split(" ").first()} has not published any hours yet - pick another tutor."
+                else
+                    "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -182,9 +171,10 @@ fun BookingFlowScreen(
             }
         }
 
-        if (uiState.selectedLocation.isNotBlank()) {
-            VenueMap(uiState.selectedLocation, tutor.campus)
-        }
+        // Google Maps owns the map. Tapping the venue hands it over by intent,
+        // which is what the calendar and session screens already do - an
+        // embedded MapView bought a thumbnail and cost a crash.
+        VenueLink(uiState.selectedLocation)
 
         Button(
             onClick = onNext,
@@ -194,98 +184,6 @@ fun BookingFlowScreen(
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
             Text("Continue to Review", fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-
-
-/**
- * A room name on its own almost never geocodes, so the campus is tried next and
- * the marker lands there instead of nowhere.
- */
-@Suppress("DEPRECATION") // The async overload needs API 33; minSdk is 26.
-private suspend fun geocodeVenue(context: Context, venue: String, campus: String): LatLng? =
-    withContext(Dispatchers.IO) {
-        val geocoder = Geocoder(context, Locale.ENGLISH)
-        listOf("$venue, $campus", campus, venue)
-            .filter { it.isNotBlank() }
-            .firstNotNullOfOrNull { query ->
-                runCatching { geocoder.getFromLocationName(query, 1) }.getOrNull()?.firstOrNull()
-            }
-            ?.let { LatLng(it.latitude, it.longitude) }
-    }
-
-/** Hands the pin to the Google Maps app, which owns the full map UI. */
-private fun openInMaps(context: Context, at: LatLng, label: String) {
-    val pin = Uri.encode("${at.latitude},${at.longitude}($label)")
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:${at.latitude},${at.longitude}?q=$pin"))
-    runCatching { context.startActivity(intent) }
-}
-
-/**
- * Shows the venue the student just picked. The map runs in lite mode: it is a still
- * render, so it cannot steal drag gestures from the list it sits in, and a tap opens
- * the Google Maps app for panning, zooming and directions.
- */
-@Composable
-private fun VenueMap(venue: String, campus: String) {
-    val context = LocalContext.current
-    var target by remember(venue, campus) { mutableStateOf<LatLng?>(null) }
-    var locating by remember(venue, campus) { mutableStateOf(true) }
-    LaunchedEffect(venue, campus) {
-        target = geocodeVenue(context, venue, campus)
-        locating = false
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth().height(180.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        val here = target
-        if (here == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    if (locating) "Locating $venue..." else "No map available for $venue.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            // A lite-mode map cannot be moved after it is built, so the point is keyed
-            // in and the map is rebuilt when the student picks a different venue.
-            key(here) {
-                // Explicit sizes: the MapView asks for its own layout off the
-                // maps thread, so it is never left to wrap its content. Its
-                // caller must also keep it out of any lazy layout - see the
-                // comment on BookingFlowScreen's Column.
-                Box(Modifier.fillMaxSize()) {
-                    GoogleMap(
-                        modifier = Modifier.matchParentSize(),
-                        googleMapOptionsFactory = { GoogleMapOptions().liteMode(true) },
-                        // ponytail: zoom 16 suits a campus building - widen it if venues sit far apart.
-                        cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(here, 16f)
-                        },
-                        uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false),
-                        onMapClick = { openInMaps(context, here, venue) }
-                    ) {
-                        Marker(state = rememberMarkerState(position = here), title = venue, snippet = campus)
-                    }
-                    Text(
-                        "Tap to open in Google Maps",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(NavySecondary.copy(alpha = 0.85f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
         }
     }
 }

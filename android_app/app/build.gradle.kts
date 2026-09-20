@@ -25,9 +25,6 @@ android {
                 ?.inputStream()?.use { load(it) }
         }
 
-        // The Maps SDK reads its key from the manifest.
-        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
-
         // 10.0.2.2 is the emulator's alias for the host's localhost and is
         // unroutable from a physical device, which needs the dev machine's LAN
         // IP (or the deployed URL) set as API_BASE_URL in local.properties.
@@ -110,6 +107,5 @@ dependencies {
     //Biometric
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("com.google.code.gson:gson:2.11.0")
-    //Google Maps
-    implementation("com.google.maps.android:maps-compose:6.4.1")
+    //Google Maps is reached by intent (see VenueLink), so the SDK is not a dependency.
 }

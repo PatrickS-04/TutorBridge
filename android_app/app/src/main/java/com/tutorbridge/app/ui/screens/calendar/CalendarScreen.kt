@@ -39,7 +39,8 @@ fun CalendarScreen(
     uiState: TutorBridgeUiState,
     onSelectDate: (LocalDate) -> Unit,
     onFilterChange: (String) -> Unit,
-    onNavigateToPrep: () -> Unit
+    onNavigateToPrep: () -> Unit,
+    onAddEvent: () -> Unit
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
     val yearMonth = YearMonth.from(uiState.selectedCalendarDate)
@@ -71,7 +72,7 @@ fun CalendarScreen(
                 // only ever accepts or declines one, so they get no Add button.
                 if (!isTutor) {
                     Button(
-                        onClick = {},
+                        onClick = onAddEvent,
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
@@ -273,7 +274,8 @@ fun CalendarScreenPreview() {
             uiState = TutorBridgeUiState(),
             onSelectDate = {},
             onFilterChange = {},
-            onNavigateToPrep = {}
+            onNavigateToPrep = {},
+            onAddEvent = {}
         )
     }
 }

@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import { Institution, InstitutionStatus, Subject, Province, Area, User, UserRole, AuthProvider, VerificationStatus } from "./models";
+import { Institution, InstitutionStatus, Subject, Province, Area, User, UserRole, AuthProvider, VerificationStatus, DayOfWeek } from "./models";
 
 /**
  * Dev seed: makes the app testable.
@@ -23,6 +23,14 @@ import { Institution, InstitutionStatus, Subject, Province, Area, User, UserRole
 
 const TUTOR_EMAIL = "tutor@tutorbridge.test";
 const ADMIN_EMAIL = "admin@tutorbridge.test";
+
+const WEEKDAY_HOURS = [
+  DayOfWeek.MONDAY,
+  DayOfWeek.TUESDAY,
+  DayOfWeek.WEDNESDAY,
+  DayOfWeek.THURSDAY,
+  DayOfWeek.FRIDAY,
+].map((day) => ({ day, startTime: "09:00", endTime: "17:00" }));
 
 async function main() {
   const uri = process.env.MONGODB_URI;
@@ -92,6 +100,14 @@ async function main() {
     staffNumber: "T-0001",
     bio: "Seeded tutor account for local testing.",
   });
+  // A tutor with no published hours has no bookable slot on any date, so the
+  // student booking flow dead-ends on every day of the calendar. Only filled
+  // when empty, so hours a tutor sets in the app are never clobbered.
+  await User.updateOne(
+    { email: TUTOR_EMAIL, availability: { $size: 0 } },
+    { $set: { availability: WEEKDAY_HOURS } }
+  );
+
   const admin = await seedUser(ADMIN_EMAIL, "Test Admin", UserRole.INSTITUTION_ADMIN);
 
   console.log(`institution : ${institution.name}`);

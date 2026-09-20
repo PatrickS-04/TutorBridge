@@ -219,7 +219,8 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
-                    onNavigateToPrep = { viewModel.navigateTo("session_prep") }
+                    onNavigateToPrep = { viewModel.navigateTo("session_prep") },
+                    onAddEvent = { viewModel.navigateTo("find_tutors") }
                 )
 
                 // ===== Student requests flow =====
