@@ -219,7 +219,7 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
-                    onNavigateToPrep = { viewModel.navigateTo("session_prep") },
+                    onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") }
                 )
 
@@ -272,8 +272,14 @@ fun TutorBridgeNavGraph(
                 )
                 "session_prep" -> SessionPrepScreen(
                     uiState = uiState,
-                    onBack = { viewModel.navigateTo("calendar") },
-                    onToggleGoal = { viewModel.toggleSessionGoal(it) }
+                    // Side notes are a draft while they are being typed, so
+                    // leaving the screen is what commits them.
+                    onBack = { viewModel.closeSessionNotes() },
+                    onToggleGoal = { viewModel.toggleSessionGoal(it) },
+                    onRemoveGoal = { viewModel.removeChecklistItem(it) },
+                    onNewItemChange = { viewModel.setNewChecklistItem(it) },
+                    onAddItem = { viewModel.addChecklistItem() },
+                    onSideNotesChange = { viewModel.setSessionSideNotes(it) }
                 )
                 "edit_tutor_profile" -> EditTutorProfileScreen(
                     uiState = uiState,

@@ -20,6 +20,11 @@ import { syncBookingCreated, syncBookingCancelled } from "../utils/googleCalenda
 const router = Router();
 router.use(authenticate);
 
+//Caps on a tutor's prep notes, mirroring the schema in models/Booking.ts.
+const MAX_NOTE_ITEMS = 50;
+const MAX_NOTE_ITEM_TEXT = 200;
+const MAX_NOTE_TEXT = 2000;
+
 /**
  * Schedule the session behind an application the student has already accepted.
  * This is what the "Accept & Match" flow ends in: the tutor offered and the
@@ -293,15 +298,78 @@ router.put(
   })
 );
 
+/**
+ * Replace the tutor's prep notes for one session: the checklist of what has to
+ * be done, and their free-text side notes about the student or guardian.
+ *
+ * The whole set is sent on every save rather than an endpoint per add, tick
+ * and delete - a checklist is small, and one write cannot half-apply.
+ */
+router.put(
+  "/:id/notes",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { items, text } = req.body;
+
+    if (items !== undefined && !Array.isArray(items)) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "items must be an array", "items"));
+    }
+    if (Array.isArray(items) && items.length > MAX_NOTE_ITEMS) {
+      return res
+        .status(400)
+        .json(apiError("VALIDATION_ERROR", `At most ${MAX_NOTE_ITEMS} checklist items`, "items"));
+    }
+    if (text !== undefined && typeof text !== "string") {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "text must be a string", "text"));
+    }
+
+    //A blank row is what an untouched "add item" box sends; drop it rather
+    //than fail the save the tutor actually meant.
+    const notes = {
+      items: ((items ?? []) as unknown[])
+        .map((entry) => {
+          const item = (entry ?? {}) as { text?: unknown; done?: unknown };
+          return { text: String(item.text ?? "").trim(), done: Boolean(item.done) };
+        })
+        .filter((item) => item.text !== ""),
+      text: String(text ?? ""),
+    };
+
+    if (
+      notes.items.some((item) => item.text.length > MAX_NOTE_ITEM_TEXT) ||
+      notes.text.length > MAX_NOTE_TEXT
+    ) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "A note is too long to store", "text"));
+    }
+
+    //Notes belong to the tutor teaching the session, so matching on tutorId is
+    //the authorisation check: another tutor's booking simply is not found.
+    const booking = await Booking.findOneAndUpdate(
+      { _id: req.params.id, institutionId: req.auth!.institutionId, tutorId: req.auth!.userId },
+      { $set: { tutorNotes: notes } },
+      { new: true }
+    ).select("+tutorNotes");
+    if (!booking) return res.status(404).json(apiError("NOT_FOUND", "Booking not found"));
+
+    res.status(200).json(booking.tutorNotes);
+  })
+);
+
 router.get(
   "/",
   asyncHandler(async (req: AuthRequest, res) => {
-    const filter =
-      req.auth!.role === UserRole.TUTOR
-        ? { institutionId: req.auth!.institutionId, tutorId: req.auth!.userId }
-        : { institutionId: req.auth!.institutionId, studentId: req.auth!.userId };
+    const isTutor = req.auth!.role === UserRole.TUTOR;
+    const filter = isTutor
+      ? { institutionId: req.auth!.institutionId, tutorId: req.auth!.userId }
+      : { institutionId: req.auth!.institutionId, studentId: req.auth!.userId };
 
-    const result = await paginate(Booking, filter, req, ["tutorId", "studentId"]);
+    //Only the tutor who wrote them gets their notes back with the list.
+    const result = await paginate(
+      Booking,
+      filter,
+      req,
+      ["tutorId", "studentId"],
+      isTutor ? "+tutorNotes" : undefined
+    );
     res.status(200).json(result);
   })
 );

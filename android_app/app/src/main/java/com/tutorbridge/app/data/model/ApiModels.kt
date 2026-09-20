@@ -169,8 +169,19 @@ data class BookingDto(
     val mode: String = "IN_PERSON",
     val location: String? = null,
     val status: String = "REQUESTED",
-    val agreedRatePerHour: Double = 0.0
+    val agreedRatePerHour: Double = 0.0,
+    /** Only ever set for the tutor teaching the session - the server leaves it
+     *  out of the student's own booking list. */
+    val tutorNotes: TutorNotesDto? = null
 )
+
+/** The tutor's private prep notes for one session. Also the PUT body. */
+data class TutorNotesDto(
+    val items: List<TutorNoteItemDto> = emptyList(),
+    val text: String = ""
+)
+
+data class TutorNoteItemDto(val text: String = "", val done: Boolean = false)
 
 /** POST /bookings - schedules the session behind an already-accepted application. */
 data class ApplicationBookingRequest(

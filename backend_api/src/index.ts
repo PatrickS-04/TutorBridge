@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import swaggerUi from "swagger-ui-express";
 import { registerRoutes } from "./routes";
 import { openapiSpec } from "./openapi";
+import { errorHandler } from "./middleware/errors";
 
 dotenv.config();
 
@@ -25,17 +26,7 @@ async function main() {
   registerRoutes(app);
 
   // Conventional error body for anything that reaches here unhandled.
-  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    // A model rejected the client's input (an over-long venue, say) - that is a
-    // bad request, not a server fault, so it must not leave here as a 500.
-    if (err?.name === "ValidationError") {
-      const field = Object.keys(err.errors ?? {})[0] ?? null;
-      const message = field ? err.errors[field].message : err.message;
-      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message, field } });
-    }
-    console.error(err);
-    res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Something went wrong", field: null } });
-  });
+  app.use(errorHandler);
 
   const port = process.env.PORT || 5000;
   app.listen(port, () => console.log(`TutorBridge API listening on port ${port}`));

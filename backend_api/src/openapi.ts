@@ -125,7 +125,7 @@ function crudPaths(resource: string, schema: string) {
         summary: `Delete ${a} ${noun}`,
         description: adminOnly,
         parameters: [pathId("id", `${schema} id.`)],
-        responses: { 204: noContent, ...authErrors },
+        responses: { 204: noContent, ...authErrors, 404: res.notFound },
       },
     },
   };
@@ -824,6 +824,24 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/{id}/notes": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Save the tutor's prep notes for a session",
+        description:
+          "The tutor's own checklist and side notes about the student or guardian. Private to " +
+          "the tutor who wrote them: they are returned with GET /bookings for that tutor and " +
+          "never for the student. The whole set is replaced on every save.",
+        parameters: [pathId("id", "Booking id.")],
+        requestBody: { required: true, ...json(ref("TutorNotes")) },
+        responses: {
+          200: ok("The stored notes.", ref("TutorNotes")),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+        },
+      },
+    },
 
     "/threads": {
       get: {
@@ -1107,7 +1125,9 @@ export const openapiSpec = {
         ...json(ref("Error")),
       },
       NotFound: {
-        description: "No such record, or it is not visible to the caller.",
+        description:
+          "No such record, it is not visible to the caller, or the id in the path is not a " +
+          "well-formed ObjectId - all three mean the same thing to the client.",
         ...json(ref("Error")),
       },
       Conflict: {
@@ -1321,6 +1341,33 @@ export const openapiSpec = {
           googleCalendarEventId: { type: "string", nullable: true },
           confirmedAt: { ...dateTime("When it was confirmed."), nullable: true },
           completedAt: { ...dateTime("When it was completed."), nullable: true },
+          tutorNotes: {
+            ...ref("TutorNotes"),
+            description: "Only present for the tutor teaching the session.",
+          },
+        },
+      },
+      TutorNotes: {
+        type: "object",
+        description: "A tutor's private prep notes for one session.",
+        properties: {
+          items: {
+            type: "array",
+            description: "The checklist, at most 50 rows. Blank rows are dropped on save.",
+            items: {
+              type: "object",
+              properties: {
+                text: { type: "string", maxLength: 200, example: "Mark last week's problem set" },
+                done: { type: "boolean", example: false },
+              },
+            },
+          },
+          text: {
+            type: "string",
+            maxLength: 2000,
+            description: "Free-text side notes.",
+            example: "Guardian asked for a progress update before the test.",
+          },
         },
       },
       BookingSummary: {

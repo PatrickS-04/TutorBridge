@@ -9,9 +9,11 @@ private val studentOnly = setOf(
     "booking_sent", "booking_confirmed", "booking_declined", "my_requests", "new_request",
     "request_detail", "learning_history"
 )
+// session_prep holds the tutor's own notes on a session, which the server
+// never sends to the student, so the page is theirs alone.
 private val tutorOnly = setOf(
     "tutor_home", "tutor_requests", "session_offer_sent", "availability", "claims_export",
-    "edit_tutor_profile"
+    "edit_tutor_profile", "session_prep"
 )
 
 /** The route this role may open: the one asked for, or its own home if that page belongs to the other role. */

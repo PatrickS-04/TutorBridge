@@ -107,6 +107,21 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     suspend fun cancelBooking(id: String, reason: String?): Result<BookingAckDto> =
         call { api.cancelBooking(id, CancelRequest(reason)) }
 
+    /** Saves the tutor's checklist and side notes for one session, in one write. */
+    suspend fun saveSessionNotes(
+        bookingId: String,
+        checklist: List<SessionGoalUi>,
+        sideNotes: String
+    ): Result<TutorNotesDto> = call {
+        api.saveSessionNotes(
+            bookingId,
+            TutorNotesDto(
+                items = checklist.map { TutorNoteItemDto(text = it.text, done = it.completed) },
+                text = sideNotes
+            )
+        )
+    }
+
     // ==================== NOTIFICATIONS ====================
 
     suspend fun notifications(): Result<List<NotificationUi>> =
@@ -244,7 +259,13 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
             "CANCELLED" -> EventStatus.CANCELLED
             else -> EventStatus.CONFIRMED
         },
-        forRole = "both"
+        forRole = "both",
+        // The server replaces the whole list on every save, so a row has no id
+        // of its own - the position it came back in is what the screen keys on.
+        checklist = tutorNotes?.items.orEmpty().mapIndexed { index, item ->
+            SessionGoalUi(id = "n$index", text = item.text, completed = item.done)
+        },
+        sideNotes = tutorNotes?.text.orEmpty()
     )
 }
 

@@ -39,7 +39,7 @@ fun CalendarScreen(
     uiState: TutorBridgeUiState,
     onSelectDate: (LocalDate) -> Unit,
     onFilterChange: (String) -> Unit,
-    onNavigateToPrep: () -> Unit,
+    onOpenSessionNotes: (CalendarEventUi) -> Unit,
     onAddEvent: () -> Unit
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
@@ -239,7 +239,13 @@ fun CalendarScreen(
         } else {
             items(eventsOnDate) { event ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onNavigateToPrep() },
+                    // The notes behind a session are the tutor's own, so only
+                    // they get a card that opens onto them.
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (isTutor) Modifier.clickable { onOpenSessionNotes(event) } else Modifier
+                        ),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -259,6 +265,30 @@ fun CalendarScreen(
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text("With ${event.participantName}", fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+
+                        if (isTutor) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.EditNote,
+                                    contentDescription = null,
+                                    tint = CrimsonPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    if (event.checklist.isEmpty()) {
+                                        "Add session notes"
+                                    } else {
+                                        "Notes • ${event.checklist.count { it.completed }}/${event.checklist.size} done"
+                                    },
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -274,7 +304,7 @@ fun CalendarScreenPreview() {
             uiState = TutorBridgeUiState(),
             onSelectDate = {},
             onFilterChange = {},
-            onNavigateToPrep = {},
+            onOpenSessionNotes = {},
             onAddEvent = {}
         )
     }

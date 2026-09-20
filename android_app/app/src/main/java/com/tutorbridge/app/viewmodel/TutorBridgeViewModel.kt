@@ -744,16 +744,119 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(selectedClaimPeriodId = id) }
     }
 
-    // ==================== SESSION PREP ====================
+    // ==================== SESSION PREP: THE TUTOR'S NOTES ====================
 
+    /**
+     * Open one session's notes. The checklist and side notes come down with
+     * the booking list, so there is nothing to fetch - they are copied into
+     * editable state here and written back by [saveSessionNotes].
+     */
+    fun openSessionNotes(session: CalendarEventUi) {
+        _uiState.update {
+            it.copy(
+                selectedSessionId = session.id,
+                sessionChecklist = session.checklist,
+                sessionSideNotes = session.sideNotes,
+                newChecklistItem = "",
+                currentRoute = routeForRole("session_prep", it.role)
+            )
+        }
+    }
+
+    /** Ticking a box is a decision, not a draft, so it saves straight away. */
     fun toggleSessionGoal(goalId: String) {
         _uiState.update { state ->
             state.copy(
-                sessionGoals = state.sessionGoals.map { goal ->
+                sessionChecklist = state.sessionChecklist.map { goal ->
                     if (goal.id == goalId) goal.copy(completed = !goal.completed) else goal
                 }
             )
         }
+        saveSessionNotes()
+    }
+
+    fun setNewChecklistItem(text: String) {
+        _uiState.update { it.copy(newChecklistItem = text) }
+    }
+
+    fun addChecklistItem() {
+        val text = _uiState.value.newChecklistItem.trim()
+        if (text.isEmpty()) return
+        _uiState.update { state ->
+            state.copy(
+                // Ids only have to be unique within the list the screen is
+                // drawing; the server stores the rows in order, without ids.
+                sessionChecklist = state.sessionChecklist + SessionGoalUi(
+                    id = "n${state.sessionChecklist.size}-${System.currentTimeMillis()}",
+                    text = text,
+                    completed = false
+                ),
+                newChecklistItem = ""
+            )
+        }
+        saveSessionNotes()
+    }
+
+    fun removeChecklistItem(goalId: String) {
+        _uiState.update { state ->
+            state.copy(sessionChecklist = state.sessionChecklist.filterNot { it.id == goalId })
+        }
+        saveSessionNotes()
+    }
+
+    /** Typing is a draft: it is written back when the tutor leaves the screen. */
+    fun setSessionSideNotes(text: String) {
+        _uiState.update { it.copy(sessionSideNotes = text) }
+    }
+
+    /** Write the open session's notes back, without waiting for the result. */
+    fun saveSessionNotes() {
+        val sessionId = _uiState.value.selectedSessionId ?: return
+        viewModelScope.launch { writeSessionNotes(sessionId) }
+    }
+
+    /**
+     * Leave the notes screen. The write is awaited before navigating, because
+     * opening the calendar refetches the bookings - starting both at once
+     * would let the refresh answer with notes from before the save.
+     */
+    fun closeSessionNotes() {
+        val sessionId = _uiState.value.selectedSessionId
+        if (sessionId == null) {
+            navigateTo("calendar")
+            return
+        }
+        viewModelScope.launch {
+            writeSessionNotes(sessionId)
+            navigateTo("calendar")
+        }
+    }
+
+    /**
+     * Saves whatever is currently on screen. Also patches the booking already
+     * in [TutorBridgeUiState.calendarEvents] so reopening the session shows
+     * what was saved without waiting on a refresh.
+     */
+    private suspend fun writeSessionNotes(sessionId: String) {
+        val state = _uiState.value
+        val checklist = state.sessionChecklist
+        val sideNotes = state.sessionSideNotes
+
+        repository.saveSessionNotes(sessionId, checklist, sideNotes)
+            .onSuccess {
+                _uiState.update { current ->
+                    current.copy(
+                        calendarEvents = current.calendarEvents.map { event ->
+                            if (event.id == sessionId) {
+                                event.copy(checklist = checklist, sideNotes = sideNotes)
+                            } else {
+                                event
+                            }
+                        }
+                    )
+                }
+            }
+            .onFailure { reportError(it) }
     }
 
     // ==================== STUDENT ACCOUNT DELETION (POPIA) ====================

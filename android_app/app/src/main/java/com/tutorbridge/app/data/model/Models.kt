@@ -99,7 +99,11 @@ data class CalendarEventUi(
     val participantRole: String,
     val location: String,
     val status: EventStatus,
-    val forRole: String // "student", "tutor", "both"
+    val forRole: String, // "student", "tutor", "both"
+    /** The tutor's prep checklist for this session; empty for the student. */
+    val checklist: List<SessionGoalUi> = emptyList(),
+    /** The tutor's free-text side notes about this student or guardian. */
+    val sideNotes: String = ""
 )
 
 /** A booking a student requested, waiting for the tutor to confirm or decline. */
