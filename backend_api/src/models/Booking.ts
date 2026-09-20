@@ -24,6 +24,8 @@ export interface IBooking extends Document {
   cancellationReason?: string;
   agreedRatePerHour: number;
   googleCalendarEventId?: string;
+  //Whose calendar the event was written to - either party may link one.
+  googleCalendarUserId?: Types.ObjectId;
   confirmedAt?: Date;
   completedAt?: Date;
 }
@@ -46,6 +48,7 @@ const BookingSchema = new Schema<IBooking>(
     cancellationReason: { type: String },
     agreedRatePerHour: { type: Number, required: true },
     googleCalendarEventId: { type: String },
+    googleCalendarUserId: { type: Schema.Types.ObjectId, ref: "User" },
     confirmedAt: { type: Date },
     completedAt: { type: Date },
   },

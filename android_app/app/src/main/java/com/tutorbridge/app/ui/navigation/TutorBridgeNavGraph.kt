@@ -292,9 +292,9 @@ fun TutorBridgeNavGraph(
                         onAuthCode = { authCode -> viewModel.linkCalendar(authCode) },
                         onError = { message -> viewModel.setCalendarMessage(message) }
                     )
-                    // Only tutors see the row, so only they need the status.
+                    // Both roles see the row now, so both need the status.
                     LaunchedEffect(uiState.role) {
-                        if (uiState.role == UserRole.TUTOR) viewModel.refreshCalendarLink()
+                        viewModel.refreshCalendarLink()
                     }
                     SettingsScreen(
                         uiState = uiState,

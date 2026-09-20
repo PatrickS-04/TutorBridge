@@ -120,22 +120,21 @@ type BookingEvent = Pick<IBooking, "subjectName" | "startTime" | "endTime" | "mo
 
 //Times go out as UTC instants - an RFC3339 string with a Z offset is already
 //unambiguous, so Google needs no separate timeZone field.
-export function buildEvent(booking: BookingEvent, studentName: string, studentEmail?: string) {
+export function buildEvent(booking: BookingEvent, guestName: string, guestEmail?: string) {
   const event: Record<string, unknown> = {
-    summary: `${booking.subjectName} with ${studentName}`,
+    summary: `${booking.subjectName} with ${guestName}`,
     description: "Booked through TutorBridge.",
     start: { dateTime: booking.startTime.toISOString() },
     end: { dateTime: booking.endTime.toISOString() },
   };
   if (booking.mode !== LessonMode.ONLINE && booking.location) event.location = booking.location;
-  //Inviting the student puts the same session on their calendar without us
-  //needing them to link an account too.
-  if (studentEmail) event.attendees = [{ email: studentEmail }];
+  //Inviting the other party puts the same session on their calendar without
+  //a second event they would then see twice.
+  if (guestEmail) event.attendees = [{ email: guestEmail }];
   return event;
 }
-
 /**
- * Put a freshly confirmed booking on the tutor's calendar. Fire-and-forget in
+ * Put a freshly confirmed booking on a linked calendar. Fire-and-forget in
  * the same spirit as notify(): Google being down must never fail the confirm
  * the tutor just made, so failures are recorded on the link and left there.
  */
@@ -143,24 +142,46 @@ export function syncBookingCreated(booking: IBooking) {
   createEvent(booking).catch((error) => console.error("calendar sync failed:", error));
 }
 
+/**
+ * The tutor's calendar owns the event when they have linked one, because they
+ * are the party with a whole timetable of these; the student's is the fallback
+ * so one linked account is enough for the session to land somewhere. Whoever
+ * does not own it is invited to it, which is what puts it on both calendars
+ * without writing a second event the invitee would see twice.
+ */
+async function ownerLinkFor(booking: IBooking) {
+  const byTutor = await CalendarLink.findOne({ userId: booking.tutorId, syncEnabled: true }).select("+refreshTokenEnc");
+  if (byTutor) return byTutor;
+  return CalendarLink.findOne({ userId: booking.studentId, syncEnabled: true }).select("+refreshTokenEnc");
+}
+
 async function createEvent(booking: IBooking) {
-  const link = await CalendarLink.findOne({ userId: booking.tutorId, syncEnabled: true }).select("+refreshTokenEnc");
-  if (!link) return;
+  const link = await ownerLinkFor(booking);
+  //Neither party linking is the one sync failure nothing else records: no
+  //lastSyncError to write it to, and the caller is fire-and-forget. Say so.
+  if (!link) {
+    console.log(`calendar sync skipped: neither party on booking ${booking._id} has a linked Google Calendar`);
+    return;
+  }
 
   try {
     const accessToken = await accessTokenFor(decryptToken(link.refreshTokenEnc));
-    const student = await User.findById(booking.studentId).select("fullName email").lean();
+    //The guest is whichever party does not own the calendar being written to.
+    const guestId = String(link.userId) === String(booking.tutorId) ? booking.studentId : booking.tutorId;
+    const guest = await User.findById(guestId).select("fullName email").lean();
 
     const response = await fetch(`${eventsUrl(link.calendarId)}?sendUpdates=all`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify(buildEvent(booking, student?.fullName ?? "your student", student?.email)),
+      body: JSON.stringify(buildEvent(booking, guest?.fullName ?? "your session partner", guest?.email)),
     });
     const created: any = await response.json();
     if (!response.ok) throw new Error(created.error?.message ?? `Calendar API ${response.status}`);
 
     //Straight to the collection: the caller has already saved and responded.
-    await booking.updateOne({ $set: { googleCalendarEventId: created.id } });
+    //The owner is recorded so a later cancellation knows whose calendar to
+    //delete from - it is no longer always the tutor's.
+    await booking.updateOne({ $set: { googleCalendarEventId: created.id, googleCalendarUserId: link.userId } });
     await link.updateOne({ $set: { lastSyncedAt: new Date() }, $unset: { lastSyncError: "" } });
   } catch (error) {
     await link.updateOne({ $set: { lastSyncError: String(error) } });
@@ -178,7 +199,11 @@ export function syncBookingCancelled(booking: IBooking) {
 }
 
 async function deleteEvent(booking: IBooking) {
-  const link = await CalendarLink.findOne({ userId: booking.tutorId }).select("+refreshTokenEnc");
+  //Bookings synced before either party could link default to the tutor, which
+  //is whose calendar they went to back then.
+  const link = await CalendarLink.findOne({ userId: booking.googleCalendarUserId ?? booking.tutorId }).select(
+    "+refreshTokenEnc"
+  );
   if (!link) return;
 
   const accessToken = await accessTokenFor(decryptToken(link.refreshTokenEnc));
@@ -190,5 +215,5 @@ async function deleteEvent(booking: IBooking) {
   if (!response.ok && response.status !== 404 && response.status !== 410) {
     throw new Error(`Calendar API ${response.status}`);
   }
-  await booking.updateOne({ $unset: { googleCalendarEventId: "" } });
+  await booking.updateOne({ $unset: { googleCalendarEventId: "", googleCalendarUserId: "" } });
 }
