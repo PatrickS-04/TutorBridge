@@ -165,6 +165,23 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun roleFromBackend(backendRole: String): UserRole =
         if (backendRole == "TUTOR") UserRole.TUTOR else UserRole.STUDENT
 
+    /** Emails the signed-in user a Firebase link to set a new password. */
+    fun sendPasswordReset(onResult: (String) -> Unit) {
+        val email = Firebase.auth.currentUser?.email
+        if (email == null) {
+            onResult("No signed-in user found - Please log in again")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                Firebase.auth.sendPasswordResetEmail(email).await()
+                onResult("We emailed a reset link to $email")
+            } catch (exception: Exception) {
+                onResult(exception.message ?: "Could not send the reset email")
+            }
+        }
+    }
+
     fun setAuthError(message: String) {
         _uiState.update { it.copy(authErrorMessage = message) }
     }

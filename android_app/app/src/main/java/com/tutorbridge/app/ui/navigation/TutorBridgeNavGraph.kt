@@ -307,7 +307,8 @@ fun TutorBridgeNavGraph(
                         onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
                         onToggleBiometric = { viewModel.toggleBiometric(it) },
                         onLinkCalendar = linkCalendar,
-                        onUnlinkCalendar = { viewModel.unlinkCalendar() }
+                        onUnlinkCalendar = { viewModel.unlinkCalendar() },
+                        onChangePassword = { viewModel.sendPasswordReset(it) }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(

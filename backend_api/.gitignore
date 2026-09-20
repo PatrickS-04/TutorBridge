@@ -60,3 +60,6 @@ Thumbs.db
 # Firebase service account key
 *firebase-adminsdk*.json
 serviceAccount*.json
+
+# Tutor provisioning CSVs contain plaintext passwords
+tutors*.csv

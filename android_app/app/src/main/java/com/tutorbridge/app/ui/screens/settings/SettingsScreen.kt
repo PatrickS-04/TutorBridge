@@ -35,9 +35,11 @@ fun SettingsScreen(
     onToggleSmsFallback: (Boolean) -> Unit = {},
     onToggleBiometric: (Boolean) -> Unit = {},
     onLinkCalendar: () -> Unit = {},
-    onUnlinkCalendar: () -> Unit = {}
+    onUnlinkCalendar: () -> Unit = {},
+    onChangePassword: ((String) -> Unit) -> Unit = {}
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
+    var passwordMessage by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = Modifier
@@ -180,6 +182,21 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column {
+                    SettingsRow(
+                        icon = Icons.Default.Lock,
+                        label = "Change password",
+                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }) { Text("Email me a link") } },
+                        onClick = {}
+                    )
+                    passwordMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
+                        )
+                    }
+                    Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Shield,
                         label = "SMS Fallback for OTP",
