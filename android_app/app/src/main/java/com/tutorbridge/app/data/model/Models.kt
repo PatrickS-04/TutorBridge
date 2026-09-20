@@ -192,18 +192,13 @@ data class OneOffSlotUi(
     val note: String = ""
 )
 
-// ==================== SESSION PREP ====================
+// ==================== SESSION NOTES ====================
 
+/** One row on a tutor's checklist for a session. */
 data class SessionGoalUi(
     val id: String,
     val text: String,
     val completed: Boolean
-)
-
-data class StudyMaterialUi(
-    val id: String,
-    val fileName: String,
-    val sizeLabel: String
 )
 
 data class LearningHistoryEntryUi(

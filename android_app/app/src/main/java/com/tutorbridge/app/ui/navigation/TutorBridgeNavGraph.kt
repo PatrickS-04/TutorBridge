@@ -279,7 +279,8 @@ fun TutorBridgeNavGraph(
                     onRemoveGoal = { viewModel.removeChecklistItem(it) },
                     onNewItemChange = { viewModel.setNewChecklistItem(it) },
                     onAddItem = { viewModel.addChecklistItem() },
-                    onSideNotesChange = { viewModel.setSessionSideNotes(it) }
+                    onSideNotesChange = { viewModel.setSessionSideNotes(it) },
+                    onSaveNotes = { viewModel.closeSessionNotes(requireSaved = true) }
                 )
                 "edit_tutor_profile" -> EditTutorProfileScreen(
                     uiState = uiState,

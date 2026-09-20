@@ -111,7 +111,6 @@ data class TutorBridgeUiState(
     val deleteConfirmText: String = "",
 
     // ===== Not backed by the API yet: no collections exist for these =====
-    val studyMaterials: List<StudyMaterialUi> = sampleStudyMaterials,
     val studentHealthIndexPercent: Int = 80,
     val lessonsTaught: Int = 0,
     val targetGrade: String = "A-",
@@ -121,12 +120,6 @@ data class TutorBridgeUiState(
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
 }
-
-// ==================== SESSION PREP (no backend collection) ====================
-
-val sampleStudyMaterials = listOf(
-    StudyMaterialUi("sm1", "Session_worksheet.pdf", "1.4 MB")
-)
 
 // ==================== LEARNING HISTORY (no backend collection) ====================
 

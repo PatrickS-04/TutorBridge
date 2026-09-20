@@ -3,7 +3,6 @@ package com.tutorbridge.app.ui.screens.prep
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,8 +30,10 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
  * The tutor's own notes for one session: a checklist of what has to be done,
  * and a box for anything else worth remembering about this student or guardian.
  *
- * Ticking, adding and removing a row saves immediately; the side notes are a
- * draft until [onBack], which writes them before leaving.
+ * Ticking, adding and removing a row saves immediately. The side notes are a
+ * draft until [onSaveNotes], which writes them and returns to the calendar -
+ * or until [onBack], which writes them too, so nothing typed is lost by
+ * walking away.
  */
 @Composable
 fun SessionPrepScreen(
@@ -42,7 +43,8 @@ fun SessionPrepScreen(
     onRemoveGoal: (String) -> Unit = {},
     onNewItemChange: (String) -> Unit = {},
     onAddItem: () -> Unit = {},
-    onSideNotesChange: (String) -> Unit = {}
+    onSideNotesChange: (String) -> Unit = {},
+    onSaveNotes: () -> Unit = {}
 ) {
     val session = uiState.selectedSession
     val checklist = uiState.sessionChecklist
@@ -234,29 +236,22 @@ fun SessionPrepScreen(
                     Text("Anything worth remembering about this student or guardian", fontSize = 13.sp)
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
-                supportingText = { Text("Saved when you go back. Only you can see these notes.", fontSize = 11.sp) }
+                supportingText = { Text("Only you can see these notes.", fontSize = 11.sp) }
             )
         }
 
-        // Attached Study Materials
         item {
-            Text("Attached Study Materials", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-        }
-
-        items(uiState.studyMaterials) { material ->
-            Card(
+            // Always enabled: this is also the way out of the screen, and a
+            // tutor who only ticked boxes should not find it greyed out.
+            Button(
+                onClick = onSaveNotes,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Default.InsertDriveFile, contentDescription = "PDF", tint = CrimsonPrimary)
-                    Text("${material.fileName} (${material.sizeLabel})", fontSize = 12.5.sp)
-                }
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Save notes", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }

@@ -816,19 +816,25 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     /**
-     * Leave the notes screen. The write is awaited before navigating, because
-     * opening the calendar refetches the bookings - starting both at once
-     * would let the refresh answer with notes from before the save.
+     * Write the notes back and return to the calendar. The write is awaited
+     * before navigating, because opening the calendar refetches the bookings -
+     * starting both at once would let the refresh answer with notes from
+     * before the save.
+     *
+     * [requireSaved] is what separates Save from Back. Save is a deliberate
+     * act, so a failed write keeps the tutor on the screen with their typing
+     * intact to try again; Back has to go back either way, and lets the
+     * snackbar carry the bad news.
      */
-    fun closeSessionNotes() {
+    fun closeSessionNotes(requireSaved: Boolean = false) {
         val sessionId = _uiState.value.selectedSessionId
         if (sessionId == null) {
             navigateTo("calendar")
             return
         }
         viewModelScope.launch {
-            writeSessionNotes(sessionId)
-            navigateTo("calendar")
+            val saved = writeSessionNotes(sessionId)
+            if (saved || !requireSaved) navigateTo("calendar")
         }
     }
 
@@ -837,12 +843,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * in [TutorBridgeUiState.calendarEvents] so reopening the session shows
      * what was saved without waiting on a refresh.
      */
-    private suspend fun writeSessionNotes(sessionId: String) {
+    private suspend fun writeSessionNotes(sessionId: String): Boolean {
         val state = _uiState.value
         val checklist = state.sessionChecklist
         val sideNotes = state.sessionSideNotes
 
-        repository.saveSessionNotes(sessionId, checklist, sideNotes)
+        return repository.saveSessionNotes(sessionId, checklist, sideNotes)
             .onSuccess {
                 _uiState.update { current ->
                     current.copy(
@@ -857,6 +863,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
             }
             .onFailure { reportError(it) }
+            .isSuccess
     }
 
     // ==================== STUDENT ACCOUNT DELETION (POPIA) ====================
