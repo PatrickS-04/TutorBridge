@@ -45,15 +45,16 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         val preferences = AppPreferences(getApplication())
         val enabledBiometric = preferences.getEnabledBiometric()
         val enabledSMSFallback = preferences.getEnabledSMSFallback()
+        val enabledSessionReminders = preferences.getEnabledSessionReminders()
 
         if (Firebase.auth.currentUser != null && enabledBiometric) {
             val lastRole = AppPreferences(getApplication()).getLastRole() ?: UserRole.STUDENT
-            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, smsFallbackEnabled = enabledSMSFallback, currentRoute = "biometric_lock") }
+            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, smsFallbackEnabled = enabledSMSFallback, sessionRemindersEnabled = enabledSessionReminders, currentRoute = "biometric_lock") }
         } else {
             if (Firebase.auth.currentUser != null) {
                 Firebase.auth.signOut()
             }
-            _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback) }
+            _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback, sessionRemindersEnabled = enabledSessionReminders) }
         }
         loadInstitutions()
     }
@@ -723,6 +724,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleSessionReminders(enabled: Boolean) {
+        AppPreferences(getApplication()).enableSessionRemindersSaved(enabled)
         _uiState.update { it.copy(sessionRemindersEnabled = enabled) }
         saveNotificationPreferences()
     }
