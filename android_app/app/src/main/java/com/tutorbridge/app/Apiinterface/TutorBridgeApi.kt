@@ -82,6 +82,10 @@ interface TutorBridgeApi {
     @POST("bookings/direct")
     suspend fun bookTutorDirectly(@Body body: DirectBookingRequest): Response<BookingAckDto>
 
+    /** Books the session for a match the student already accepted. */
+    @POST("bookings")
+    suspend fun scheduleFromApplication(@Body body: ApplicationBookingRequest): Response<BookingAckDto>
+
     @PUT("bookings/{id}/confirm")
     suspend fun confirmBooking(@Path("id") id: String): Response<BookingAckDto>
 

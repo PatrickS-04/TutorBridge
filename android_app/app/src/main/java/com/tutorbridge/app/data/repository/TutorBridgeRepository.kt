@@ -58,6 +58,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
             page.data.map { application ->
                 TutorApplicant(
                     id = application._id,
+                    tutorId = application.tutorId?._id.orEmpty(),
                     name = application.tutorId?.fullName ?: "Tutor",
                     initials = initialsOf(application.tutorId?.fullName),
                     verified = application.tutorId?.verificationStatus == "VERIFIED",
@@ -97,6 +98,9 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     suspend fun bookTutorDirectly(body: DirectBookingRequest): Result<BookingAckDto> =
         call { api.bookTutorDirectly(body) }
+
+    suspend fun scheduleFromApplication(body: ApplicationBookingRequest): Result<BookingAckDto> =
+        call { api.scheduleFromApplication(body) }
 
     suspend fun confirmBooking(id: String): Result<BookingAckDto> = call { api.confirmBooking(id) }
 

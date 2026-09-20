@@ -172,6 +172,14 @@ data class BookingDto(
     val agreedRatePerHour: Double = 0.0
 )
 
+/** POST /bookings - schedules the session behind an already-accepted application. */
+data class ApplicationBookingRequest(
+    val applicationId: String,
+    val startTime: String, // ISO-8601 instant
+    val endTime: String,
+    val location: String? = null
+)
+
 data class DirectBookingRequest(
     val tutorId: String,
     val subjectId: String? = null,

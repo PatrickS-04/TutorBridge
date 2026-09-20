@@ -45,6 +45,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     /** The booking the student just requested, so "check for a reply" knows what to look at. */
     private var lastBookingId: String? = null
 
+    /** Set while the student is scheduling a match they just accepted; null
+     * means the booking flow is the ordinary "book from a profile" one.
+     * Cleared by selectTutor(), so picking a tutor from the directory always
+     * starts a fresh direct booking. */
+    private var acceptedApplicationId: String? = null
+
     init {
         val preferences = AppPreferences(getApplication())
         val enabledBiometric = preferences.getEnabledBiometric()
@@ -417,6 +423,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     // ==================== DIRECT BOOKING FLOW ====================
 
     fun selectTutor(tutor: TutorUi) {
+        acceptedApplicationId = null
         _uiState.update {
             it.copy(
                 selectedTutor = tutor,
@@ -438,7 +445,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(selectedBookingDate = date, selectedSlot = "") }
     }
 
-    /** Books the selected tutor for the selected date and slot (one hour). */
+    /**
+     * Books the selected tutor for the selected date and slot (one hour).
+     *
+     * Two ways in, one submit: scheduling a match the student already accepted
+     * books the agreed session outright - the server confirms it and writes it
+     * to Google Calendar - while booking from a tutor's profile still has to
+     * wait on that tutor's reply.
+     */
     fun sendBookingRequest() {
         val state = _uiState.value
         val tutor = state.selectedTutor
@@ -448,20 +462,43 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
+        val applicationId = acceptedApplicationId
         _uiState.update { it.copy(isRefreshing = true, dataErrorMessage = null) }
         viewModelScope.launch {
-            val request = DirectBookingRequest(
-                tutorId = tutor.id,
-                subjectId = null, // the tutor's own subject is used server-side
-                startTime = start.toInstant().toString(),
-                endTime = start.plusHours(1).toInstant().toString(),
-                mode = "IN_PERSON",
-                location = state.selectedLocation.ifBlank { null }
-            )
-            repository.bookTutorDirectly(request)
+            val startIso = start.toInstant().toString()
+            val endIso = start.plusHours(1).toInstant().toString()
+            val booked = if (applicationId != null) {
+                repository.scheduleFromApplication(
+                    ApplicationBookingRequest(
+                        applicationId = applicationId,
+                        startTime = startIso,
+                        endTime = endIso,
+                        location = state.selectedLocation.ifBlank { null }
+                    )
+                )
+            } else {
+                repository.bookTutorDirectly(
+                    DirectBookingRequest(
+                        tutorId = tutor.id,
+                        subjectId = null, // the tutor's own subject is used server-side
+                        startTime = startIso,
+                        endTime = endIso,
+                        mode = "IN_PERSON",
+                        location = state.selectedLocation.ifBlank { null }
+                    )
+                )
+            }
+
+            booked
                 .onSuccess { ack ->
                     lastBookingId = ack.id
-                    _uiState.update { it.copy(isRefreshing = false, currentRoute = "booking_sent") }
+                    acceptedApplicationId = null
+                    _uiState.update {
+                        it.copy(
+                            isRefreshing = false,
+                            currentRoute = if (applicationId != null) "booking_confirmed" else "booking_sent"
+                        )
+                    }
                     loadBookings()
                 }
                 .onFailure {
@@ -608,12 +645,30 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun acceptApplicant(requestId: String, applicationId: String) {
+    /**
+     * The student accepts a tutor's offer. Matching is only half of it - the
+     * session itself still has to be put in the diary, so this goes straight on
+     * into the booking flow against the matched tutor's own hours.
+     */
+    fun acceptApplicant(applicant: TutorApplicant) {
         viewModelScope.launch {
-            repository.decideApplication(applicationId, accept = true)
+            repository.decideApplication(applicant.id, accept = true)
                 .onSuccess {
-                    _uiState.update { it.copy(currentRoute = "my_requests") }
                     loadRequests()
+                    val tutor = _uiState.value.tutors.firstOrNull { it.id == applicant.tutorId }
+                    if (tutor == null) {
+                        // Matched, but without the tutor's hours there are no slots to offer.
+                        _uiState.update {
+                            it.copy(
+                                currentRoute = "my_requests",
+                                dataErrorMessage = "Matched with ${applicant.name} - book a time from their profile under Find"
+                            )
+                        }
+                        return@onSuccess
+                    }
+                    selectTutor(tutor)                       // clears any earlier direct booking
+                    acceptedApplicationId = applicant.id     // ...so this has to follow it
+                    navigateTo("booking_flow")
                 }
                 .onFailure { reportError(it) }
         }

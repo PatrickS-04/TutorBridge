@@ -244,7 +244,7 @@ fun TutorBridgeNavGraph(
                 "request_detail" -> RequestDetailScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("my_requests") },
-                    onAcceptApplicant = { reqId, appId -> viewModel.acceptApplicant(reqId, appId) }
+                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) }
                 )
 
                 // ===== Tutor requests board =====
