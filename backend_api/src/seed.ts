@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import { Institution, Subject, Province, Area, User, UserRole, AuthProvider, VerificationStatus } from "./models";
+import { Institution, InstitutionStatus, Subject, Province, Area, User, UserRole, AuthProvider, VerificationStatus } from "./models";
 
 /**
  * Dev seed: makes the app testable.
@@ -32,7 +32,7 @@ async function main() {
   // The app defaults the sign-up dropdown to the first institution by name
   // (GET /reference/institutions sorts by name), so seed into that one:
   // Find-a-Tutor only ever lists tutors at the caller's own institution.
-  const institution = await Institution.findOne({ status: "ACTIVE" }).sort({ name: 1 });
+  const institution = await Institution.findOne({ status: InstitutionStatus.ACTIVE }).sort({ name: 1 });
   if (!institution) throw new Error("No ACTIVE institution to seed into");
 
   const subjects = await Promise.all(
@@ -54,12 +54,12 @@ async function main() {
   );
 
   const areas = await Promise.all(
-    [
+    ([
       ["Cape Town CBD", provinces[0]!._id],
       ["Bellville", provinces[0]!._id],
       ["Sandton", provinces[1]!._id],
       ["Pretoria East", provinces[1]!._id],
-    ].map(([name, provinceId]) =>
+    ] as const).map(([name, provinceId]) =>
       Area.findOneAndUpdate({ name, provinceId }, { $setOnInsert: { name, provinceId } }, { upsert: true, returnDocument: "after" })
     )
   );
