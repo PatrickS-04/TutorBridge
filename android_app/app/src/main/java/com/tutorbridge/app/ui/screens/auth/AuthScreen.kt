@@ -5,16 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -26,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -74,13 +70,11 @@ fun AuthScreen(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Logo
-        Box(
-            modifier = Modifier.size(84.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.School, contentDescription = null, tint = CrimsonPrimary, modifier = Modifier.size(38.dp))
-        }
+        Image(
+            painter = painterResource(R.drawable.ic_tutorbridge_logo),
+            contentDescription = "TutorBridge",
+            modifier = Modifier.size(96.dp)
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
