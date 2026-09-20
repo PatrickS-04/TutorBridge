@@ -23,8 +23,15 @@ class AppPreferences(context: Context) {
 
     fun getEnabledBiometric(): Boolean = preferences.getBoolean(BIOMETRIC_ENABLED_KEY, false)
 
+    fun enableSMSFallbackSaved(enabled: Boolean) {
+        preferences.edit().putBoolean(SMS_FALLBACK_KEY, enabled).apply()
+    }
+
+    fun getEnabledSMSFallback(): Boolean = preferences.getBoolean(SMS_FALLBACK_KEY, false)
+
     private companion object {
         const val LAST_ROLE_KEY = "last_role"
         const val BIOMETRIC_ENABLED_KEY = "biometric_enabled"
+        const val SMS_FALLBACK_KEY = "sms_fallback_enabled"
     }
 }

@@ -44,15 +44,16 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     init {
         val preferences = AppPreferences(getApplication())
         val enabledBiometric = preferences.getEnabledBiometric()
+        val enabledSMSFallback = preferences.getEnabledSMSFallback()
 
         if (Firebase.auth.currentUser != null && enabledBiometric) {
             val lastRole = AppPreferences(getApplication()).getLastRole() ?: UserRole.STUDENT
-            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, currentRoute = "biometric_lock") }
+            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, smsFallbackEnabled = enabledSMSFallback, currentRoute = "biometric_lock") }
         } else {
             if (Firebase.auth.currentUser != null) {
                 Firebase.auth.signOut()
             }
-            _uiState.update { it.copy(biometricEnabled = enabledBiometric) }
+            _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback) }
         }
         loadInstitutions()
     }
@@ -727,6 +728,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleSmsFallback(enabled: Boolean) {
+        AppPreferences(getApplication()).enableSMSFallbackSaved(enabled)
         _uiState.update { it.copy(smsFallbackEnabled = enabled) }
         saveSettings(UpdateSettingsRequest(smsFallback = enabled))
     }
