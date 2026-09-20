@@ -3,4 +3,21 @@
     <string name="google_web_client_id">796334323808-hmd6b11hmdjac41cbikfnvtooivo98bf.apps.googleusercontent.com</string>
     <string name="notification_channel_name">Bookings and requests</string>
     <string name="notification_channel_description">Updates about your bookings, applications and tuition requests.</string>
+    <string name="settings_title">Settings</string>
+    <string name="app_language_label">App Language</string>
+    <string name="settings_subtitle">Preferences, notifications, and application controls.</string>
+    <string name="booking_updates_label">Booking Updates</string>
+    <string name="session_reminders_label">Session Reminders</string>
+    <string name="calendar_title">Google Calendar</string>
+    <string name="calendar_disconnect">Disconnect</string>
+    <string name="calendar_connect">Connect</string>
+    <string name="calendar_default_status">Confirmed sessions are added to your calendar automatically.</string>
+    <string name="change_password_label">Change password</string>
+    <string name="email_link_action">Email me a link</string>
+    <string name="sms_fallback_label">SMS Fallback for OTP</string>
+    <string name="biometric_label">Biometric Sign-in</string>
+    <string name="dark_theme_label">Dark Theme</string>
+    <string name="sign_out_action">Sign Out</string>
+    <string name="delete_account_action">Delete Student Account</string>
+    <string name="delete_account_subtitle">Permanently purge student profile, requests, and campus bookings.</string>
 </resources>
