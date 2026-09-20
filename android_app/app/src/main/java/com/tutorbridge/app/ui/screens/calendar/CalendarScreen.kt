@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -250,7 +251,7 @@ fun CalendarScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text("📍 ${event.location}", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text("With ${event.participantName}", fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
                     }

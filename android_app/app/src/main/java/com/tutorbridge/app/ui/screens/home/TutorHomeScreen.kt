@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.NavySecondary
@@ -179,12 +180,13 @@ fun TutorHomeScreen(
                         Column {
                             Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
                             Text(
-                                listOf(booking.subjectName, booking.whenLabel, booking.location)
+                                listOf(booking.subjectName, booking.whenLabel)
                                     .filter { it.isNotBlank() }
                                     .joinToString(" • "),
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            VenueLink(booking.location, fontSize = 11.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
