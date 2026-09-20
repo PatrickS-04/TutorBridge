@@ -30,7 +30,7 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 fun RequestDetailScreen(
     uiState: TutorBridgeUiState,
     onBack: () -> Unit,
-    onAcceptApplicant: (String, String) -> Unit
+    onAcceptApplicant: (TutorApplicant) -> Unit
 ) {
     val req = uiState.selectedRequest ?: return
 
@@ -91,7 +91,7 @@ fun RequestDetailScreen(
         }
 
         items(req.applicants) { applicant ->
-            ApplicantCard(applicant) { onAcceptApplicant(req.id, applicant.id) }
+            ApplicantCard(applicant) { onAcceptApplicant(applicant) }
         }
     }
 }
@@ -152,7 +152,7 @@ fun RequestDetailScreenPreview() {
         RequestDetailScreen(
             uiState = TutorBridgeUiState(),
             onBack = {},
-            onAcceptApplicant = { _, _ -> }
+            onAcceptApplicant = {}
         )
     }
 }

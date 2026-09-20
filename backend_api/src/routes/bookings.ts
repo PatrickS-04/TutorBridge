@@ -15,29 +15,68 @@ import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
+import { syncBookingCreated, syncBookingCancelled } from "../utils/googleCalendar";
 
 const router = Router();
 router.use(authenticate);
 
+/**
+ * Schedule the session behind an application the student has already accepted.
+ * This is what the "Accept & Match" flow ends in: the tutor offered and the
+ * student accepted, so there is nothing left to agree - the booking is
+ * confirmed outright and goes straight onto the tutor's Google Calendar.
+ */
 router.post(
   "/",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { applicationId, startTime, endTime } = req.body;
+    const { applicationId, startTime, endTime, location } = req.body;
     if (!applicationId || !startTime || !endTime) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "applicationId, startTime, and endTime are required"));
     }
 
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "endTime must be a valid time after startTime", "endTime"));
+    }
+
+    //Nested populate: the subject names the calendar event and the campus area
+    //is the fallback venue - a single-level populate leaves both as bare ids.
     const application = await Application.findOne({
       _id: applicationId,
       institutionId: req.auth!.institutionId,
       status: ApplicationStatus.ACCEPTED,
-    }).populate("tuitionRequestId");
+    }).populate({ path: "tuitionRequestId", populate: [{ path: "subjectId" }, { path: "areaId" }] });
 
     if (!application) {
       return res.status(404).json(apiError("NOT_FOUND", "Accepted application not found"));
     }
 
     const tuitionRequest = application.tuitionRequestId as any;
+    if (String(tuitionRequest.studentId) !== req.auth!.userId) {
+      return res.status(403).json(apiError("FORBIDDEN", "Only the student who posted the request can schedule its session"));
+    }
+
+    //A second tap on "Confirm" must not mint a second session.
+    const already = await Booking.findOne({
+      applicationId: application._id,
+      status: { $ne: BookingStatus.CANCELLED },
+    });
+    if (already) {
+      return res.status(409).json(apiError("ALREADY_SCHEDULED", "This match already has a session booked"));
+    }
+
+    const clash = await Booking.findOne({
+      tutorId: application.tutorId,
+      status: BookingStatus.CONFIRMED,
+      startTime: { $lt: end },
+      endTime: { $gt: start },
+    });
+    if (clash) {
+      return res
+        .status(409)
+        .json(apiError("SLOT_CONFLICT", "That slot is already taken - please pick another", "startTime"));
+    }
 
     const booking = await Booking.create({
       institutionId: req.auth!.institutionId,
@@ -45,12 +84,27 @@ router.post(
       tutorId: application.tutorId,
       studentId: tuitionRequest.studentId,
       subjectName: tuitionRequest.subjectId?.name ?? "Tuition session",
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
+      startTime: start,
+      endTime: end,
       mode: tuitionRequest.mode,
-      status: BookingStatus.REQUESTED,
+      location: location ?? tuitionRequest.areaId?.name,
+      status: BookingStatus.CONFIRMED,
+      confirmedAt: new Date(),
+      addressDisclosed: true,
       agreedRatePerHour: application.proposedRate,
     });
+
+    //Made in the app, on the calendar a moment later.
+    syncBookingCreated(booking);
+
+    notify(
+      req.auth!.institutionId,
+      String(application.tutorId),
+      NotificationCategory.BOOKING,
+      "Session scheduled",
+      `${booking.subjectName} is booked for ${start.toISOString().slice(0, 16).replace("T", " ")}.`,
+      `tutorbridge://bookings/${booking._id}`
+    );
 
     res.status(201).json({
       id: booking._id,
@@ -173,6 +227,9 @@ router.put(
     booking.addressDisclosed = true;
     await booking.save();
 
+    //The session is on: put it in the tutor's Google Calendar and invite the student.
+    syncBookingCreated(booking);
+
     notify(
       req.auth!.institutionId,
       String(booking.studentId),
@@ -210,6 +267,8 @@ router.put(
     booking.cancelledBy = req.auth!.userId as any;
     booking.cancellationReason = reason;
     await booking.save();
+
+    syncBookingCancelled(booking);
 
     // Whoever did not press cancel is the one who needs telling.
     const otherParty =

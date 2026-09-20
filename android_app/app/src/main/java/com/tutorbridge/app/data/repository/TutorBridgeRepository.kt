@@ -58,6 +58,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
             page.data.map { application ->
                 TutorApplicant(
                     id = application._id,
+                    tutorId = application.tutorId?._id.orEmpty(),
                     name = application.tutorId?.fullName ?: "Tutor",
                     initials = initialsOf(application.tutorId?.fullName),
                     verified = application.tutorId?.verificationStatus == "VERIFIED",
@@ -98,6 +99,9 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     suspend fun bookTutorDirectly(body: DirectBookingRequest): Result<BookingAckDto> =
         call { api.bookTutorDirectly(body) }
 
+    suspend fun scheduleFromApplication(body: ApplicationBookingRequest): Result<BookingAckDto> =
+        call { api.scheduleFromApplication(body) }
+
     suspend fun confirmBooking(id: String): Result<BookingAckDto> = call { api.confirmBooking(id) }
 
     suspend fun cancelBooking(id: String, reason: String?): Result<BookingAckDto> =
@@ -109,6 +113,34 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
         call { api.notifications() }.map { page -> page.data.map { it.toNotificationUi() } }
 
     suspend fun markNotificationRead(id: String): Result<Unit> = call { api.markNotificationRead(id) }.map { }
+
+    suspend fun registerPushToken(token: String): Result<Unit> =
+        call { api.registerPushToken(RegisterPushTokenRequest(token)) }.map { }
+
+    // DELETE answers 204 with no body, which `call` treats as a failure, so check isSuccessful directly.
+    suspend fun unregisterPushToken(token: String): Result<Unit> = try {
+        val response = api.unregisterPushToken(token)
+        if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(IllegalStateException(parseApiError(response)))
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
+
+    // ==================== GOOGLE CALENDAR ====================
+
+    suspend fun calendarLink(): Result<CalendarLinkDto> = call { api.calendarLink() }
+
+    suspend fun linkCalendar(authCode: String): Result<CalendarLinkDto> =
+        call { api.linkCalendar(LinkCalendarRequest(authCode)) }
+
+    // 204, no body - same reason as unregisterPushToken above.
+    suspend fun unlinkCalendar(): Result<Unit> = try {
+        val response = api.unlinkCalendar()
+        if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(IllegalStateException(parseApiError(response)))
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
 
     // ==================== CLAIMS ====================
 

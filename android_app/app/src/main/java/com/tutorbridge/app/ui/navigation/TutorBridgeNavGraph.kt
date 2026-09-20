@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
+import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
@@ -218,7 +219,8 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
-                    onNavigateToPrep = { viewModel.navigateTo("session_prep") }
+                    onNavigateToPrep = { viewModel.navigateTo("session_prep") },
+                    onAddEvent = { viewModel.navigateTo("find_tutors") }
                 )
 
                 // ===== Student requests flow =====
@@ -243,7 +245,7 @@ fun TutorBridgeNavGraph(
                 "request_detail" -> RequestDetailScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("my_requests") },
-                    onAcceptApplicant = { reqId, appId -> viewModel.acceptApplicant(reqId, appId) }
+                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) }
                 )
 
                 // ===== Tutor requests board =====
@@ -285,18 +287,31 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") }
                 )
-                "settings" -> SettingsScreen(
-                    uiState = uiState,
-                    onToggleDark = { viewModel.toggleDarkTheme(it) },
-                    onToggleOffline = { viewModel.toggleOfflineMode(it) },
-                    onSelectLanguage = { viewModel.setLanguage(it) },
-                    onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
-                    onSignOut = { viewModel.signOut() },
-                    onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
-                    onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
-                    onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
-                    onToggleBiometric = { viewModel.toggleBiometric(it) }
-                )
+                "settings" -> {
+                    val linkCalendar = GoogleAuthentication.rememberCalendarAuthorizer(
+                        onAuthCode = { authCode -> viewModel.linkCalendar(authCode) },
+                        onError = { message -> viewModel.setCalendarMessage(message) }
+                    )
+                    // Both roles see the row now, so both need the status.
+                    LaunchedEffect(uiState.role) {
+                        viewModel.refreshCalendarLink()
+                    }
+                    SettingsScreen(
+                        uiState = uiState,
+                        onToggleDark = { viewModel.toggleDarkTheme(it) },
+                        onToggleOffline = { viewModel.toggleOfflineMode(it) },
+                        onSelectLanguage = { viewModel.setLanguage(it) },
+                        onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
+                        onSignOut = { viewModel.signOut() },
+                        onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
+                        onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
+                        onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
+                        onToggleBiometric = { viewModel.toggleBiometric(it) },
+                        onLinkCalendar = linkCalendar,
+                        onUnlinkCalendar = { viewModel.unlinkCalendar() },
+                        onChangePassword = { viewModel.sendPasswordReset(it) }
+                    )
+                }
                 "delete_account" -> DeleteAccountScreen(
                     uiState = uiState,
                     onConfirmDelete = {

@@ -1,10 +1,7 @@
 name: CI
 
-on:
-  push:
-    branches: [master, Dev]
-  pull_request:
-    branches: [master, Dev]
+# Every push, every branch - the POE brief requires CI on every push.
+on: [push, pull_request]
 
 permissions:
   contents: read
@@ -24,6 +21,7 @@ jobs:
           cache-dependency-path: backend_api/package-lock.json
       - run: npm ci
       - run: npm run build
+      - run: npm test
 
   android:
     runs-on: ubuntu-latest

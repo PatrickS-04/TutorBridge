@@ -29,6 +29,10 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeoutOrNull
 
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -40,6 +44,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** The booking the student just requested, so "check for a reply" knows what to look at. */
     private var lastBookingId: String? = null
+
+    /** Set while the student is scheduling a match they just accepted; null
+     * means the booking flow is the ordinary "book from a profile" one.
+     * Cleared by selectTutor(), so picking a tutor from the directory always
+     * starts a fresh direct booking. */
+    private var acceptedApplicationId: String? = null
 
     init {
         val preferences = AppPreferences(getApplication())
@@ -94,10 +104,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
             return
         }
-        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        // Self sign-up is always a student/guardian; the backend assigns the same role.
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, role = UserRole.STUDENT) }
         viewModelScope.launch {
             try {
-                Firebase.auth.createUserWithEmailAndPassword(email, password).await()
+                Firebase.auth.createUserWithEmailAndPassword(email.trim(), password).await()
                 val profileUpdate = UserProfileChangeRequest.Builder().setDisplayName(fullName).build()
                 Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
                 finishSignIn(institutionId, fullName)
@@ -111,7 +122,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
             try {
-                Firebase.auth.signInWithEmailAndPassword(email, password).await()
+                Firebase.auth.signInWithEmailAndPassword(email.trim(), password).await()
                 finishSignIn(institutionId = null, fullName = null)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
@@ -166,6 +177,23 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun roleFromBackend(backendRole: String): UserRole =
         if (backendRole == "TUTOR") UserRole.TUTOR else UserRole.STUDENT
 
+    /** Emails the signed-in user a Firebase link to set a new password. */
+    fun sendPasswordReset(onResult: (String) -> Unit) {
+        val email = Firebase.auth.currentUser?.email
+        if (email == null) {
+            onResult("No signed-in user found - Please log in again")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                Firebase.auth.sendPasswordResetEmail(email).await()
+                onResult("We emailed a reset link to $email")
+            } catch (exception: Exception) {
+                onResult(exception.message ?: "Could not send the reset email")
+            }
+        }
+    }
+
     fun setAuthError(message: String) {
         _uiState.update { it.copy(authErrorMessage = message) }
     }
@@ -183,15 +211,36 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         refreshAll()
     }
 
-    fun signOut() {
-        Firebase.auth.signOut()
-        AppPreferences(getApplication()).clear()
-        lastBookingId = null
-        _uiState.update { TutorBridgeUiState() }
-        loadInstitutions()
+    private var pendingDeepLink: String? = null
+
+    /** Called by MainActivity when a notification is tapped. */
+    fun openDeepLink(link: String) {
+        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock")
+        if (insideApp) routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
+        else pendingDeepLink = link   // cold start: replayed once the user is through sign-in / biometrics
     }
 
-    fun navigateTo(route: String) {
+    private fun consumePendingDeepLink() {
+        val link = pendingDeepLink ?: return
+        pendingDeepLink = null
+        routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            // Timeout so a bad connection can't leave the user stuck on "Sign out".
+            withTimeoutOrNull(3_000) { unregisterPushToken() }
+            Firebase.auth.signOut()          // only after the DELETE
+            AppPreferences(getApplication()).clear()
+            lastBookingId = null
+            pendingDeepLink = null           // added in C5
+            _uiState.update { TutorBridgeUiState() }
+            loadInstitutions()
+        }
+    }
+
+    fun navigateTo(requested: String) {
+        val route = routeForRole(requested, _uiState.value.role)
         _uiState.update { it.copy(currentRoute = route) }
         // Screens that are worth having fresh the moment they are opened.
         when (route) {
@@ -379,6 +428,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     // ==================== DIRECT BOOKING FLOW ====================
 
     fun selectTutor(tutor: TutorUi) {
+        acceptedApplicationId = null
         _uiState.update {
             it.copy(
                 selectedTutor = tutor,
@@ -400,7 +450,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(selectedBookingDate = date, selectedSlot = "") }
     }
 
-    /** Books the selected tutor for the selected date and slot (one hour). */
+    /**
+     * Books the selected tutor for the selected date and slot (one hour).
+     *
+     * Two ways in, one submit: scheduling a match the student already accepted
+     * books the agreed session outright - the server confirms it and writes it
+     * to Google Calendar - while booking from a tutor's profile still has to
+     * wait on that tutor's reply.
+     */
     fun sendBookingRequest() {
         val state = _uiState.value
         val tutor = state.selectedTutor
@@ -410,20 +467,43 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
+        val applicationId = acceptedApplicationId
         _uiState.update { it.copy(isRefreshing = true, dataErrorMessage = null) }
         viewModelScope.launch {
-            val request = DirectBookingRequest(
-                tutorId = tutor.id,
-                subjectId = null, // the tutor's own subject is used server-side
-                startTime = start.toInstant().toString(),
-                endTime = start.plusHours(1).toInstant().toString(),
-                mode = "IN_PERSON",
-                location = state.selectedLocation.ifBlank { null }
-            )
-            repository.bookTutorDirectly(request)
+            val startIso = start.toInstant().toString()
+            val endIso = start.plusHours(1).toInstant().toString()
+            val booked = if (applicationId != null) {
+                repository.scheduleFromApplication(
+                    ApplicationBookingRequest(
+                        applicationId = applicationId,
+                        startTime = startIso,
+                        endTime = endIso,
+                        location = state.selectedLocation.ifBlank { null }
+                    )
+                )
+            } else {
+                repository.bookTutorDirectly(
+                    DirectBookingRequest(
+                        tutorId = tutor.id,
+                        subjectId = null, // the tutor's own subject is used server-side
+                        startTime = startIso,
+                        endTime = endIso,
+                        mode = "IN_PERSON",
+                        location = state.selectedLocation.ifBlank { null }
+                    )
+                )
+            }
+
+            booked
                 .onSuccess { ack ->
                     lastBookingId = ack.id
-                    _uiState.update { it.copy(isRefreshing = false, currentRoute = "booking_sent") }
+                    acceptedApplicationId = null
+                    _uiState.update {
+                        it.copy(
+                            isRefreshing = false,
+                            currentRoute = if (applicationId != null) "booking_confirmed" else "booking_sent"
+                        )
+                    }
                     loadBookings()
                 }
                 .onFailure {
@@ -570,12 +650,30 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun acceptApplicant(requestId: String, applicationId: String) {
+    /**
+     * The student accepts a tutor's offer. Matching is only half of it - the
+     * session itself still has to be put in the diary, so this goes straight on
+     * into the booking flow against the matched tutor's own hours.
+     */
+    fun acceptApplicant(applicant: TutorApplicant) {
         viewModelScope.launch {
-            repository.decideApplication(applicationId, accept = true)
+            repository.decideApplication(applicant.id, accept = true)
                 .onSuccess {
-                    _uiState.update { it.copy(currentRoute = "my_requests") }
                     loadRequests()
+                    val tutor = _uiState.value.tutors.firstOrNull { it.id == applicant.tutorId }
+                    if (tutor == null) {
+                        // Matched, but without the tutor's hours there are no slots to offer.
+                        _uiState.update {
+                            it.copy(
+                                currentRoute = "my_requests",
+                                dataErrorMessage = "Matched with ${applicant.name} - book a time from their profile under Find"
+                            )
+                        }
+                        return@onSuccess
+                    }
+                    selectTutor(tutor)                       // clears any earlier direct booking
+                    acceptedApplicationId = applicant.id     // ...so this has to follow it
+                    navigateTo("booking_flow")
                 }
                 .onFailure { reportError(it) }
         }
@@ -745,6 +843,64 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         saveSettings(UpdateSettingsRequest(biometricEntry = enabled))
     }
 
+    // ==================== GOOGLE CALENDAR ====================
+
+    fun refreshCalendarLink() {
+        viewModelScope.launch {
+            repository.calendarLink().onSuccess { link ->
+                _uiState.update {
+                    it.copy(calendarLinked = link.linked, calendarAccountEmail = link.googleAccountEmail)
+                }
+            }
+        }
+    }
+
+    /** Called with the auth code from GoogleAuthentication.rememberCalendarAuthorizer. */
+    fun linkCalendar(authCode: String) {
+        _uiState.update { it.copy(isCalendarLinking = true, calendarMessage = null) }
+        viewModelScope.launch {
+            repository.linkCalendar(authCode)
+                .onSuccess { link ->
+                    _uiState.update {
+                        it.copy(
+                            isCalendarLinking = false,
+                            calendarLinked = link.linked,
+                            calendarAccountEmail = link.googleAccountEmail,
+                            calendarMessage = "Confirmed sessions will now appear in Google Calendar."
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCalendarLinking = false,
+                            calendarMessage = error.message ?: "Could not link Google Calendar"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun unlinkCalendar() {
+        viewModelScope.launch {
+            repository.unlinkCalendar()
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            calendarLinked = false,
+                            calendarAccountEmail = null,
+                            calendarMessage = "Google Calendar disconnected."
+                        )
+                    }
+                }
+                .onFailure { error -> reportError(error) }
+        }
+    }
+
+    fun setCalendarMessage(message: String?) {
+        _uiState.update { it.copy(isCalendarLinking = false, calendarMessage = message) }
+    }
+
     private fun saveNotificationPreferences() {
         val state = _uiState.value
         saveSettings(
@@ -771,4 +927,30 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             .atTime(LocalTime.parse(state.selectedSlot, DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)))
             .atZone(ZoneId.systemDefault())
     }.getOrNull()
+
+    // ==================== PUSH ====================
+
+    // Runs on every sign-in and biometric unlock. The backend upserts by token, so repeats are harmless.
+    private fun registerPushToken() {
+        viewModelScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                repository.registerPushToken(token).getOrThrow()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { Log.w("Push", "Could not register push token", e) }
+        }
+    }
+
+    // Needs a signed-in Firebase user: AuthInterceptor reads the ID token from it.
+    private suspend fun unregisterPushToken() {
+        try {
+            val messaging = FirebaseMessaging.getInstance()
+            repository.unregisterPushToken(messaging.token.await())
+            // Also invalidate it locally: if the server call failed, the next push
+            // returns "not registered" and the backend prunes it.
+            messaging.deleteToken().await()
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) { Log.w("Push", "Could not unregister push token", e) }
+    }
+
 }

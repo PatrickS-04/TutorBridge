@@ -1,0 +1,38 @@
+package com.tutorbridge.app.ui.components
+
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
+
+/**
+ * A booking's venue as a tappable line that opens the Google Maps app on it, where
+ * the tutor can pan, zoom and start directions. Maps searches the venue text itself,
+ * so no geocoding or API key is needed on this side.
+ */
+@Composable
+fun VenueLink(venue: String, modifier: Modifier = Modifier, fontSize: TextUnit = 12.sp) {
+    if (venue.isBlank()) return
+    val context = LocalContext.current
+    Text(
+        "📍 $venue",
+        modifier = modifier.clickable {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=${Uri.encode(venue)}"))
+            runCatching { context.startActivity(intent) }
+                .onFailure { Toast.makeText(context, "No maps app available", Toast.LENGTH_SHORT).show() }
+        },
+        fontSize = fontSize,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary,
+        textDecoration = TextDecoration.Underline
+    )
+}

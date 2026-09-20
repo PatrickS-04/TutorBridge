@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,6 +18,21 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
+
+        // local.properties keeps machine-specific values out of git.
+        val localProperties = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }
+                ?.inputStream()?.use { load(it) }
+        }
+
+        // 10.0.2.2 is the emulator's alias for the host's localhost and is
+        // unroutable from a physical device, which needs the dev machine's LAN
+        // IP (or the deployed URL) set as API_BASE_URL in local.properties.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")}\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -39,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -77,6 +95,11 @@ dependencies {
     implementation("androidx.credentials:credentials:1.6.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
+    // Sign-in gives an ID token; the calendar scope and its offline auth code
+    // come from the authorisation API, which lives here.
+    implementation("com.google.android.gms:play-services-auth:21.1.1")
+    //feat-notification but still falls under firebase
+    implementation("com.google.firebase:firebase-messaging")
     //MongoDB
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
@@ -84,4 +107,5 @@ dependencies {
     //Biometric
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("com.google.code.gson:gson:2.11.0")
+    //Google Maps is reached by intent (see VenueLink), so the SDK is not a dependency.
 }

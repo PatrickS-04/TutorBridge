@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ fun TutorExportClaimsScreen(
     onSelectInstitution: (String) -> Unit = {},
     onSelectClaimPeriod: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId }
         ?: uiState.institutions.firstOrNull()
     val period = institution?.claimPeriods?.find { it.id == uiState.selectedClaimPeriodId }
@@ -75,26 +77,14 @@ fun TutorExportClaimsScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                    Column {
-                        Text("Timesheets & Claims", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("Institution Payment Export", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                 }
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Session", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Column {
+                    Text("Timesheets & Claims", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Institution Payment Export", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -211,13 +201,13 @@ fun TutorExportClaimsScreen(
                     }
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
-                            onClick = {},
+                            onClick = { exportClaimVoucher(context, institution, period) },
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) {
                             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (period.status == ClaimStatus.PAID) "Export Voucher" else "Export Voucher", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Export Voucher", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         if (period.status == ClaimStatus.PAID) {
                             OutlinedButton(

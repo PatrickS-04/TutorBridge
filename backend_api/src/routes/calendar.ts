@@ -2,6 +2,7 @@ import { Router } from "express";
 import { CalendarLink } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { exchangeAuthCode, encryptToken, CALENDAR_SCOPE } from "../utils/googleCalendar";
 
 const router = Router();
 router.use(authenticate);
@@ -12,8 +13,22 @@ router.post(
     const { authCode, calendarId } = req.body;
     if (!authCode) return res.status(400).json(apiError("VALIDATION_ERROR", "authCode is required", "authCode"));
 
-    const googleAccountEmail = `${req.auth!.userId}@placeholder.invalid`;
-    const refreshTokenEnc = `enc:${authCode}`;
+    //The code is one-time and short-lived, so a bad one is the user's problem
+    //to retry, not a 500.
+    let googleAccountEmail: string;
+    let refreshTokenEnc: string;
+    try {
+      const granted = await exchangeAuthCode(authCode);
+      //Labelling the link is not worth failing it: if Google told us nothing,
+      //the account they signed in with is the best guess we have.
+      googleAccountEmail = granted.email || req.firebase?.email || "Google account";
+      refreshTokenEnc = encryptToken(granted.refreshToken);
+    } catch (error) {
+      console.error("calendar link failed:", error);
+      return res
+        .status(400)
+        .json(apiError("GOOGLE_AUTH_FAILED", "Could not link that Google account - please try again", "authCode"));
+    }
 
     const link = await CalendarLink.findOneAndUpdate(
       { userId: req.auth!.userId },
@@ -22,6 +37,7 @@ router.post(
           googleAccountEmail,
           calendarId: calendarId ?? "primary",
           refreshTokenEnc,
+          scopes: [CALENDAR_SCOPE],
           syncEnabled: true,
         },
       },

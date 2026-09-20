@@ -82,6 +82,10 @@ interface TutorBridgeApi {
     @POST("bookings/direct")
     suspend fun bookTutorDirectly(@Body body: DirectBookingRequest): Response<BookingAckDto>
 
+    /** Books the session for a match the student already accepted. */
+    @POST("bookings")
+    suspend fun scheduleFromApplication(@Body body: ApplicationBookingRequest): Response<BookingAckDto>
+
     @PUT("bookings/{id}/confirm")
     suspend fun confirmBooking(@Path("id") id: String): Response<BookingAckDto>
 
@@ -100,4 +104,24 @@ interface TutorBridgeApi {
 
     @GET("timesheets/periods")
     suspend fun claimPeriods(@Query("count") count: Int = 3): Response<TimesheetPeriodsDto>
+
+    // ==================== GOOGLE CALENDAR ====================
+
+    @GET("calendar/link")
+    suspend fun calendarLink(): Response<CalendarLinkDto>
+
+    @POST("calendar/link")
+    suspend fun linkCalendar(@Body body: LinkCalendarRequest): Response<CalendarLinkDto>
+
+    @DELETE("calendar/link")
+    suspend fun unlinkCalendar(): Response<Unit>
+
+    // ==================== PUSH TOKENS ====================
+
+    @POST("notification-tokens")
+    suspend fun registerPushToken(@Body body: RegisterPushTokenRequest): Response<Map<String, Any>>
+
+    @DELETE("notification-tokens/{token}")
+    suspend fun unregisterPushToken(@Path("token") token: String): Response<Unit>
+
 }

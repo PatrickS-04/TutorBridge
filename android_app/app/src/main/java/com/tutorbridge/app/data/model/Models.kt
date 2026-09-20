@@ -77,7 +77,10 @@ data class StudentRequestUi(
 )
 
 data class TutorApplicant(
+    /** The application's id - what accept/reject is sent against. */
     val id: String,
+    /** The tutor behind it, so accepting can open their availability. */
+    val tutorId: String,
     val name: String,
     val initials: String,
     val verified: Boolean,

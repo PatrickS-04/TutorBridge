@@ -172,6 +172,14 @@ data class BookingDto(
     val agreedRatePerHour: Double = 0.0
 )
 
+/** POST /bookings - schedules the session behind an already-accepted application. */
+data class ApplicationBookingRequest(
+    val applicationId: String,
+    val startTime: String, // ISO-8601 instant
+    val endTime: String,
+    val location: String? = null
+)
+
 data class DirectBookingRequest(
     val tutorId: String,
     val subjectId: String? = null,
@@ -228,4 +236,22 @@ data class TimesheetPeriodsDto(
     val staffNumber: String = "",
     val department: String = "",
     val periods: List<TimesheetPeriodDto> = emptyList()
+)
+
+// ==================== PUSH TOKENS ====================
+
+data class RegisterPushTokenRequest(val token: String, val platform: String = "android")
+
+// ==================== GOOGLE CALENDAR ====================
+
+/** [authCode] is the one-time offline-access code from Play Services; the
+ * backend trades it for the refresh token and keeps that side hidden. */
+data class LinkCalendarRequest(val authCode: String)
+
+data class CalendarLinkDto(
+    val linked: Boolean = false,
+    val googleAccountEmail: String? = null,
+    val syncEnabled: Boolean = true,
+    val lastSyncedAt: String? = null,
+    val lastSyncError: String? = null
 )

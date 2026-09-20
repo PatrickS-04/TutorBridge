@@ -33,9 +33,13 @@ fun SettingsScreen(
     onToggleBookingUpdates: (Boolean) -> Unit = {},
     onToggleSessionReminders: (Boolean) -> Unit = {},
     onToggleSmsFallback: (Boolean) -> Unit = {},
-    onToggleBiometric: (Boolean) -> Unit = {}
+    onToggleBiometric: (Boolean) -> Unit = {},
+    onLinkCalendar: () -> Unit = {},
+    onUnlinkCalendar: () -> Unit = {},
+    onChangePassword: ((String) -> Unit) -> Unit = {}
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
+    var passwordMessage by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = Modifier
@@ -134,6 +138,40 @@ fun SettingsScreen(
             }
         }
 
+        // Google Calendar - student or tutor may link one. The event is written
+        // to whichever calendar is linked and the other party is invited to it.
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column {
+                    SettingsRow(
+                        icon = Icons.Default.CalendarMonth,
+                        label = "Google Calendar",
+                        trailing = {
+                            when {
+                                uiState.isCalendarLinking -> CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar) { Text("Disconnect") }
+                                else -> TextButton(onClick = onLinkCalendar) { Text("Connect") }
+                            }
+                        },
+                        onClick = {}
+                    )
+                    val status = uiState.calendarMessage
+                        ?: uiState.calendarAccountEmail?.let { "Connected as $it" }
+                        ?: "Confirmed sessions are added to your calendar automatically."
+                    Text(
+                        text = status,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
+                    )
+                }
+            }
+        }
+
         // Security Card
         item {
             Card(
@@ -142,6 +180,21 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column {
+                    SettingsRow(
+                        icon = Icons.Default.Lock,
+                        label = "Change password",
+                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }) { Text("Email me a link") } },
+                        onClick = {}
+                    )
+                    passwordMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
+                        )
+                    }
+                    Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Shield,
                         label = "SMS Fallback for OTP",
@@ -175,8 +228,10 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = NavySecondary
+                    // Navy text on the dark navy surface is all but invisible, so dark
+                    // mode gets the brand crimson behind it instead.
+                    containerColor = if (uiState.isDarkTheme) CrimsonPrimary else MaterialTheme.colorScheme.surface,
+                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else NavySecondary
                 )
             ) {
                 Icon(Icons.Default.Logout, contentDescription = "Sign Out")
