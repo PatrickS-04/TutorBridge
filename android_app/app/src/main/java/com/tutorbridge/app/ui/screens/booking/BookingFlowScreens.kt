@@ -265,8 +265,13 @@ private fun VenueMap(venue: String, campus: String) {
             // A lite-mode map cannot be moved after it is built, so the point is keyed
             // in and the map is rebuilt when the student picks a different venue.
             key(here) {
-                Box {
+                // Both sizes are explicit: left to wrap its content, the MapView
+                // measures itself and asks for another layout from the maps
+                // thread, which re-enters Compose's measure pass and crashes on
+                // a node it has already detached.
+                Box(Modifier.fillMaxSize()) {
                     GoogleMap(
+                        modifier = Modifier.matchParentSize(),
                         googleMapOptionsFactory = { GoogleMapOptions().liteMode(true) },
                         // ponytail: zoom 16 suits a campus building - widen it if venues sit far apart.
                         cameraPositionState = rememberCameraPositionState {
