@@ -15,7 +15,8 @@ export interface IBooking extends Document {
   startTime: Date;
   endTime: Date;
   mode: LessonMode;
-  /** Campus venue picked in the booking flow. Online sessions leave it unset. */
+  /** Where the session happens: a campus venue, or a place the student named
+   * themselves - a coffee shop, say. Online sessions leave it unset. */
   location?: string;
   status: BookingStatus;
   isTrial: boolean;
@@ -40,7 +41,7 @@ const BookingSchema = new Schema<IBooking>(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     mode: { type: String, enum: Object.values(LessonMode), required: true },
-    location: { type: String, trim: true },
+    location: { type: String, trim: true, maxlength: 120 },
     status: { type: String, enum: Object.values(BookingStatus), default: BookingStatus.REQUESTED },
     isTrial: { type: Boolean, default: false },
     addressDisclosed: { type: Boolean, default: false },

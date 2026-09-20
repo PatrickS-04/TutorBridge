@@ -719,7 +719,12 @@ export const openapiSpec = {
               applicationId: objectId("The accepted application."),
               startTime: dateTime("Session start."),
               endTime: dateTime("Session end; must be after startTime."),
-              location: { type: "string", description: "Defaults to the request's area." },
+              location: {
+                type: "string",
+                maxLength: 120,
+                description:
+                  "Where to meet: a campus venue, or a place the student named themselves such as a coffee shop. Defaults to the request's area.",
+              },
             },
           }),
         },
@@ -759,7 +764,11 @@ export const openapiSpec = {
               startTime: dateTime("Session start."),
               endTime: dateTime("Session end; must be after startTime."),
               mode: enumOf(LessonMode),
-              location: { type: "string" },
+              location: {
+                type: "string",
+                maxLength: 120,
+                description: "Where to meet: a campus venue, or a place the student named themselves such as a coffee shop.",
+              },
             },
           }),
         },

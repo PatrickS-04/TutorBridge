@@ -102,7 +102,9 @@ router.post(
       String(application.tutorId),
       NotificationCategory.BOOKING,
       "Session scheduled",
-      `${booking.subjectName} is booked for ${start.toISOString().slice(0, 16).replace("T", " ")}.`,
+      //The venue is in the body because this flow confirms outright: the tutor
+      //never taps accept, so this is the first they hear of where they are going.
+      `${booking.subjectName} is booked for ${start.toISOString().slice(0, 16).replace("T", " ")}${booking.location ? ` at ${booking.location}` : ""}.`,
       `tutorbridge://bookings/${booking._id}`
     );
 

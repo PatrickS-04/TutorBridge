@@ -66,6 +66,9 @@ fun BookingFlowScreen(
     val venues = (listOf(tutor.consultationVenue) + uiState.areaOptions.map { it.name })
         .filter { it.isNotBlank() }
         .distinct()
+    // ...and whatever the student typed in below instead - a coffee shop, a
+    // public library - which is simply the location no listed venue matches.
+    val customVenue = uiState.selectedLocation.takeUnless { it in venues }.orEmpty()
 
     // A plain scrolling Column, not a LazyColumn: this screen is about 25 rows,
     // so laziness buys nothing, and a lazy layout force-measures its children
@@ -171,6 +174,17 @@ fun BookingFlowScreen(
             }
         }
 
+        OutlinedTextField(
+            value = customVenue,
+            // Capped where the server caps it, so a long paste fails here and not on submit.
+            onValueChange = { if (it.length <= 120) onSelectLocation(it) },
+            label = { Text("Somewhere else") },
+            placeholder = { Text("e.g. The Daily Grind coffee shop, Main Road") },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
         // Google Maps owns the map. Tapping the venue hands it over by intent,
         // which is what the calendar and session screens already do - an
         // embedded MapView bought a thumbnail and cost a crash.
@@ -255,7 +269,7 @@ fun ReviewBookingScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(Icons.Default.Place, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
-            Text("You will meet ${tutor.name.split(" ").last()} at the confirmed room location above once verified.", fontSize = 11.5.sp, color = NavySecondary)
+            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 11.5.sp, color = NavySecondary)
         }
 
         Spacer(modifier = Modifier.weight(1f))
