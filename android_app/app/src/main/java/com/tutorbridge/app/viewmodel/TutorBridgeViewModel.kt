@@ -93,7 +93,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
             return
         }
-        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        // Self sign-up is always a student/guardian; the backend assigns the same role.
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, role = UserRole.STUDENT) }
         viewModelScope.launch {
             try {
                 Firebase.auth.createUserWithEmailAndPassword(email.trim(), password).await()
