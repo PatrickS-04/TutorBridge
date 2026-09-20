@@ -1,24 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M31,63.928c0,0 6.4,-2.3 13,-2.3c6,0 12,1.8 12,1.8"
-        android:strokeWidth="2"
-        android:strokeColor="#333639"
-        android:strokeLineCap="round" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M48.822,49.037c0,4.441 -3.601,8.041 -8.042,8.041c-4.44,0 -8.041,-3.6 -8.041,-8.041c0,-4.44 3.601,-8.041 8.041,-8.041c4.441,0 8.042,3.601 8.042,8.041z"
-        android:strokeWidth="2"
-        android:strokeColor="#333639" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M73.041,49.037c0,4.441 -3.601,8.041 -8.041,8.041c-4.441,0 -8.042,-3.6 -8.042,-8.041c0,-4.44 3.601,-8.041 8.042,-8.041c4.44,0 8.041,3.601 8.041,8.041z"
-        android:strokeWidth="2"
-        android:strokeColor="#333639" />
-</vector>
+<!-- Adaptive-icon foreground: the badge inset to the 66dp safe zone of the 108dp canvas. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_tutorbridge_logo"
+    android:inset="19.5%" />

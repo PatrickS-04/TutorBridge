@@ -43,19 +43,14 @@ fun MyRequestsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("My Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(
-                    "Track requests you've submitted and review mentor applicants.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        Column {
+            Text("My Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "Track requests you've submitted and review mentor applicants.",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onNewRequest,
                 shape = RoundedCornerShape(20.dp),
