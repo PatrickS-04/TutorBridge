@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
@@ -99,7 +100,6 @@ dependencies {
     // come from the authorisation API, which lives here.
     implementation("com.google.android.gms:play-services-auth:21.1.1")
     //feat-notification but still falls under firebase
-    implementation("com.google.firebase:firebase-messaging")
     //MongoDB
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

@@ -92,6 +92,8 @@ data class TutorBridgeUiState(
     val tutorProfileCompleteness: Int = 0,
     val tutorLanguagesSpoken: String = "",
     val tutorConsultationRoom: String = "",
+    val currentProfile: UserDto? = null,
+    val profileStatusMessage: String? = null,
 
     // Booking decline note
     val lastDeclineNote: String = "",

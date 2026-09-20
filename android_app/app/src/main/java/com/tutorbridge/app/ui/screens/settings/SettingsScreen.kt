@@ -30,6 +30,7 @@ fun SettingsScreen(
     onSelectLanguage: (String) -> Unit,
     onDeleteAccountClick: () -> Unit,
     onSignOut: () -> Unit,
+    onEditProfileClick: () -> Unit = {},
     onToggleBookingUpdates: (Boolean) -> Unit = {},
     onToggleSessionReminders: (Boolean) -> Unit = {},
     onToggleSmsFallback: (Boolean) -> Unit = {},
@@ -99,7 +100,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = onEditProfileClick) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
                     }
                 }

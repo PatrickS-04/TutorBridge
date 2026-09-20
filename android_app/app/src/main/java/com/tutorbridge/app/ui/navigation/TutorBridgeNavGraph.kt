@@ -41,6 +41,7 @@ import com.tutorbridge.app.ui.screens.requests.RequestDetailScreen
 import com.tutorbridge.app.ui.screens.requests.SessionOfferSentScreen
 import com.tutorbridge.app.ui.screens.requests.TutorRequestsBoardScreen
 import com.tutorbridge.app.ui.screens.settings.DeleteAccountScreen
+import com.tutorbridge.app.ui.screens.settings.EditProfileScreen
 import com.tutorbridge.app.ui.screens.settings.SettingsScreen
 import com.tutorbridge.app.ui.screens.splash.SplashScreen
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
@@ -286,6 +287,13 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("settings") }
                 )
+                "edit_profile" -> EditProfileScreen(
+                    uiState = uiState,
+                    onLoadProfile = { viewModel.refreshProfile() },
+                    onSave = { email, bio, hourlyRate, department ->
+                        viewModel.saveProfile(email, bio, hourlyRate, department) { viewModel.navigateTo("settings") }
+                    }
+                )
                 "learning_history" -> LearningHistoryScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("student_home") }
@@ -310,6 +318,7 @@ fun TutorBridgeNavGraph(
                         onSelectLanguage = { viewModel.setLanguage(it) },
                         onDeleteAccountClick = { viewModel.navigateTo("delete_account") },
                         onSignOut = { viewModel.signOut() },
+                        onEditProfileClick = { viewModel.navigateTo("edit_profile") },
                         onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
                         onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
                         onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },

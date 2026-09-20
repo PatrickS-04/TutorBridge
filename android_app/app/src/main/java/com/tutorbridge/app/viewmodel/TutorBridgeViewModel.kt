@@ -298,6 +298,46 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun refreshProfile() {
+        viewModelScope.launch {
+            repository.me().onSuccess { profile ->
+                _uiState.update { it.copy(currentProfile = profile) }
+            }
+        }
+    }
+
+    fun saveProfile(newEmail: String, bio: String, hourlyRate: Double?, department: String, onComplete: () -> Unit) {
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, profileStatusMessage = null) }
+        viewModelScope.launch {
+            val profileResult = repository.updateProfile(UpdateProfileRequest(bio = bio, hourlyRate = hourlyRate, department = department))
+            if (profileResult.isFailure) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = profileResult.exceptionOrNull()?.message ?: "Could not update profile") }
+                return@launch
+            }
+
+            val user = Firebase.auth.currentUser
+            val emailChanged = user != null && newEmail.isNotBlank() && newEmail != user.email
+
+            try {
+                if (emailChanged) {
+                    user!!.verifyBeforeUpdateEmail(newEmail).await()
+                }
+                _uiState.update {
+                    it.copy(
+                        isAuthLoading = false,
+                        currentProfile = profileResult.getOrNull(),
+                        profileStatusMessage = if (emailChanged) "Profile saved. Check your new email inbox to confirm the address change." else "Profile saved."
+                    )
+                }
+                onComplete()
+            } catch (exception: FirebaseAuthRecentLoginRequiredException) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and sign back in before changing your email") }
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not update email") }
+            }
+        }
+    }
+
     private fun loadSettings() {
         viewModelScope.launch {
             repository.settings().onSuccess { settings ->

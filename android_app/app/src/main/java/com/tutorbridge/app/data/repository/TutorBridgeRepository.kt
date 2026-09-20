@@ -25,6 +25,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     // ==================== PROFILE, SETTINGS, REFERENCE DATA ====================
 
     suspend fun me(): Result<UserDto> = call { api.me() }
+    suspend fun updateProfile(body: UpdateProfileRequest): Result<UserDto> = call { api.updateMe(body) }
 
     suspend fun settings(): Result<UserSettingsDto> = call { api.settings() }
 
