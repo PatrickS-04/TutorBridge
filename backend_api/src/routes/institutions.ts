@@ -94,7 +94,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res) => {
     const tutor = await User.findOneAndUpdate(
       { _id: req.params.id, institutionId: req.auth!.institutionId, role: UserRole.TUTOR },
-      { $set: { deletionScheduledFor: new Date() } }
+      { $set: { deactivatedAt: new Date() } }
     );
     if (!tutor) return res.status(404).json(apiError("NOT_FOUND", "Tutor not found"));
     res.status(204).send();

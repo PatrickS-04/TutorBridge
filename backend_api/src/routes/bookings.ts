@@ -147,6 +147,7 @@ router.post(
       role: UserRole.TUTOR,
       verificationStatus: VerificationStatus.VERIFIED,
       deletionScheduledFor: null,
+      deactivatedAt: null,
     }).populate("subjectIds");
     if (!tutor) return res.status(404).json(apiError("NOT_FOUND", "Bookable tutor not found"));
 

@@ -1218,6 +1218,10 @@ export const openapiSpec = {
             ...dateTime("Set once deletion is scheduled."),
             nullable: true,
           },
+          deactivatedAt: {
+            ...dateTime("Set when an admin removes a tutor; never purged."),
+            nullable: true,
+          },
           mustChangePassword: { type: "boolean" },
           createdAt: dateTime("When the profile was created."),
           updatedAt: dateTime("When it last changed."),

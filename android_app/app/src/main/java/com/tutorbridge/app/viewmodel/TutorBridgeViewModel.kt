@@ -892,7 +892,19 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 // Schedule the TutorBridge record for deletion first (POPIA
                 // grace period) - it needs the Firebase token that deleting
                 // the account is about to invalidate.
-                repository.scheduleAccountDeletion()
+                val scheduled = repository.scheduleAccountDeletion()
+                if (scheduled.isFailure) {
+                    // Deleting the Firebase user now would strand the TutorBridge
+                    // record: there is no account left to authenticate a retry with.
+                    _uiState.update {
+                        it.copy(
+                            isAuthLoading = false,
+                            authErrorMessage = scheduled.exceptionOrNull()?.message
+                                ?: "Could not reach TutorBridge - your account was not deleted"
+                        )
+                    }
+                    return@launch
+                }
                 user.delete().await()
                 AppPreferences(getApplication()).clear()
                 _uiState.update { TutorBridgeUiState() }
