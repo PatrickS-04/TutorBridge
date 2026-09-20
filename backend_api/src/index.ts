@@ -7,6 +7,7 @@ import { registerRoutes } from "./routes";
 import { openapiSpec } from "./openapi";
 import { errorHandler } from "./middleware/errors";
 import { purgeScheduledDeletions } from "./utils/purgeScheduledDeletions";
+import { completePastSessions } from "./utils/completePastSessions";
 
 dotenv.config();
 
@@ -26,20 +27,25 @@ async function main() {
 
   registerRoutes(app);
 
-  // Profiles whose deletion grace period has run out. Hourly is plenty for a
-  // 14-day window, and the pass on boot catches anything that came due while
-  // the server was off.
+  // Housekeeping no request can trigger. Hourly suits both - a 14-day
+  // deletion window, and a claim nobody reads until month end - and the pass
+  // on boot catches whatever came due while the server was off.
   // ponytail: in-process timer, one instance - move it to a real scheduler if
   // the API is ever run horizontally.
-  const purge = () =>
-    purgeScheduledDeletions().then(
-      (count) => {
-        if (count) console.log(`Purged ${count} profile(s) past the deletion grace period`);
-      },
-      (error) => console.error("Scheduled deletion purge failed:", error)
-    );
-  purge();
-  setInterval(purge, 60 * 60 * 1000).unref();
+  const hourly = (job: () => Promise<number>, done: (count: number) => string) => {
+    const run = () =>
+      job().then(
+        (count) => {
+          if (count) console.log(done(count));
+        },
+        (error) => console.error(`${job.name} failed:`, error)
+      );
+    run();
+    setInterval(run, 60 * 60 * 1000).unref();
+  };
+
+  hourly(purgeScheduledDeletions, (n) => `Purged ${n} profile(s) past the deletion grace period`);
+  hourly(completePastSessions, (n) => `Completed ${n} session(s) whose end time has passed`);
 
   // Conventional error body for anything that reaches here unhandled.
   app.use(errorHandler);
