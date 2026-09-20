@@ -1,4 +1,4 @@
-import { Express } from "express";
+import { Express, Router } from "express";
 import { Subject, Province, Area } from "../models";
 import { createCrudRouter } from "../utils/createCrudRouter";
 
@@ -15,21 +15,30 @@ import calendarRoutes from "./calendar";
 import timesheetRoutes from "./timesheets";
 import notificationRoutes from "./notifications";
 
-export function registerRoutes(app: Express) {
-  app.use("/auth", authRoutes);
-  app.use("/institutions", institutionRoutes);
-  app.use("/users", userRoutes);
-  app.use("/tuition-requests", tuitionRequestRoutes);
-  app.use("/applications", applicationRoutes);
-  app.use("/bookings", bookingRoutes);
-  app.use("/threads", threadRoutes);
-  app.use("/notification-tokens", notificationTokenRoutes);
-  app.use("/reference", referenceRoutes);
-  app.use("/calendar", calendarRoutes);
-  app.use("/timesheets", timesheetRoutes);
-  app.use("/notifications", notificationRoutes);
+/**
+ * Mount path -> router. A table rather than a list of app.use calls so
+ * openapi.test.ts can read the real route surface back and check every
+ * endpoint is documented.
+ */
+export const routeMounts: Record<string, Router> = {
+  "/auth": authRoutes,
+  "/institutions": institutionRoutes,
+  "/users": userRoutes,
+  "/tuition-requests": tuitionRequestRoutes,
+  "/applications": applicationRoutes,
+  "/bookings": bookingRoutes,
+  "/threads": threadRoutes,
+  "/notification-tokens": notificationTokenRoutes,
+  "/reference": referenceRoutes,
+  "/calendar": calendarRoutes,
+  "/timesheets": timesheetRoutes,
+  "/notifications": notificationRoutes,
 
-  app.use("/admin/subjects", createCrudRouter(Subject));
-  app.use("/admin/provinces", createCrudRouter(Province));
-  app.use("/admin/areas", createCrudRouter(Area));
+  "/admin/subjects": createCrudRouter(Subject),
+  "/admin/provinces": createCrudRouter(Province),
+  "/admin/areas": createCrudRouter(Area),
+};
+
+export function registerRoutes(app: Express) {
+  for (const [path, router] of Object.entries(routeMounts)) app.use(path, router);
 }

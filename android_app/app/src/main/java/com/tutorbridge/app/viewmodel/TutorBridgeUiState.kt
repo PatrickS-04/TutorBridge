@@ -40,6 +40,9 @@ data class TutorBridgeUiState(
     val isCalendarLinking: Boolean = false,
     /** Outcome of the last link/unlink attempt, shown under the row. */
     val calendarMessage: String? = null,
+    /** Why the server's last write to Google Calendar failed, if it did. The
+     *  sync is fire-and-forget, so without this a broken link looks linked. */
+    val calendarSyncError: String? = null,
 
     /** Set when a background refresh or a write to the server failed. */
     val dataErrorMessage: String? = null,

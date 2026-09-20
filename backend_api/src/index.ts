@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import swaggerUi from "swagger-ui-express";
 import { registerRoutes } from "./routes";
+import { openapiSpec } from "./openapi";
 
 dotenv.config();
 
@@ -15,6 +17,10 @@ async function main() {
   const app = express();
   app.use(cors());
   app.use(express.json());
+
+  // Browsable docs, plus the raw spec for client generators.
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec, { customSiteTitle: "TutorBridge API" }));
+  app.get("/openapi.json", (_req, res) => res.json(openapiSpec));
 
   registerRoutes(app);
 

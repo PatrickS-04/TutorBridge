@@ -849,7 +849,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             repository.calendarLink().onSuccess { link ->
                 _uiState.update {
-                    it.copy(calendarLinked = link.linked, calendarAccountEmail = link.googleAccountEmail)
+                    it.copy(
+                        calendarLinked = link.linked,
+                        calendarAccountEmail = link.googleAccountEmail,
+                        calendarSyncError = link.lastSyncError
+                    )
                 }
             }
         }
