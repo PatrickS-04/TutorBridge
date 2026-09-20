@@ -67,15 +67,19 @@ fun CalendarScreen(
                     )
                     Text("Calendar & Events", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Event", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                // Sessions are created by the student who needs them - a tutor
+                // only ever accepts or declines one, so they get no Add button.
+                if (!isTutor) {
+                    Button(
+                        onClick = {},
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Event", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
