@@ -210,7 +210,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun navigateTo(route: String) {
+    fun navigateTo(requested: String) {
+        val route = routeForRole(requested, _uiState.value.role)
         _uiState.update { it.copy(currentRoute = route) }
         // Screens that are worth having fresh the moment they are opened.
         when (route) {
