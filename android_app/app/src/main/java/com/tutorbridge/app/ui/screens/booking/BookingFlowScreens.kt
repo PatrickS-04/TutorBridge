@@ -8,9 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -82,98 +81,91 @@ fun BookingFlowScreen(
         .filter { it.isNotBlank() }
         .distinct()
 
-    LazyColumn(
+    // A plain scrolling Column, not a LazyColumn: this screen is about 25 rows,
+    // so laziness buys nothing, and a lazy layout force-measures its children
+    // through a subcomposition - which is what the MapView below cannot survive.
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        }
+
+        Text(
+            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+                ?.plus(" ${selectedDate.year}") ?: "Pick a date",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            dates.forEach { (dateVal, dayNum) ->
+                val selected = uiState.selectedBookingDate == dateVal
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surface)
+                        .clickable { onSelectDate(dateVal) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
                 }
-                Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         }
 
-        item {
+        Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+
+        if (slots.isEmpty()) {
             Text(
-                selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-                    ?.plus(" ${selectedDate.year}") ?: "Pick a date",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+                "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        item {
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                dates.forEach { (dateVal, dayNum) ->
-                    val selected = uiState.selectedBookingDate == dateVal
-                    Column(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surface)
-                            .clickable { onSelectDate(dateVal) }
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            }
-        }
-
-        item { Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-
-        if (slots.isEmpty()) {
-            item {
-                Text(
-                    "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        item {
-            val slotRows = slots.chunked(2)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                slotRows.forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        row.forEach { slot ->
-                            val isSelected = uiState.selectedSlot == slot
-                            Card(
-                                modifier = Modifier.weight(1f).clickable { onSelectSlot(slot) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Text(
-                                    slot,
-                                    modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 13.sp
-                                )
-                            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            slots.chunked(2).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    row.forEach { slot ->
+                        val isSelected = uiState.selectedSlot == slot
+                        Card(
+                            modifier = Modifier.weight(1f).clickable { onSelectSlot(slot) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Text(
+                                slot,
+                                modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 13.sp
+                            )
                         }
-                        if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                     }
+                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
 
-        item { Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+        Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
-        items(venues) { venue ->
+        venues.forEach { venue ->
             val isSelected = uiState.selectedLocation == venue
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onSelectLocation(venue) },
@@ -191,19 +183,17 @@ fun BookingFlowScreen(
         }
 
         if (uiState.selectedLocation.isNotBlank()) {
-            item { VenueMap(uiState.selectedLocation, tutor.campus) }
+            VenueMap(uiState.selectedLocation, tutor.campus)
         }
 
-        item {
-            Button(
-                onClick = onNext,
-                enabled = uiState.selectedSlot.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
-            ) {
-                Text("Continue to Review", fontWeight = FontWeight.Bold)
-            }
+        Button(
+            onClick = onNext,
+            enabled = uiState.selectedSlot.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+        ) {
+            Text("Continue to Review", fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -265,10 +255,10 @@ private fun VenueMap(venue: String, campus: String) {
             // A lite-mode map cannot be moved after it is built, so the point is keyed
             // in and the map is rebuilt when the student picks a different venue.
             key(here) {
-                // Both sizes are explicit: left to wrap its content, the MapView
-                // measures itself and asks for another layout from the maps
-                // thread, which re-enters Compose's measure pass and crashes on
-                // a node it has already detached.
+                // Explicit sizes: the MapView asks for its own layout off the
+                // maps thread, so it is never left to wrap its content. Its
+                // caller must also keep it out of any lazy layout - see the
+                // comment on BookingFlowScreen's Column.
                 Box(Modifier.fillMaxSize()) {
                     GoogleMap(
                         modifier = Modifier.matchParentSize(),
