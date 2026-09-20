@@ -7,8 +7,8 @@ import java.time.LocalDate
  * Everything the screens render. The lists start empty and are filled from
  * backend_api once the user is signed in - see TutorBridgeViewModel.refreshAll().
  *
- * Session prep, study materials and the learning history at the bottom are the
- * exception: no collection backs them yet, so they stay as fixed sample rows.
+ * Study materials and the learning history at the bottom are the exception:
+ * no collection backs them yet, so they stay as fixed sample rows.
  */
 data class TutorBridgeUiState(
     val currentRoute: String = "splash",
@@ -40,6 +40,9 @@ data class TutorBridgeUiState(
     val isCalendarLinking: Boolean = false,
     /** Outcome of the last link/unlink attempt, shown under the row. */
     val calendarMessage: String? = null,
+    /** Why the server's last write to Google Calendar failed, if it did. The
+     *  sync is fire-and-forget, so without this a broken link looks linked. */
+    val calendarSyncError: String? = null,
 
     /** Set when a background refresh or a write to the server failed. */
     val dataErrorMessage: String? = null,
@@ -93,31 +96,30 @@ data class TutorBridgeUiState(
     // Booking decline note
     val lastDeclineNote: String = "",
 
+    // Tutor: prep notes for the session currently open on the prep screen.
+    // Held here rather than read straight off the calendar event because the
+    // tutor is editing them - the event stays the last thing the server sent.
+    val selectedSessionId: String? = null,
+    val sessionChecklist: List<SessionGoalUi> = emptyList(),
+    val sessionSideNotes: String = "",
+    /** What is typed in the "add a to-do" box, before it becomes a row. */
+    val newChecklistItem: String = "",
+
     // Delete account
     val deleteAccountReason: String = "",
     val deleteConfirmChecked: Boolean = false,
     val deleteConfirmText: String = "",
 
     // ===== Not backed by the API yet: no collections exist for these =====
-    val sessionGoals: List<SessionGoalUi> = sampleSessionGoals,
-    val studyMaterials: List<StudyMaterialUi> = sampleStudyMaterials,
     val studentHealthIndexPercent: Int = 80,
     val lessonsTaught: Int = 0,
     val targetGrade: String = "A-",
     val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
-)
-
-// ==================== SESSION PREP (no backend collection) ====================
-
-val sampleSessionGoals = listOf(
-    SessionGoalUi("g1", "Review the problem sets from last session", false),
-    SessionGoalUi("g2", "Bring questions on the topics you found hardest", false),
-    SessionGoalUi("g3", "Work through a past paper together", false)
-)
-
-val sampleStudyMaterials = listOf(
-    StudyMaterialUi("sm1", "Session_worksheet.pdf", "1.4 MB")
-)
+) {
+    /** The session the prep screen is showing, derived so it cannot go stale. */
+    val selectedSession: CalendarEventUi?
+        get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
+}
 
 // ==================== LEARNING HISTORY (no backend collection) ====================
 

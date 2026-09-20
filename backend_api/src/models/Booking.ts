@@ -4,6 +4,19 @@ import { LessonMode, BookingStatus } from "./enums";
 //This represents the «collection: bookings» Booking stated in design document
 //The client only requests one and renders what comes back.
 
+/** One tick-box on the tutor's prep checklist for a session. */
+export interface ITutorNoteItem {
+  text: string;
+  done: boolean;
+}
+
+/** A tutor's private working notes for one session. */
+export interface ITutorNotes {
+  items: ITutorNoteItem[];
+  /** Free-text side notes, kept alongside the checklist. */
+  text: string;
+}
+
 export interface IBooking extends Document {
   institutionId: Types.ObjectId;
   /** Set when the booking came from an accepted application; unset when the
@@ -15,7 +28,8 @@ export interface IBooking extends Document {
   startTime: Date;
   endTime: Date;
   mode: LessonMode;
-  /** Campus venue picked in the booking flow. Online sessions leave it unset. */
+  /** Where the session happens: a campus venue, or a place the student named
+   * themselves - a coffee shop, say. Online sessions leave it unset. */
   location?: string;
   status: BookingStatus;
   isTrial: boolean;
@@ -28,7 +42,29 @@ export interface IBooking extends Document {
   googleCalendarUserId?: Types.ObjectId;
   confirmedAt?: Date;
   completedAt?: Date;
+  /** The tutor's own prep notes about this student/guardian. Private to
+   * them: the `select: false` below keeps it out of every query that does not
+   * ask for it by name, so the student's own booking list cannot carry it. */
+  tutorNotes?: ITutorNotes;
 }
+
+//The whole list is replaced on every save, so an item is a value rather than
+//a thing with its own identity - no _id to keep in step with the client.
+const TutorNoteItemSchema = new Schema<ITutorNoteItem>(
+  {
+    text: { type: String, required: true, trim: true, maxlength: 200 },
+    done: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const TutorNotesSchema = new Schema<ITutorNotes>(
+  {
+    items: { type: [TutorNoteItemSchema], default: [] },
+    text: { type: String, default: "", trim: true, maxlength: 2000 },
+  },
+  { _id: false }
+);
 
 const BookingSchema = new Schema<IBooking>(
   {
@@ -40,7 +76,7 @@ const BookingSchema = new Schema<IBooking>(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     mode: { type: String, enum: Object.values(LessonMode), required: true },
-    location: { type: String, trim: true },
+    location: { type: String, trim: true, maxlength: 120 },
     status: { type: String, enum: Object.values(BookingStatus), default: BookingStatus.REQUESTED },
     isTrial: { type: Boolean, default: false },
     addressDisclosed: { type: Boolean, default: false },
@@ -51,6 +87,7 @@ const BookingSchema = new Schema<IBooking>(
     googleCalendarUserId: { type: Schema.Types.ObjectId, ref: "User" },
     confirmedAt: { type: Date },
     completedAt: { type: Date },
+    tutorNotes: { type: TutorNotesSchema, select: false },
   },
   { timestamps: true }
 );

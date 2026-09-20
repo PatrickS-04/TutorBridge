@@ -29,6 +29,9 @@ export interface IUser extends Document {
   locale: Locale;
   address?: string;
   deletionScheduledFor?: Date;
+  /** Set when an institution admin removes a tutor. Stops them being bookable
+   * without ever purging the profile, so their bookings and claims survive. */
+  deactivatedAt?: Date;
   createdBy?: Types.ObjectId;
   mustChangePassword: boolean;
   isBookable(): boolean;
@@ -62,6 +65,7 @@ const UserSchema = new Schema<IUser>(
     locale: { type: String, enum: Object.values(Locale), default: Locale.EN },
     address: { type: String, select: false },
     deletionScheduledFor: { type: Date },
+    deactivatedAt: { type: Date },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     mustChangePassword: { type: Boolean, default: false },
   },
@@ -74,7 +78,8 @@ UserSchema.methods.isBookable = function (this: IUser): boolean {
   return (
     this.role === UserRole.TUTOR &&
     this.verificationStatus === VerificationStatus.VERIFIED &&
-    !this.deletionScheduledFor
+    !this.deletionScheduledFor &&
+    !this.deactivatedAt
   );
 };
 

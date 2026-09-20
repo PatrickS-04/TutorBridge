@@ -92,6 +92,10 @@ interface TutorBridgeApi {
     @PUT("bookings/{id}/cancel")
     suspend fun cancelBooking(@Path("id") id: String, @Body body: CancelRequest): Response<BookingAckDto>
 
+    /** Replaces the tutor's prep notes for one session - checklist and side notes together. */
+    @PUT("bookings/{id}/notes")
+    suspend fun saveSessionNotes(@Path("id") id: String, @Body body: TutorNotesDto): Response<TutorNotesDto>
+
     // ==================== NOTIFICATIONS ====================
 
     @GET("notifications")

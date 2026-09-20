@@ -83,6 +83,40 @@ class MappingTest {
     }
 
     @Test
+    fun `a session carries the tutor's notes, and nothing when the server sends none`() {
+        val booking = BookingDto(
+            _id = "b1",
+            tutorId = UserBriefDto("t1", "Thabo Mokoena"),
+            studentId = UserBriefDto("u1", "Zola Khumalo"),
+            subjectName = "Mathematics",
+            startTime = "2026-09-21T08:30:00.000Z",
+            endTime = "2026-09-21T09:30:00.000Z",
+            status = "CONFIRMED",
+            tutorNotes = TutorNotesDto(
+                items = listOf(
+                    TutorNoteItemDto("Mark the problem set", done = true),
+                    TutorNoteItemDto("Set homework")
+                ),
+                text = "Guardian wants a progress update."
+            )
+        )
+
+        val forTutor = booking.toCalendarEvent(selfIsTutor = true)!!
+        assertEquals(2, forTutor.checklist.size)
+        assertEquals("Mark the problem set", forTutor.checklist[0].text)
+        assertTrue(forTutor.checklist[0].completed)
+        assertTrue(!forTutor.checklist[1].completed)
+        assertEquals("Guardian wants a progress update.", forTutor.sideNotes)
+        // Ids are positional, so two rows never collide in the list.
+        assertEquals(2, forTutor.checklist.map { it.id }.toSet().size)
+
+        // The student's own list never carries them, so the screen sees empty.
+        val forStudent = booking.copy(tutorNotes = null).toCalendarEvent(selfIsTutor = false)!!
+        assertTrue(forStudent.checklist.isEmpty())
+        assertEquals("", forStudent.sideNotes)
+    }
+
+    @Test
     fun `a tuition request keeps its subject, venue and match`() {
         val request = TuitionRequestDto(
             _id = "r1",

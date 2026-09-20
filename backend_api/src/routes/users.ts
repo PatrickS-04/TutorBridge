@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 
 /**
  * Bookable tutors at the caller's institution - what the Find a Tutor screen
- * lists. Mirrors User.isBookable(): tutor, verified, not pending deletion.
+ * lists. Mirrors User.isBookable(): tutor, verified, not deactivated or pending deletion.
  * (`deletionScheduledFor: null` also matches documents where the field is absent.)
  */
 router.get(
@@ -24,6 +24,7 @@ router.get(
         role: UserRole.TUTOR,
         verificationStatus: VerificationStatus.VERIFIED,
         deletionScheduledFor: null,
+        deactivatedAt: null,
       },
       req,
       ["subjectIds", "areaId"]

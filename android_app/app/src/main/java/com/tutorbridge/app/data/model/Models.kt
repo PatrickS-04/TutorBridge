@@ -99,7 +99,11 @@ data class CalendarEventUi(
     val participantRole: String,
     val location: String,
     val status: EventStatus,
-    val forRole: String // "student", "tutor", "both"
+    val forRole: String, // "student", "tutor", "both"
+    /** The tutor's prep checklist for this session; empty for the student. */
+    val checklist: List<SessionGoalUi> = emptyList(),
+    /** The tutor's free-text side notes about this student or guardian. */
+    val sideNotes: String = ""
 )
 
 /** A booking a student requested, waiting for the tutor to confirm or decline. */
@@ -188,18 +192,13 @@ data class OneOffSlotUi(
     val note: String = ""
 )
 
-// ==================== SESSION PREP ====================
+// ==================== SESSION NOTES ====================
 
+/** One row on a tutor's checklist for a session. */
 data class SessionGoalUi(
     val id: String,
     val text: String,
     val completed: Boolean
-)
-
-data class StudyMaterialUi(
-    val id: String,
-    val fileName: String,
-    val sizeLabel: String
 )
 
 data class LearningHistoryEntryUi(

@@ -160,6 +160,10 @@ fun SettingsScreen(
                         onClick = {}
                     )
                     val status = uiState.calendarMessage
+                        //A failed write outranks the happy "Connected as" line:
+                        //it is the one thing the row could say that the user
+                        //cannot find out any other way.
+                        ?: uiState.calendarSyncError?.let { "Last sync failed: $it" }
                         ?: uiState.calendarAccountEmail?.let { "Connected as $it" }
                         ?: "Confirmed sessions are added to your calendar automatically."
                     Text(

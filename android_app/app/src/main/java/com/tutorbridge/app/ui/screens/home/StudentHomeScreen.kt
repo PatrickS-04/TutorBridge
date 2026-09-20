@@ -60,7 +60,9 @@ fun StudentHomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNavigate("session_prep") },
+                    // Session prep is now the tutor's private notes page, so
+                    // the student's card opens the schedule and venue instead.
+                    .clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = NavySecondary)
             ) {
@@ -78,7 +80,7 @@ fun StudentHomeScreen(
                                 fontSize = 10.5.sp
                             )
                         }
-                        Text("Prep & Room →", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        Text("Schedule & Room →", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
