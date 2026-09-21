@@ -275,7 +275,7 @@ These accounts are in the team's database.
 | Role | Email | Password |
 |---|---|---|
 | Student | tomnook@gmail.com | `TNook12345` |
-| Tutor | dillonrinkwest@gmail.com | `Dillon1234@` |
+| Tutor | jonesdillon634@gmail.com | `Tom1234@` |
 
 ### Run the tests
 Each from the repo root:
