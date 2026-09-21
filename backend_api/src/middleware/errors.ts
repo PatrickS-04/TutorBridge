@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { apiError } from "../utils/asyncHandler";
 
+// Reference: Express.js. n.d. Error handling. [Online].
+//   Available at: https://expressjs.com/en/guide/error-handling/ [Accessed 21 September 2026].
 /**
  * The last thing an unhandled error passes through, and the one place that
  * decides whose fault it was. A 500 is a page for whoever is on call, so

@@ -14,6 +14,8 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
+// Reference: Android Developers. 2026. Guide to app architecture. [Online].
+//   Available at: https://developer.android.com/topic/architecture [Accessed 21 September 2026].
 /**
  * The one place backend documents become the `*Ui` models the screens render.
  *
@@ -377,6 +379,8 @@ fun TutorUi.slotsOn(date: LocalDate): List<String> {
 
 // ==================== SHARED HELPERS ====================
 
+// Reference: Google. 2024. Gson (Version 2.11.0). [Computer program].
+//   Available at: https://github.com/google/gson [Accessed 21 September 2026].
 internal fun <T> parseApiError(response: Response<T>): String {
     val raw = response.errorBody()?.string()
     return try {

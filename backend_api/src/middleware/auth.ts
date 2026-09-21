@@ -25,6 +25,8 @@ export interface AuthRequest extends Request {
 // Firebase SDK and sends the resulting ID token as the bearer. Credentials
 // are read from GOOGLE_APPLICATION_CREDENTIALS (path to a service-account
 // JSON) - see .env.
+// Reference: Firebase. 2026. Add the Firebase Admin SDK to your server. [Online].
+//   Available at: https://firebase.google.com/docs/admin/setup [Accessed 21 September 2026].
 if (admin.apps.length === 0) {
   admin.initializeApp({ credential: admin.credential.applicationDefault() });
 }
@@ -33,6 +35,8 @@ function unauthenticated(res: Response, code: string, message: string) {
   return res.status(401).json({ error: { code, message, field: null } });
 }
 
+// Reference: Firebase. 2026. Verify ID tokens. [Online].
+//   Available at: https://firebase.google.com/docs/auth/admin/verify-id-tokens [Accessed 21 September 2026].
 /**
  * Verifies the Firebase ID token and nothing else. Use this for routes that
  * must work before a TutorBridge profile exists - i.e. POST /auth/bootstrap.

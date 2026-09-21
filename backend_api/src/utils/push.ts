@@ -8,6 +8,8 @@ export interface PushPayload {
   deepLink?: string;
 }
 
+// Reference: Firebase. 2026. Send a message using Firebase Admin SDK. [Online].
+//   Available at: https://firebase.google.com/docs/cloud-messaging/send/admin-sdk [Accessed 21 September 2026].
 export function buildMulticast(tokens: string[], payload: PushPayload): MulticastMessage {
   const data: Record<string, string> = {
     title: payload.title,

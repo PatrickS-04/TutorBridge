@@ -1,3 +1,5 @@
+// Reference: Node.js. 2026. Test runner (Node.js v22.23.2 documentation). [Online].
+//   Available at: https://nodejs.org/docs/latest-v22.x/api/test.html [Accessed 21 September 2026].
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { completableFilter } from "./completePastSessions";

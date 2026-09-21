@@ -5,6 +5,8 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
+// Reference: Android Developers. 2026. Show a biometric authentication dialog. [Online].
+//   Available at: https://developer.android.com/identity/sign-in/biometric-auth [Accessed 21 September 2026].
 class BiometricAuthentication(private val activity: FragmentActivity) {
     private val authenticatorsAllowed = BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL

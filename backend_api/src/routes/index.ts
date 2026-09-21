@@ -15,6 +15,8 @@ import calendarRoutes from "./calendar";
 import timesheetRoutes from "./timesheets";
 import notificationRoutes from "./notifications";
 
+// Reference: Express.js. n.d. Routing. [Online].
+//   Available at: https://expressjs.com/en/guide/routing/ [Accessed 21 September 2026].
 /**
  * Mount path -> router. A table rather than a list of app.use calls so
  * openapi.test.ts can read the real route surface back and check every

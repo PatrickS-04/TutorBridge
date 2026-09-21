@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) handleDeepLink(intent)
 
+        // Reference: Android Developers. 2026. Get started with Jetpack Compose. [Online].
+        //   Available at: https://developer.android.com/develop/ui/compose/documentation [Accessed 21 September 2026].
         setContent {
             val uiState by viewModel.uiState.collectAsState()
 
@@ -69,6 +71,8 @@ class MainActivity : AppCompatActivity() {
         intent?.getStringExtra(EXTRA_DEEP_LINK)?.let(viewModel::openDeepLink)
     }
 
+    // Reference: Android Developers. 2026. Notification runtime permission. [Online].
+    //   Available at: https://developer.android.com/develop/ui/compose/notifications/notification-permission [Accessed 21 September 2026].
     private fun askForNotificationPermission() {
         if (askedForNotifications || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         askedForNotifications = true

@@ -5,6 +5,8 @@ import { paginate } from "../utils/paginate";
 import { authenticate, requireRole } from "../middleware/auth";
 import { UserRole } from "../models";
 
+// Reference: Express.js. n.d. Routing. [Online].
+//   Available at: https://expressjs.com/en/guide/routing/ [Accessed 21 September 2026].
 export function createCrudRouter<T>(model: Model<T>) {
   const router = Router();
   router.use(authenticate);

@@ -11,6 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Reference: Android Developers. 2026. Material Design 3 in Compose. [Online].
+//   Available at: https://developer.android.com/develop/ui/compose/designsystems/material3 [Accessed 21 September 2026].
 val TutorBridgeTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,

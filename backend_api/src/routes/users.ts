@@ -7,6 +7,8 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 router.use(authenticate);
+// Reference: Express.js. 2026. Multer (Version 2.4.0). [Computer program].
+//   Available at: https://github.com/expressjs/multer [Accessed 21 September 2026].
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 /**

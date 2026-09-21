@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Reference: Android Developers. 2026. Localize your app. [Online].
+           Available at: https://developer.android.com/guide/topics/resources/localization [Accessed 21 September 2026]. -->
     <string name="app_name">TutorBridge</string>
     <string name="settings_title">Izilungiselelo</string>
     <string name="settings_subtitle">Okukhethwayo, izaziso, nezilawuli zohlelo lokusebenza.</string>
