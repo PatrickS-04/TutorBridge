@@ -9,7 +9,6 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
-- [Design Considerations](#design-considerations)
 - [Setup](#setup)
 - [Version Control/GitHub Workflows](#version-controlgithub-workflows)
 - [AI Disclosure](#ai-disclosure)
