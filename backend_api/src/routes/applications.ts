@@ -23,7 +23,7 @@ router.get(
     // the student behind each request it applied to.
     const result = await paginate(Application, { tutorId: req.auth!.userId }, req, {
       path: "tuitionRequestId",
-      populate: [{ path: "subjectId" }, { path: "studentId" }],
+      populate: [{ path: "subjectId" }, { path: "studentId" }, { path: "areaId" }],
     });
     res.status(200).json(result);
   })
