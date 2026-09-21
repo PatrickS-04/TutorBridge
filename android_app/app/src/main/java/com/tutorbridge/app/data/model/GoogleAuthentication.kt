@@ -23,6 +23,8 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Co
 import com.tutorbridge.app.R
 
 object GoogleAuthentication {
+    // Reference: Android Developers. 2026. About Sign in with Google. [Online].
+    //   Available at: https://developer.android.com/identity/sign-in/credential-manager-siwg [Accessed 21 September 2026].
     suspend fun idTokenRequest(context: Context, webClientId: String): String {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
@@ -86,6 +88,8 @@ object GoogleAuthentication {
             if (code != null) onAuthCode(code) else onError("Calendar access was not granted")
         }
 
+        // Reference: Android Developers. 2025. Authorize access to Google user data. [Online].
+        //   Available at: https://developer.android.com/identity/authorization [Accessed 21 September 2026].
         val authorize = { account: Account ->
             val request = AuthorizationRequest.Builder()
                 //"email" rides along so the backend can name the account that

@@ -9,6 +9,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+// References:
+// Square, Inc. 2024. Retrofit (Version 2.11.0). [Computer program].
+//   Available at: https://lysine.dev/retrofit/ [Accessed 21 September 2026].
+// Square, Inc. 2023. OkHttp (Version 4.12.0). [Computer program].
+//   Available at: https://lysine.dev/okhttp/ [Accessed 21 September 2026].
+// Google. 2024. Gson (Version 2.11.0). [Computer program].
+//   Available at: https://github.com/google/gson [Accessed 21 September 2026].
 object RetrofitInstance {
 
     // 10.0.2.2 = the host machine's localhost, as seen from the Android

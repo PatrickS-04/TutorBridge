@@ -10,6 +10,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
+// Reference: Android Developers. 2026. Build local unit tests. [Online].
+//   Available at: https://developer.android.com/training/testing/local-tests [Accessed 21 September 2026].
 /**
  * Covers the mapping between backend documents and what the screens draw -
  * the part that fails quietly (wrong day, no slots, blank name) rather than

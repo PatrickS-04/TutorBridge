@@ -59,6 +59,11 @@ router.post(
     const existing = await User.findOne({ email: String(email).toLowerCase() });
     if (existing) return res.status(409).json(apiError("EMAIL_TAKEN", "Email already registered", "email"));
 
+    // References:
+    // Node.js. 2026. Crypto (Node.js v22.23.2 documentation). [Online].
+    //   Available at: https://nodejs.org/docs/latest-v22.x/api/crypto.html [Accessed 21 September 2026].
+    // Wirtz, D. 2025. bcrypt.js (Version 3.0.3). [Computer program].
+    //   Available at: https://github.com/dcodeIO/bcrypt.js [Accessed 21 September 2026].
     const temporaryPassword = crypto.randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10);
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 

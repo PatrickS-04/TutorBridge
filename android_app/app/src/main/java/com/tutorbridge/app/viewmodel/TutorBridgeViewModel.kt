@@ -34,11 +34,20 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 
+// References:
+// Android Developers. 2026. Guide to app architecture. [Online].
+//   Available at: https://developer.android.com/topic/architecture [Accessed 21 September 2026].
+// Android Developers. 2026. ViewModel overview. [Online].
+//   Available at: https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 21 September 2026].
+// Android Developers. 2026. Kotlin coroutines on Android. [Online].
+//   Available at: https://developer.android.com/kotlin/coroutines [Accessed 21 September 2026].
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository(RetrofitInstance.authApi)
     private val repository = TutorBridgeRepository(RetrofitInstance.tutorBridgeApi)
 
+    // Reference: Android Developers. 2026. StateFlow and SharedFlow. [Online].
+    //   Available at: https://developer.android.com/kotlin/flow/stateflow-and-sharedflow [Accessed 21 September 2026].
     private val _uiState = MutableStateFlow(TutorBridgeUiState())
     val uiState: StateFlow<TutorBridgeUiState> = _uiState.asStateFlow()
 
@@ -98,6 +107,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(authMode = mode, authErrorMessage = null) }
     }
 
+    // Reference: Firebase. 2026. Authenticate with Firebase using password-based accounts on Android. [Online].
+    //   Available at: https://firebase.google.com/docs/auth/android/password-auth [Accessed 21 September 2026].
     fun signUp(fullName: String, email: String, password: String) {
         val institutionId = _uiState.value.selectedSignupInstitutionId
         if (institutionId == null) {
@@ -130,6 +141,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    // Reference: Firebase. 2026. Authenticate with Google on Android. [Online].
+    //   Available at: https://firebase.google.com/docs/auth/android/google-signin [Accessed 21 September 2026].
     /**
      * [idToken] is the raw Google ID token from Credential Manager
      * (GoogleAuthentication.idTokenRequest), exchanged for a Firebase
@@ -977,6 +990,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             else -> "en"
         }
 
+        // Reference: Android Developers. 2026. Per-app language preferences. [Online].
+        //   Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
         androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
             androidx.core.os.LocaleListCompat.forLanguageTags(localeTag)
         )
@@ -1108,6 +1123,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     // ==================== PUSH ====================
 
     // Runs on every sign-in and biometric unlock. The backend upserts by token, so repeats are harmless.
+    // Reference: Firebase. 2026. Get started with Firebase Cloud Messaging in Android apps. [Online].
+    //   Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026].
     private fun registerPushToken() {
         viewModelScope.launch {
             try {

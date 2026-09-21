@@ -10,6 +10,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+// Reference: Square, Inc. 2024. Retrofit (Version 2.11.0). [Computer program].
+//   Available at: https://lysine.dev/retrofit/ [Accessed 21 September 2026].
 /**
  * Everything the app talks to after sign-in. One interface rather than one per
  * route file: the screens read across all of them anyway, and Retrofit builds

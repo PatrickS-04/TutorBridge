@@ -33,6 +33,8 @@ async function main() {
     return Object.fromEntries(cols.map((c, i) => [c, cells[i] ?? ""]));
   });
 
+  // Reference: Firebase. 2026. Add the Firebase Admin SDK to your server. [Online].
+  //   Available at: https://firebase.google.com/docs/admin/setup [Accessed 21 September 2026].
   admin.initializeApp({ credential: admin.credential.applicationDefault() });
   await mongoose.connect(uri);
 
@@ -43,6 +45,8 @@ async function main() {
       if (!institution) throw new Error(`no institution named "${r.institution}"`);
       if (!r.fullName) throw new Error("fullName is required");
 
+      // Reference: Firebase. 2026. Manage users. [Online].
+      //   Available at: https://firebase.google.com/docs/auth/admin/manage-users [Accessed 21 September 2026].
       let fbUser: admin.auth.UserRecord;
       let created = false;
       try {

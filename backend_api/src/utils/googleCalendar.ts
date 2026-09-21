@@ -27,6 +27,8 @@ function encryptionKey() {
 
 //A Google refresh token is a standing key to the user's calendar, so it never
 //sits in Mongo in the clear. Stored as iv:authTag:ciphertext.
+// Reference: Node.js. 2026. Crypto (Node.js v22.23.2 documentation). [Online].
+//   Available at: https://nodejs.org/docs/latest-v22.x/api/crypto.html [Accessed 21 September 2026].
 export function encryptToken(plain: string): string {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", encryptionKey(), iv);
@@ -42,6 +44,8 @@ export function decryptToken(stored: string): string {
   return Buffer.concat([decipher.update(Buffer.from(body, "hex")), decipher.final()]).toString("utf8");
 }
 
+// Reference: Google for Developers. 2026. Using OAuth 2.0 for web server applications. [Online].
+//   Available at: https://developers.google.com/identity/protocols/oauth2/web-server [Accessed 21 September 2026].
 async function postForm(body: Record<string, string>) {
   const response = await fetch(TOKEN_URL, {
     method: "POST",
@@ -84,6 +88,8 @@ export async function exchangeAuthCode(authCode: string) {
   };
 }
 
+// Reference: Google for Developers. 2026. OpenID Connect. [Online].
+//   Available at: https://developers.google.com/identity/openid-connect/openid-connect [Accessed 21 September 2026].
 async function fetchAccountEmail(accessToken?: string): Promise<string | undefined> {
   if (!accessToken) return undefined;
   try {
@@ -155,6 +161,8 @@ async function ownerLinkFor(booking: IBooking) {
   return CalendarLink.findOne({ userId: booking.studentId, syncEnabled: true }).select("+refreshTokenEnc");
 }
 
+// Reference: Google for Developers. 2026. Events: insert. [Online].
+//   Available at: https://developers.google.com/workspace/calendar/api/v3/reference/events/insert [Accessed 21 September 2026].
 async function createEvent(booking: IBooking) {
   const link = await ownerLinkFor(booking);
   //Neither party linking is the one sync failure nothing else records: no
@@ -198,6 +206,8 @@ export function syncBookingCancelled(booking: IBooking) {
   deleteEvent(booking).catch((error) => console.error("calendar cleanup failed:", error));
 }
 
+// Reference: Google for Developers. 2026. Events: delete. [Online].
+//   Available at: https://developers.google.com/workspace/calendar/api/v3/reference/events/delete [Accessed 21 September 2026].
 async function deleteEvent(booking: IBooking) {
   //Bookings synced before either party could link default to the tutor, which
   //is whose calendar they went to back then.

@@ -5,6 +5,8 @@ import com.tutorbridge.app.viewmodel.routeForRole
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+// Reference: Android Developers. 2026. Build local unit tests. [Online].
+//   Available at: https://developer.android.com/training/testing/local-tests [Accessed 21 September 2026].
 class RouteAccessTest {
 
     @Test

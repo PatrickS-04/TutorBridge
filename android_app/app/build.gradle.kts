@@ -19,6 +19,8 @@ val localProperties = Properties().apply {
 // from a physical device. For a phone, set API_BASE_URL=http://127.0.0.1:5000/
 // in local.properties: every build then tunnels that port on each connected
 // device to this machine over adb, whatever network the phone is on.
+// Reference: Android Developers. 2026. Android Emulator networking. [Online].
+//   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
 val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")
 
 android {
@@ -68,6 +70,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 // adb reverse drops whenever a device is unplugged or restarts, so redo it on
 // every build instead of leaving the app timing out against 127.0.0.1.
+// Reference: Android Developers. 2026. Android Debug Bridge (adb). [Online].
+//   Available at: https://developer.android.com/tools/adb [Accessed 21 September 2026].
 val apiUri = URI(apiBaseUrl)
 if (apiUri.host == "127.0.0.1" || apiUri.host == "localhost") {
     val adb = androidComponents.sdkComponents.adb
@@ -106,6 +110,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     //Firebase
+    // Reference: Firebase. 2026. Add Firebase to your Android project. [Online].
+    //   Available at: https://firebase.google.com/docs/android/setup [Accessed 21 September 2026].
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")

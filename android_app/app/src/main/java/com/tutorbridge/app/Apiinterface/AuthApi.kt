@@ -6,6 +6,8 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 
+// Reference: Square, Inc. 2024. Retrofit (Version 2.11.0). [Computer program].
+//   Available at: https://lysine.dev/retrofit/ [Accessed 21 September 2026].
 /**
  * Mirrors backend_api/src/routes/auth.ts and the public
  * GET /reference/institutions endpoint.

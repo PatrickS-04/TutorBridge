@@ -32,6 +32,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Reference: Android Developers. 2025. Setting up file sharing. [Online].
+               Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026]. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -41,6 +43,8 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <!-- Reference: Firebase. 2026. Get started with Firebase Cloud Messaging in Android apps. [Online].
+               Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026]. -->
         <service
             android:name=".push.TutorBridgeMessagingService"
             android:exported="false">

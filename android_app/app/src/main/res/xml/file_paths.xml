@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <!-- Exported claim vouchers live in the cache; the share sheet reads them from here. -->
+    <!-- Reference: Android Developers. 2025. Setting up file sharing. [Online].
+           Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026]. -->
     <cache-path name="vouchers" path="vouchers/" />
 </paths>
