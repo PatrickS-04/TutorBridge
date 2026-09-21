@@ -131,6 +131,8 @@ function crudPaths(resource: string, schema: string) {
   };
 }
 
+// Reference: OpenAPI Initiative. 2020. OpenAPI Specification v3.0.3. [Online].
+//   Available at: https://spec.openapis.org/oas/v3.0.3.html [Accessed 21 September 2026].
 export const openapiSpec = {
   openapi: "3.0.3",
   info: {

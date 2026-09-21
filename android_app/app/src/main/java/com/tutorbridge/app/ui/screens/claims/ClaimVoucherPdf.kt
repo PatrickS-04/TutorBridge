@@ -27,6 +27,8 @@ fun exportClaimVoucher(context: Context, institution: InstitutionUi, period: Cla
         return
     }
 
+    // Reference: Android Developers. 2025. Setting up file sharing. [Online].
+    //   Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026].
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     val share = Intent(Intent.ACTION_SEND).apply {
         type = "application/pdf"
@@ -37,6 +39,8 @@ fun exportClaimVoucher(context: Context, institution: InstitutionUi, period: Cla
     context.startActivity(Intent.createChooser(share, "Export claim voucher"))
 }
 
+// Reference: Android Developers. 2026. PdfDocument. [Online].
+//   Available at: https://developer.android.com/reference/android/graphics/pdf/PdfDocument [Accessed 21 September 2026].
 private fun writeVoucherPdf(
     context: Context,
     institution: InstitutionUi,

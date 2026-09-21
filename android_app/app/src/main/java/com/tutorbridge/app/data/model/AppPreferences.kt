@@ -2,6 +2,8 @@ package com.tutorbridge.app.data.model
 
 import android.content.Context
 
+// Reference: Android Developers. 2026. Save simple data with SharedPreferences. [Online].
+//   Available at: https://developer.android.com/training/data-storage/shared-preferences [Accessed 21 September 2026].
 class AppPreferences(context: Context) {
     private val preferences = context.getSharedPreferences("tutorbridge_preferences", Context.MODE_PRIVATE)
 

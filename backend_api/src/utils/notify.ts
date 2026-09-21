@@ -21,6 +21,8 @@ async function deliver(
   await sendPush(event).catch((error) => console.error("push failed:", error));
 }
 
+// Reference: Firebase. 2026. Send a message using Firebase Admin SDK. [Online].
+//   Available at: https://firebase.google.com/docs/cloud-messaging/send/admin-sdk [Accessed 21 September 2026].
 async function sendPush(event: INotificationEvent) {
   const rows = await NotificationToken.find({ userId: event.userId }).select("token").lean();
   if (rows.length === 0) return;

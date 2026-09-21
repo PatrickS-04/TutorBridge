@@ -6,6 +6,8 @@ import com.google.firebase.auth.auth
 import okhttp3.Interceptor
 import okhttp3.Response
 
+// Reference: Square, Inc. 2023. OkHttp (Version 4.12.0). [Computer program].
+//   Available at: https://lysine.dev/okhttp/ [Accessed 21 September 2026].
 /**
  * Attaches the signed-in user's Firebase ID token as the bearer, which is
  * what backend_api's `authenticate` middleware verifies.

@@ -7,6 +7,8 @@ permissions:
   contents: read
 
 jobs:
+  # Reference: GitHub. n.d. Building and testing Node.js. [Online].
+  #   Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs [Accessed 21 September 2026].
   backend:
     runs-on: ubuntu-latest
     defaults:
@@ -23,6 +25,13 @@ jobs:
       - run: npm run build
       - run: npm test
       # Pushes to master deploy to Azure App Service: dist/ plus runtime deps only.
+      # References:
+      # Microsoft. 2025. Deploy by using GitHub Actions. [Online].
+      #   Available at: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions [Accessed 21 September 2026].
+      # Microsoft. 2026. azure/webapps-deploy (Version 3). [Computer program].
+      #   Available at: https://github.com/Azure/webapps-deploy [Accessed 21 September 2026].
+      # Microsoft. 2025. Quickstart: create a Node.js web app. [Online].
+      #   Available at: https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs [Accessed 21 September 2026].
       - if: github.ref == 'refs/heads/master'
         run: npm prune --omit=dev
       - if: github.ref == 'refs/heads/master'
@@ -32,6 +41,8 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: backend_api
 
+  # Reference: GitHub. n.d. Building and testing Java with Gradle. [Online].
+  #   Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
   android:
     runs-on: ubuntu-latest
     defaults:
@@ -46,6 +57,8 @@ jobs:
           cache: gradle
       - run: chmod +x gradlew
       - run: ./gradlew testDebugUnitTest assembleDebug
+      # Reference: GitHub. n.d. Store and share data with workflow artifacts. [Online].
+      #   Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
       - uses: actions/upload-artifact@v4
         with:
           name: tutorbridge-debug-apk

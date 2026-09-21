@@ -80,6 +80,8 @@ export async function purgeScheduledDeletions(now = new Date()): Promise<number>
   return due.length;
 }
 
+// Reference: Firebase. 2026. Manage users. [Online].
+//   Available at: https://firebase.google.com/docs/auth/admin/manage-users [Accessed 21 September 2026].
 /**
  * The app deletes the Firebase account itself before calling DELETE
  * /users/me, so this is usually a no-op. It matters when that half failed and

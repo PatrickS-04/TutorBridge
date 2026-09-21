@@ -26,6 +26,8 @@ fun VenueLink(venue: String, modifier: Modifier = Modifier, fontSize: TextUnit =
     Text(
         "📍 $venue",
         modifier = modifier.clickable {
+            // Reference: Android Developers. 2026. Google Maps intents for Android. [Online].
+            //   Available at: https://developer.android.com/guide/components/google-maps-intents [Accessed 21 September 2026].
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=${Uri.encode(venue)}"))
             runCatching { context.startActivity(intent) }
                 .onFailure { Toast.makeText(context, "No maps app available", Toast.LENGTH_SHORT).show() }

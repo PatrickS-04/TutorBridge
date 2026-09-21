@@ -9,19 +9,30 @@ import { errorHandler } from "./middleware/errors";
 import { purgeScheduledDeletions } from "./utils/purgeScheduledDeletions";
 import { completePastSessions } from "./utils/completePastSessions";
 
+// Reference: Motte, S. 2026. dotenv (Version 17.4.2). [Computer program].
+//   Available at: https://github.com/motdotla/dotenv [Accessed 21 September 2026].
 dotenv.config();
 
 async function main() {
+  // References:
+  // MongoDB. n.d. MongoDB Atlas: multi-cloud database service. [Online].
+  //   Available at: https://www.mongodb.com/docs/atlas/ [Accessed 21 September 2026].
+  // MongoDB. n.d. Connection strings. [Online].
+  //   Available at: https://www.mongodb.com/docs/manual/reference/connection-string/ [Accessed 21 September 2026].
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI is not set");
   await mongoose.connect(uri);
   console.log("MongoDB connected");
 
   const app = express();
+  // Reference: Express.js. 2026. cors (Version 2.8.6). [Computer program].
+  //   Available at: https://github.com/expressjs/cors [Accessed 21 September 2026].
   app.use(cors());
   app.use(express.json());
 
   // Browsable docs, plus the raw spec for client generators.
+  // Reference: Scott, S. 2024. swagger-ui-express (Version 5.0.1). [Computer program].
+  //   Available at: https://github.com/scottie1984/swagger-ui-express [Accessed 21 September 2026].
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec, { customSiteTitle: "TutorBridge API" }));
   app.get("/openapi.json", (_req, res) => res.json(openapiSpec));
 

@@ -22,6 +22,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
+// Reference: Firebase. 2026. Get started with Firebase Cloud Messaging in Android apps. [Online].
+//   Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026].
 class TutorBridgeMessagingService : FirebaseMessagingService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
