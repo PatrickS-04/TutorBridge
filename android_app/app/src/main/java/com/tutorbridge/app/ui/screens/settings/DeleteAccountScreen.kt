@@ -12,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,7 +100,7 @@ fun DeleteAccountScreen(
                     OutlinedTextField(
                         value = uiState.deleteAccountReason,
                         onValueChange = onReasonChange,
-                        readOnly = true,
+                        placeholder = { Text("Graduating or found an external tutor etc. (Optional)")},
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -128,16 +130,28 @@ fun DeleteAccountScreen(
         }
 
         item {
+            uiState.authErrorMessage?.let { message ->
+                Text(message, color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth())
+            }
+        }
+
+        item {
             Button(
                 onClick = onConfirmDelete,
-                enabled = canDelete,
+                enabled = canDelete && !uiState.isAuthLoading,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {
-                Icon(Icons.Default.DeleteForever, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Permanently Delete Account", fontWeight = FontWeight.Bold)
+                if (uiState.isAuthLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.DeleteForever, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Permanently Delete Account", fontWeight = FontWeight.Bold)
+                }
             }
         }
 

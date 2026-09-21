@@ -31,7 +31,8 @@ fun TutorAvailabilityScreen(
     onTabChange: (String) -> Unit = {},
     onToggleDay: (String) -> Unit = {}
 ) {
-    val dayLetters = listOf("M", "T", "W", "T", "F", "S", "S")
+    // Keyed by DayOfWeek name so Tuesday and Thursday stay distinct.
+    val days = java.time.DayOfWeek.entries
 
     Column(
         modifier = Modifier
@@ -75,7 +76,8 @@ fun TutorAvailabilityScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                dayLetters.forEach { d ->
+                                days.forEach { dayOfWeek ->
+                                    val d = dayOfWeek.name
                                     val active = uiState.activeDays.contains(d)
                                     Box(
                                         modifier = Modifier
@@ -86,7 +88,7 @@ fun TutorAvailabilityScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            d,
+                                            d.take(1),
                                             color = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 12.sp

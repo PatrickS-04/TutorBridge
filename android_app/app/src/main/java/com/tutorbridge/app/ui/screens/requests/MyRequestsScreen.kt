@@ -43,19 +43,14 @@ fun MyRequestsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("My Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(
-                    "Track requests you've submitted and review mentor applicants.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        Column {
+            Text("My Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "Track requests you've submitted and review mentor applicants.",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onNewRequest,
                 shape = RoundedCornerShape(20.dp),
@@ -101,7 +96,7 @@ fun MyRequestsScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         when (req.status) {
                             RequestStatus.OPEN -> {
-                                if (req.applicants.isNotEmpty()) {
+                                if (req.applicantCount > 0) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -113,7 +108,7 @@ fun MyRequestsScreen(
                                     ) {
                                         Icon(Icons.Default.Group, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
                                         Text(
-                                            "${req.applicants.size} tutor applicants — Tap to review & match",
+                                            "${req.applicantCount} tutor applicants — Tap to review & match",
                                             fontSize = 12.sp,
                                             color = NavySecondary
                                         )
@@ -128,7 +123,12 @@ fun MyRequestsScreen(
                                         .background(EmeraldTint)
                                         .padding(10.dp)
                                 ) {
-                                    Text("Matched with ${req.matchedTutorName}", fontSize = 12.sp, color = EmeraldSuccess, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        if (req.matchedTutorName.isBlank()) "Matched" else "Matched with ${req.matchedTutorName}",
+                                        fontSize = 12.sp,
+                                        color = EmeraldSuccess,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                             else -> {}

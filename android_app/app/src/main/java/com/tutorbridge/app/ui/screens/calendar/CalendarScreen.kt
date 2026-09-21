@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -38,8 +39,8 @@ fun CalendarScreen(
     uiState: TutorBridgeUiState,
     onSelectDate: (LocalDate) -> Unit,
     onFilterChange: (String) -> Unit,
-    onAddEvent: (CalendarEventUi) -> Unit,
-    onNavigateToPrep: () -> Unit
+    onOpenSessionNotes: (CalendarEventUi) -> Unit,
+    onAddEvent: () -> Unit
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
     val yearMonth = YearMonth.from(uiState.selectedCalendarDate)
@@ -67,15 +68,19 @@ fun CalendarScreen(
                     )
                     Text("Calendar & Events", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Event", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                // Sessions are created by the student who needs them - a tutor
+                // only ever accepts or declines one, so they get no Add button.
+                if (!isTutor) {
+                    Button(
+                        onClick = onAddEvent,
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Event", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -234,7 +239,13 @@ fun CalendarScreen(
         } else {
             items(eventsOnDate) { event ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onNavigateToPrep() },
+                    // The notes behind a session are the tutor's own, so only
+                    // they get a card that opens onto them.
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (isTutor) Modifier.clickable { onOpenSessionNotes(event) } else Modifier
+                        ),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -251,9 +262,33 @@ fun CalendarScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text("📍 ${event.location}", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text("With ${event.participantName}", fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+
+                        if (isTutor) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.EditNote,
+                                    contentDescription = null,
+                                    tint = CrimsonPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    if (event.checklist.isEmpty()) {
+                                        "Add session notes"
+                                    } else {
+                                        "Notes • ${event.checklist.count { it.completed }}/${event.checklist.size} done"
+                                    },
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -269,8 +304,8 @@ fun CalendarScreenPreview() {
             uiState = TutorBridgeUiState(),
             onSelectDate = {},
             onFilterChange = {},
-            onAddEvent = {},
-            onNavigateToPrep = {}
+            onOpenSessionNotes = {},
+            onAddEvent = {}
         )
     }
 }

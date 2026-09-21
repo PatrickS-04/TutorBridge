@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.find
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,10 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -58,9 +61,17 @@ fun TutorProfileScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("🏛", fontSize = 12.sp)
-                    Text("${tutor.department} • ${tutor.staffOrTutorId}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_tutorbridge_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        listOf(tutor.department, tutor.staffOrTutorId).filter { it.isNotBlank() }.joinToString(" • "),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -71,7 +82,10 @@ fun TutorProfileScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "★ ${tutor.rating} Rating  •  ${if (tutor.activeToday) "Active today" else "Active now"}",
+                    listOfNotNull(
+                        if (tutor.reviewsCount > 0) "★ ${tutor.rating} Rating" else null,
+                        if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else "Not available today"
+                    ).joinToString("  •  "),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

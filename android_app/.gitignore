@@ -4,3 +4,6 @@
 /build/
 /local.properties
 /captures/
+.idea/
+hs_err_pid*.log
+replay_pid*.log

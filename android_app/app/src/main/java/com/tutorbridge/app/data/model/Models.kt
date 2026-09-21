@@ -24,6 +24,13 @@ enum class ClaimStatus {
     ACTIVE_DRAFT, PAID
 }
 
+/** One weekly availability window, parsed from the user's availability slots. */
+data class AvailabilityWindowUi(
+    val day: java.time.DayOfWeek,
+    val start: java.time.LocalTime,
+    val end: java.time.LocalTime
+)
+
 data class TutorUi(
     val id: String,
     val name: String,
@@ -45,7 +52,9 @@ data class TutorUi(
     val department: String = "",
     val languages: List<String> = emptyList(),
     val totalConsultations: Int = 0,
-    val consultationVenue: String = ""
+    val consultationVenue: String = "",
+    /** Weekly availability, which the booking flow turns into slots per date. */
+    val windows: List<AvailabilityWindowUi> = emptyList()
 )
 
 data class StudentRequestUi(
@@ -62,11 +71,16 @@ data class StudentRequestUi(
     val timestamp: String,
     val preferredVenue: String,
     val matchedTutorName: String = "",
+    /** How many tutors applied; the applicants themselves load on the detail screen. */
+    val applicantCount: Int = 0,
     val applicants: List<TutorApplicant> = emptyList()
 )
 
 data class TutorApplicant(
+    /** The application's id - what accept/reject is sent against. */
     val id: String,
+    /** The tutor behind it, so accepting can open their availability. */
+    val tutorId: String,
     val name: String,
     val initials: String,
     val verified: Boolean,
@@ -85,7 +99,21 @@ data class CalendarEventUi(
     val participantRole: String,
     val location: String,
     val status: EventStatus,
-    val forRole: String // "student", "tutor", "both"
+    val forRole: String, // "student", "tutor", "both"
+    /** The tutor's prep checklist for this session; empty for the student. */
+    val checklist: List<SessionGoalUi> = emptyList(),
+    /** The tutor's free-text side notes about this student or guardian. */
+    val sideNotes: String = ""
+)
+
+/** A booking a student requested, waiting for the tutor to confirm or decline. */
+data class PendingBookingUi(
+    val id: String,
+    val studentName: String,
+    val initials: String,
+    val subjectName: String,
+    val whenLabel: String,
+    val location: String
 )
 
 data class NotificationUi(
@@ -100,9 +128,15 @@ data class NotificationUi(
 data class RequestDraft(
     val step: Int = 1,
     val subject: String = "",
+    val subjectId: String = "",
     val level: String = "Undergraduate 1st Year",
-    val timeWindow: String = "Weekday afternoons (Wed/Fri)",
-    val preferredVenue: String = "Upper Campus — Leslie Social Sciences 2.10",
+    val timeWindow: String = "",
+    val preferredVenue: String = "",
+    val areaId: String = "",
+    /** Days and hours picked in step 3, sent as the request's availability. */
+    val days: Set<java.time.DayOfWeek> = emptySet(),
+    val startTime: String = "14:00",
+    val endTime: String = "17:00",
     val topic: String = "",
     val notes: String = ""
 )
@@ -158,18 +192,13 @@ data class OneOffSlotUi(
     val note: String = ""
 )
 
-// ==================== SESSION PREP ====================
+// ==================== SESSION NOTES ====================
 
+/** One row on a tutor's checklist for a session. */
 data class SessionGoalUi(
     val id: String,
     val text: String,
     val completed: Boolean
-)
-
-data class StudyMaterialUi(
-    val id: String,
-    val fileName: String,
-    val sizeLabel: String
 )
 
 data class LearningHistoryEntryUi(

@@ -4,9 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +23,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.TutorUi
+import com.tutorbridge.app.data.repository.slotsOn
+import com.tutorbridge.app.ui.components.VenueLink
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.CrimsonTint
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
@@ -33,23 +37,14 @@ import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
-private val bookingDates = listOf(
-    "2026-10-15" to Pair("MON", "15"),
-    "2026-10-16" to Pair("TUE", "16"),
-    "2026-10-17" to Pair("WED", "17"),
-    "2026-10-18" to Pair("THU", "18"),
-    "2026-10-19" to Pair("FRI", "19")
-)
+// The next two weeks, starting tomorrow.
+private val dayLabel = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
 
-private val venues = listOf(
-    "Upper Campus — Leslie Social Sciences 2.10",
-    "Science Precinct — RW James Physics Lab 3",
-    "Engineering Mall — Menzies Building Study Lounge",
-    "Kramer Law Building — Seminar Room 4",
-    "Chancellor's Building — Computer Lab B",
-    "Main Library — Quiet Study Room 2",
-    "Chancellor Oppenheimer Library — Study Pod 4"
-)
+private fun upcomingDates(): List<Pair<String, Pair<String, String>>> =
+    (1..14).map { offset ->
+        val date = LocalDate.now().plusDays(offset.toLong())
+        date.toString() to Pair(date.format(dayLabel).uppercase(Locale.ENGLISH), date.dayOfMonth.toString())
+    }
 
 // ==================== STEP 1: SELECT AVAILABILITY ====================
 
@@ -63,82 +58,106 @@ fun BookingFlowScreen(
     onBack: () -> Unit
 ) {
     val tutor = uiState.selectedTutor ?: return
+    val dates = remember { upcomingDates() }
+    val selectedDate = runCatching { LocalDate.parse(uiState.selectedBookingDate) }.getOrNull()
+    val slots = selectedDate?.let { tutor.slotsOn(it) }.orEmpty()
+    // Campus areas come from the institution's reference data; the tutor's own
+    // consultation venue is offered first when they have one.
+    val venues = (listOf(tutor.consultationVenue) + uiState.areaOptions.map { it.name })
+        .filter { it.isNotBlank() }
+        .distinct()
+    // ...and whatever the student typed in below instead - a coffee shop, a
+    // public library - which is simply the location no listed venue matches.
+    val customVenue = uiState.selectedLocation.takeUnless { it in venues }.orEmpty()
 
-    LazyColumn(
+    // A plain scrolling Column, not a LazyColumn: this screen is about 25 rows,
+    // so laziness buys nothing, and a lazy layout force-measures its children
+    // through a subcomposition - which is what the MapView below cannot survive.
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        }
+
+        Text(
+            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+                ?.plus(" ${selectedDate.year}") ?: "Pick a date",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            dates.forEach { (dateVal, dayNum) ->
+                val selected = uiState.selectedBookingDate == dateVal
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surface)
+                        .clickable { onSelectDate(dateVal) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
                 }
-                Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         }
 
-        item { Text("October 2026", fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+        Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
-        item {
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                bookingDates.forEach { (dateVal, dayNum) ->
-                    val selected = uiState.selectedBookingDate == dateVal
-                    Column(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surface)
-                            .clickable { onSelectDate(dateVal) }
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            }
+        if (slots.isEmpty()) {
+            Text(
+                if (tutor.windows.isEmpty())
+                    "${tutor.name.split(" ").first()} has not published any hours yet - pick another tutor."
+                else
+                    "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
-        item { Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-
-        item {
-            val slotRows = tutor.availableSlots.chunked(2)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                slotRows.forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        row.forEach { slot ->
-                            val isSelected = uiState.selectedSlot == slot
-                            Card(
-                                modifier = Modifier.weight(1f).clickable { onSelectSlot(slot) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Text(
-                                    slot,
-                                    modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 13.sp
-                                )
-                            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            slots.chunked(2).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    row.forEach { slot ->
+                        val isSelected = uiState.selectedSlot == slot
+                        Card(
+                            modifier = Modifier.weight(1f).clickable { onSelectSlot(slot) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Text(
+                                slot,
+                                modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 13.sp
+                            )
                         }
-                        if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                     }
+                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
 
-        item { Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+        Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
-        items(venues) { venue ->
+        venues.forEach { venue ->
             val isSelected = uiState.selectedLocation == venue
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onSelectLocation(venue) },
@@ -155,20 +174,33 @@ fun BookingFlowScreen(
             }
         }
 
-        item {
-            Button(
-                onClick = onNext,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
-            ) {
-                Text("Continue to Review", fontWeight = FontWeight.Bold)
-            }
+        OutlinedTextField(
+            value = customVenue,
+            // Capped where the server caps it, so a long paste fails here and not on submit.
+            onValueChange = { if (it.length <= 120) onSelectLocation(it) },
+            label = { Text("Somewhere else") },
+            placeholder = { Text("e.g. The Daily Grind coffee shop, Main Road") },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Google Maps owns the map. Tapping the venue hands it over by intent,
+        // which is what the calendar and session screens already do - an
+        // embedded MapView bought a thumbnail and cost a crash.
+        VenueLink(uiState.selectedLocation)
+
+        Button(
+            onClick = onNext,
+            enabled = uiState.selectedSlot.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+        ) {
+            Text("Continue to Review", fontWeight = FontWeight.Bold)
         }
     }
 }
-
-
 
 // ==================== STEP 2: REVIEW BOOKING ====================
 
@@ -237,7 +269,7 @@ fun ReviewBookingScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(Icons.Default.Place, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
-            Text("You will meet ${tutor.name.split(" ").last()} at the confirmed room location above once verified.", fontSize = 11.5.sp, color = NavySecondary)
+            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 11.5.sp, color = NavySecondary)
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -265,8 +297,7 @@ private fun ReviewRow(label: String, value: String) {
 
 @Composable
 fun BookingRequestSentScreen(
-    onSimulateAccepted: () -> Unit,
-    onSimulateDeclined: () -> Unit,
+    onCheckStatus: () -> Unit,
     onViewCalendar: () -> Unit
 ) {
     Column(
@@ -294,16 +325,10 @@ fun BookingRequestSentScreen(
         )
         Spacer(modifier = Modifier.height(28.dp))
         OutlinedButton(
-            onClick = onSimulateAccepted,
+            onClick = onCheckStatus,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(24.dp)
-        ) { Text("Simulate: Accepted", fontWeight = FontWeight.Bold) }
-        Spacer(modifier = Modifier.height(10.dp))
-        OutlinedButton(
-            onClick = onSimulateDeclined,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            shape = RoundedCornerShape(24.dp)
-        ) { Text("Simulate: Declined", fontWeight = FontWeight.Bold) }
+        ) { Text("Check for a reply", fontWeight = FontWeight.Bold) }
         Spacer(modifier = Modifier.height(14.dp))
         TextButton(onClick = onViewCalendar) {
             Text("View in Calendar Tab", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
@@ -479,8 +504,7 @@ fun ReviewBookingScreenPreview() {
 fun BookingRequestSentScreenPreview() {
     TutorBridgeTheme {
         BookingRequestSentScreen(
-            onSimulateAccepted = {},
-            onSimulateDeclined = {},
+            onCheckStatus = {},
             onViewCalendar = {}
         )
     }
