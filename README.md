@@ -9,8 +9,9 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
+- [Design Considerations](#designconsiderations)
 - [Setup](#setup)
-- 
+- [Version Control/GitHub Workflows](#versioncontrolgithubworkflows)
 - [AI Disclosure](#ai-disclosure)
 
 ---
@@ -163,7 +164,12 @@ TutorBridge/
 ---
 
 ## Architecture
+<img width="1760" height="968" alt="image" src="https://github.com/user-attachments/assets/e1ac94b2-4733-4815-852b-9ffbb6387b94" />
 
+Looking at the above diagram the architectural choices made for this project centers around the android application, the project
+custom APIs, a database and external APIs with the android application being our device, custom APIs being hosted by Azure App Service,
+the database being a MongoDB atlas database and our external APIs being Firebase services as well as google workspace services. These choices
+showcase the application needs as well as the group's best choices to make them.
 
 ---
 
