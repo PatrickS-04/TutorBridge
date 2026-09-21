@@ -3,16 +3,22 @@
 > By Dillon Rinkwest - ST10439147, Patrick Shutte - ST10440987, Liam Swile - ST10438679 and Uzair Essa - ST10440109
 
 ## Table of Contents
-- [1. Overview](#1-overview)
-- [1.1 Intended User Base](#11-intended-user-base)
-
+- [Overview](#overviewpurpose)
+- [Intended User Base](#intended-user-base)
+- [Features](#featuresscope)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [Setup](#setup)
+- 
+- [AI Disclosure](#ai-disclosure)
 
 ---
 
-## 1. Overview
+## Overview/Purpose
 TutorBridge is Tutoring Android Application that aims to provide institutions with a platform that connects
 Students with institute availed Tutors with resources that assist in finding proper Tutors, connecting with
-students with proper and chosen resources as well as organizing out of campus tutor sessions.
+students with proper and chosen resources with the option out and off campus tutor sessions.
 
 | Project | Type | Description |
 |---|---|---|
@@ -23,14 +29,14 @@ students with proper and chosen resources as well as organizing out of campus tu
 
 ---
 
-### 1.1 Intended User Base
+### Intended User Base
 - Insitutions such as Emeris
 - Tutors availed by institutions
 - Students of the institutions
 
 ---
 
-### 1.2 Features
+### Features/Scope
 * Biometric Scanner (in POE Part 3 Final Submission)
 * Single sign-on 
 * Payroll claim export 
@@ -42,16 +48,17 @@ students with proper and chosen resources as well as organizing out of campus tu
 
 ---
 
-### 1.3 Tech Stack
+### Tech Stack
 * Kotlin
 * Typescript
 * MongoDB Atlas
 * Firebase
 * Google Cloud (Google Calendar)
+* Jetpack Compose
 
 ---
 
-## 2. Project Structure
+## Project Structure
 
 ```
 TutorBridge/
@@ -155,13 +162,67 @@ TutorBridge/
 
 ---
 
-## 2.1 Architecture
+## Architecture
 
 
 ---
 
-## 3. Setup
+## Design Considerations
 
+
+---
+
+## Setup
+
+### Prerequisites
+* Node.js 
+* Android Studio
+* Android Emulator/Android Device
+* Student Email/Password = tomnook@gmail.com/TNook12345
+* Tutor Email/Password = dillonrinkwest@gmail.com/Dillon1234@
+
+### Clone Repository
+```bash
+git clone <repo-url>
+```
+
+### Setup Custom APIs
+```bash
+cd backend_api
+npm install
+```
+
+### Create .env file
+```env
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/TutorBridge
+GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+PORT=5000
+
+# Only needed for the Google Calendar integration
+CALENDAR_TOKEN_KEY=<64 hex characters>
+GOOGLE_OAUTH_CLIENT_ID=<web client id>
+GOOGLE_OAUTH_CLIENT_SECRET=<web client secret>
+```
+
+### Generate a calendar key with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Start APIs
+```bash
+npm run dev
+```
+
+### Run the Android app
+
+1. Open the **`android_app/`** folder (not the repo root) in Android Studio and let Gradle sync.
+2. Select the **app** run configuration and press **Run**.
+
+---
+
+## Version Control/GitHub Workflows
 
 
 ---
