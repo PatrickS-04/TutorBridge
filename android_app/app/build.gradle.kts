@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -7,6 +8,18 @@ plugins {
     //Firebase
     id("com.google.gms.google-services")
 }
+
+// local.properties keeps machine-specific values out of git.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }
+        ?.inputStream()?.use { load(it) }
+}
+
+// 10.0.2.2 is the emulator's alias for the host's localhost and is unroutable
+// from a physical device. For a phone, set API_BASE_URL=http://127.0.0.1:5000/
+// in local.properties: every build then tunnels that port on each connected
+// device to this machine over adb, whatever network the phone is on.
+val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")
 
 android {
     namespace = "com.tutorbridge.app"
@@ -19,20 +32,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // local.properties keeps machine-specific values out of git.
-        val localProperties = Properties().apply {
-            rootProject.file("local.properties").takeIf { it.exists() }
-                ?.inputStream()?.use { load(it) }
-        }
-
-        // 10.0.2.2 is the emulator's alias for the host's localhost and is
-        // unroutable from a physical device, which needs the dev machine's LAN
-        // IP (or the deployed URL) set as API_BASE_URL in local.properties.
-        buildConfigField(
-            "String",
-            "API_BASE_URL",
-            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")}\""
-        )
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -64,6 +64,23 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+// adb reverse drops whenever a device is unplugged or restarts, so redo it on
+// every build instead of leaving the app timing out against 127.0.0.1.
+val apiUri = URI(apiBaseUrl)
+if (apiUri.host == "127.0.0.1" || apiUri.host == "localhost") {
+    val adb = androidComponents.sdkComponents.adb
+    val port = "tcp:${apiUri.port}"
+    val adbReverse = tasks.register("adbReverse") {
+        doLast {
+            val adbPath = adb.get().asFile.path
+            ProcessBuilder(adbPath, "devices").start().inputStream.bufferedReader().readLines()
+                .filter { it.endsWith("\tdevice") }
+                .forEach { ProcessBuilder(adbPath, "-s", it.substringBefore('\t'), "reverse", port, port).start().waitFor() }
+        }
+    }
+    tasks.named("preBuild") { dependsOn(adbReverse) }
 }
 
 
