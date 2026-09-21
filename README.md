@@ -210,24 +210,25 @@ The project is split into layers, so each part has one job.
 ## Setup
 
 ### Prerequisites
-* Node.js 
-* Android Studio
-* Android Emulator/Android Device
-* Student Email/Password = tomnook@gmail.com/TNook12345
-* Tutor Email/Password = dillonrinkwest@gmail.com/Dillon1234@
+* Node.js 22 (the version CI uses)
+* Android Studio (its bundled JDK 17 is all the Android build needs)
+* An Android emulator, or an Android phone with USB debugging turned on
+* A MongoDB connection string (your own MongoDB Atlas cluster works; see the seed step)
+* The Firebase service-account key for the TutorBridge Firebase project (ask the team; it's not in the repo)
 
-### Clone Repository
+### Clone the repository
 ```bash
-git clone <https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679.git>
+git clone https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679.git
+cd prog7314-g2-2026-formative-2-part-2-st10438679
 ```
 
-### Setup Custom APIs
+### Set up the API
 ```bash
 cd backend_api
 npm install
 ```
 
-### Create .env file
+Create `backend_api/.env`:
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/TutorBridge
 GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
@@ -239,80 +240,68 @@ GOOGLE_OAUTH_CLIENT_ID=<web client id>
 GOOGLE_OAUTH_CLIENT_SECRET=<web client secret>
 ```
 
-### Generate a calendar key with:
+* `GOOGLE_APPLICATION_CREDENTIALS` is the path to the Firebase service-account key (Firebase console → Project settings → Service accounts → **Generate new private key**). It must come from the same Firebase project as `android_app/app/google-services.json`, or the API rejects every sign-in.
+* Generate `CALENDAR_TOKEN_KEY` with:
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
 
+### Seed the database (first run only)
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+npm run seed
 ```
+This adds an institution, subjects, provinces and areas, plus a test tutor and admin. Without it the app's pickers are empty and there is no one to book. To use the seeded tutor or admin, sign **up** in the app with the email the script prints, using any password.
 
-### Start APIs
+### Start the API
 ```bash
 npm run dev
 ```
+The API runs at http://localhost:5000, and its interactive docs are at http://localhost:5000/docs.
 
 ### Run the Android app
-
 1. Open the **`android_app/`** folder (not the repo root) in Android Studio and let Gradle sync.
-2. Select the **app** run configuration and press **Run**.
+2. On an **emulator** there's nothing to change: the app calls `http://10.0.2.2:5000/`, the emulator's address for your computer.
+   On a **physical phone**, connect it over USB and add this line to `android_app/local.properties`:
+   ```properties
+   API_BASE_URL=http://127.0.0.1:5000/
+   ```
+   Each build then runs `adb reverse`, so the phone reaches the API on your computer. Rebuild if you reconnect the phone.
+3. Select the **app** run configuration and press **Run**.
 
+> **Google sign-in** only works on builds whose signing key is registered in the Firebase project. On your own machine, sign in with email and password, or add the SHA-1 from `./gradlew signingReport` in Firebase console → Project settings → Your apps.
+
+### Test accounts
+These accounts are in the team's database.
+
+| Role | Email | Password |
+|---|---|---|
+| Student | tomnook@gmail.com | `TNook12345` |
+| Tutor | dillonrinkwest@gmail.com | `Dillon1234@` |
+
+### Run the tests
+Each from the repo root:
+```bash
+cd backend_api
+npm test
+```
+```bash
+cd android_app
+./gradlew testDebugUnitTest
+```
+Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JAVA_HOME` isn't set, point it at Android Studio's bundled JDK (the `jbr` folder in its install directory).
 ---
 
 ## Version Control/GitHub Workflows
-```yml
-name: CI
+[![CI](https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679/actions/workflows/ci.yml/badge.svg)](https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679/actions/workflows/ci.yml)
 
-# Every push, every branch - the POE brief requires CI on every push.
-on: [push, pull_request]
+**Branching:** each feature is built on its own `feat-*` branch (for example `feat-EditProfile` and `feat-AppLanguage`) and merged through a pull request.
 
-permissions:
-  contents: read
+**CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request, on every branch:
+* The **backend** job installs the API's dependencies, compiles the TypeScript and runs the backend tests.
+* The **android** job runs the unit tests and builds a debug APK.
+* A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test report instead.
 
-jobs:
-  backend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend_api
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: backend_api/package-lock.json
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
-
-  android:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: android_app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
-      - run: chmod +x gradlew
-      - run: ./gradlew testDebugUnitTest assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tutorbridge-debug-apk
-          path: android_app/app/build/outputs/apk/debug/*.apk
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: unit-test-report
-          path: android_app/app/build/reports/tests/
-```
-This is the GitHub workflow file for TutorBridge project solution. To summarize the automation and version control
-implementation within GitHub actions the project has both its backend API and android application tested each time during
-every published commit and has its success and fails recorded. These automated tests allows the project solution to be
-properly mointored throughout its development stages with each commit and these actions keep the project's team informed
-with each change and feature addition success and fails tracked through its commit history.
+A failed job puts a red cross next to the commit on GitHub, so the team can see which change broke the build and fix it before merging.
 
 ---
 
