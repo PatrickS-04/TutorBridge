@@ -108,4 +108,6 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("com.google.code.gson:gson:2.11.0")
     //Google Maps is reached by intent (see VenueLink), so the SDK is not a dependency.
+
+    implementation("androidx.appcompat:appcompat:1.8.0")
 }

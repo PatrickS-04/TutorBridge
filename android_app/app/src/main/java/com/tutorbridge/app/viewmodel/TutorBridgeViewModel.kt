@@ -970,6 +970,17 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun setLanguage(language: String) {
         _uiState.update { it.copy(selectedLanguage = language) }
+
+        val localeTag = when (language) {
+            "isiZulu" -> "zu"
+            "Afrikaans" -> "af"
+            else -> "en"
+        }
+
+        androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+            androidx.core.os.LocaleListCompat.forLanguageTags(localeTag)
+        )
+
         saveSettings(
             UpdateSettingsRequest(
                 language = when (language) {

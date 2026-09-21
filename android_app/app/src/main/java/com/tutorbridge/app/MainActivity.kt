@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,12 +18,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.ui.navigation.TutorBridgeNavGraph
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
 
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: TutorBridgeViewModel by viewModels()
 
