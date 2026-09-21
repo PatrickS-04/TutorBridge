@@ -301,19 +301,3 @@ Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JA
 * A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test report instead.
 
 A failed job puts a red cross next to the commit on GitHub, so the team can see which change broke the build and fix it before merging.
-
----
-
-## AI Disclosure
-### Sections where AI was used:
-* Project Structure
-### AI Tool Used:
-* Claude Sonnet 5
-### Purpose/Intent:
-* To gather the project structure quickly and easily in a well-format readme section
-#### Dates used:
-* 2026/09/21
-### Link:
-* https://claude.ai/share/e02a707f-cc7e-4a32-a913-9b3e5fbad1e0
-### Action taken:
-* The prompt answer was reviewed then copied onto the project structure heading of the readme
