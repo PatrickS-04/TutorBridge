@@ -9,9 +9,9 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
-- [Design Considerations](#designconsiderations)
+- [Design Considerations](#design-considerations)
 - [Setup](#setup)
-- [Version Control/GitHub Workflows](#versioncontrolgithubworkflows)
+- [Version Control/GitHub Workflows](#version-controlgithub-workflows)
 - [AI Disclosure](#ai-disclosure)
 
 ---
@@ -173,8 +173,8 @@ showcase the application needs as well as the group's best choices to make them.
 
 ---
 
-## Design Considerations
-
+## Structural Design Considerations
+The project's structural design uses Kotlin native Android Studio Application UI (Jepack Compose) as Presentation Layer, 
 
 ---
 
@@ -189,7 +189,7 @@ showcase the application needs as well as the group's best choices to make them.
 
 ### Clone Repository
 ```bash
-git clone <repo-url>
+git clone <https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679.git>
 ```
 
 ### Setup Custom APIs
@@ -229,7 +229,61 @@ npm run dev
 ---
 
 ## Version Control/GitHub Workflows
+```yml
+name: CI
 
+# Every push, every branch - the POE brief requires CI on every push.
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend_api/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: chmod +x gradlew
+      - run: ./gradlew testDebugUnitTest assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tutorbridge-debug-apk
+          path: android_app/app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: unit-test-report
+          path: android_app/app/build/reports/tests/
+```
+This is the GitHub workflow file for TutorBridge project solution. To summarize the automation and version control
+implementation within GitHub actions the project has both its backend API and android application tested each time during
+every published commit and has its success and fails recorded. These automated tests allows the project solution to be
+properly mointored throughout its development stages with each commit and these actions keep the project's team informed
+with each change and feature addition success and fails tracked through its commit history.
 
 ---
 
