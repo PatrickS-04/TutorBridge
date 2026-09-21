@@ -38,24 +38,34 @@ students with proper and chosen resources with the option out and off campus tut
 ---
 
 ### Features/Scope
-* Biometric Scanner (in POE Part 3 Final Submission)
-* Single sign-on 
-* Payroll claim export 
-* Two phase booking; rejection overlap 
-* Google Calendar 
-* Match relevance 
-* Session materials pack 
-* Institutional structural plan
+## Features/Scope
+| Feature | Status | What it does |
+|---|---|---|
+| Biometric unlock | Done | Turned on in Settings, it keeps you signed in and asks for a biometric scan (or the phone's screen lock) each time the app starts |
+| Single sign-on | Done | Sign in with a Google account, or with email and password (Firebase Authentication) |
+| Payroll claim export | Done | Tutors see their hours and earnings for each monthly claim period, built from completed sessions, and export a claim voucher as a PDF. The API can also export a month as CSV |
+| Two-phase booking with overlap rejection | Done | A student requests a slot and the tutor confirms it. A slot that overlaps one of the tutor's confirmed sessions is rejected, both when it's requested and again when it's confirmed |
+| Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited |
+| Match relevance | Not built yet | The "% match" badge is in the UI, but no score is calculated yet |
+| Session materials pack | Partly done | Tutors keep a private to-do list and notes for each session on the Session Prep screen |
+| Institutional structure | Done | Each user belongs to an institution and only sees that institution's tutors. Institution admins add tutor accounts and review verification documents through the API; the app has no admin screens yet |
+
+**Also in the app**
+- Tuition request board: students post what they need, tutors apply with a rate, and the student accepts one and schedules the session
+- Tutor availability: tutors publish weekly hours, and students pick a slot inside them
+- Push notifications that open the relevant screen when tapped
+- Account deletion with a 14-day grace period
 
 ---
 
 ### Tech Stack
-* Kotlin
-* Typescript
-* MongoDB Atlas
-* Firebase
-* Google Cloud (Google Calendar)
-* Jetpack Compose
+* **Android app:** Kotlin, Jetpack Compose (Material 3), Retrofit and OkHttp, Credential Manager (Google sign-in), AndroidX Biometric
+* **Backend API:** Node.js, Express, TypeScript, Mongoose, Swagger UI (OpenAPI docs)
+* **Database:** MongoDB Atlas
+* **Firebase:** Authentication, Cloud Messaging (push notifications)
+* **Google Cloud:** Google Calendar API
+* **Hosting:** Azure App Service (API)
+* **CI:** GitHub Actions
 
 ---
 
@@ -171,10 +181,29 @@ custom APIs, a database and external APIs with the android application being our
 the database being a MongoDB atlas database and our external APIs being Firebase services as well as google workspace services. These choices
 showcase the application needs as well as the group's best choices to make them.
 
+The system has four parts:
+* **Android app:** the client that students and tutors use.
+* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://<your-app>.azurewebsites.net`, with interactive docs at `/docs`.
+* **Database:** MongoDB Atlas, which only the API talks to.
+* **External services:** Firebase Authentication (sign-in), Firebase Cloud Messaging (push notifications) and the Google Calendar API.
+
+The app signs users in with Firebase and sends the Firebase ID token with every API call. The API checks that token before it touches the database, so the device never connects to the database directly.
+
 ---
 
 ## Structural Design Considerations
-The project's structural design uses Kotlin native Android Studio Application UI (Jepack Compose) as Presentation Layer, 
+The project is split into layers, so each part has one job.
+
+**Android app (MVVM)**
+* **Presentation:** Jetpack Compose screens in `ui/screens/`, one folder per feature. `TutorBridgeNavGraph.kt` shows the screen for the current route, and `RouteAccess.kt` sends a student or tutor to their own home screen if they open a page meant for the other role.
+* **State:** `TutorBridgeViewModel` keeps the app's state in a single `TutorBridgeUiState` (a `StateFlow`). Screens only display that state and pass user actions back to the ViewModel.
+* **Data:** `TutorBridgeRepository` and `AuthRepository` call the API through Retrofit, and `AuthInterceptor` adds the signed-in user's Firebase ID token to every request.
+
+**Backend API**
+* **Routes** (`src/routes/`): one Express router per resource (bookings, tuition requests, timesheets and so on). The admin reference data (subjects, provinces, areas) shares one generic CRUD router.
+* **Middleware** (`src/middleware/`): `auth.ts` verifies the Firebase ID token, loads the user's TutorBridge profile and checks their role. `errors.ts` turns any unhandled error into a standard JSON error response.
+* **Models** (`src/models/`): Mongoose schemas for MongoDB Atlas. Users, tuition requests, applications and bookings carry an `institutionId`, and the API filters on it, so people only see data from their own institution.
+* **Utilities** (`src/utils/`): Google Calendar sync, push notifications and pagination. Two hourly jobs mark sessions complete once their end time passes and delete accounts whose 14-day grace period is over.
 
 ---
 
