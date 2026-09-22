@@ -1,6 +1,7 @@
 import { Router } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import admin from "firebase-admin";
 import { Institution, User, VerificationDocument, UserRole, AuthProvider, VerificationStatus } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
@@ -37,9 +38,11 @@ router.get(
   "/me/tutors",
   requireRole(UserRole.INSTITUTION_ADMIN),
   asyncHandler(async (req: AuthRequest, res) => {
+    // DELETE below only stamps deactivatedAt, so a removed tutor is still in
+    // the collection - leave them out here or "removed" means nothing.
     const result = await paginate(
       User,
-      { institutionId: req.auth!.institutionId, role: UserRole.TUTOR },
+      { institutionId: req.auth!.institutionId, role: UserRole.TUTOR, deactivatedAt: null },
       req,
       "subjectIds"
     );
@@ -56,23 +59,23 @@ router.post(
       return res.status(400).json(apiError("VALIDATION_ERROR", "fullName and email are required"));
     }
 
-    const existing = await User.findOne({ email: String(email).toLowerCase() });
-    if (existing) return res.status(409).json(apiError("EMAIL_TAKEN", "Email already registered", "email"));
-
     // References:
     // Node.js. 2026. Crypto (Node.js v22.23.2 documentation). [Online].
     //   Available at: https://nodejs.org/docs/latest-v22.x/api/crypto.html [Accessed 21 September 2026].
     // Wirtz, D. 2025. bcrypt.js (Version 3.0.3). [Computer program].
     //   Available at: https://github.com/dcodeIO/bcrypt.js [Accessed 21 September 2026].
-    const temporaryPassword = crypto.randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10);
-    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+    // Always 10 characters: base64url has no "+", "/" or padding to strip, and
+    // Firebase refuses a password under 6.
+    const temporaryPassword = crypto.randomBytes(8).toString("base64url").slice(0, 10);
 
-    const tutor = await User.create({
+    const tutor = new User({
       institutionId: req.auth!.institutionId,
       role: UserRole.TUTOR,
       fullName,
-      email: String(email).toLowerCase(),
-      passwordHash,
+      email,
+      // Firebase holds the password itself; this hash only lets
+      // POST /auth/change-password refuse the temporary one back.
+      passwordHash: await bcrypt.hash(temporaryPassword, 12),
       authProvider: AuthProvider.PASSWORD,
       subjectIds: subjectIds ?? [],
       department,
@@ -82,6 +85,44 @@ router.post(
       mustChangePassword: true,
       createdBy: req.auth!.userId,
     });
+
+    // Everything that can turn the request away runs before a Firebase login
+    // exists, so a rejected request never leaves one behind.
+    await tutor.validate();
+    if (await User.exists({ email: tutor.email })) {
+      return res.status(409).json(apiError("EMAIL_TAKEN", "Email already registered", "email"));
+    }
+
+    // The app signs in against Firebase, so that is where the temporary
+    // password has to work - a profile on its own is a login nobody can use.
+    // Reference: Firebase. 2026. Manage users. [Online].
+    //   Available at: https://firebase.google.com/docs/auth/admin/manage-users [Accessed 21 September 2026].
+    let firebaseUser;
+    try {
+      firebaseUser = await admin.auth().createUser({
+        email: tutor.email,
+        password: temporaryPassword,
+        displayName: tutor.fullName,
+        emailVerified: true, // the institution vouches for its staff address, as in seedTutors.ts
+      });
+    } catch (err: any) {
+      if (err?.code === "auth/email-already-exists") {
+        return res.status(409).json(apiError("EMAIL_TAKEN", "Email already registered", "email"));
+      }
+      if (err?.code === "auth/invalid-email") {
+        return res.status(400).json(apiError("VALIDATION_ERROR", "email is not a valid address", "email"));
+      }
+      throw err;
+    }
+
+    tutor.firebaseUid = firebaseUser.uid;
+    try {
+      await tutor.save();
+    } catch (err) {
+      // A login with no profile behind it can only ever fail - take it back out.
+      await admin.auth().deleteUser(firebaseUser.uid);
+      throw err;
+    }
 
     res.status(201).json({
       id: tutor._id,

@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +43,13 @@ fun TutorAvailabilityScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        // No bottom bar on this page, so this is the way back out.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Text("Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        }
         Text(
             "Manage recurring weekly hours & one-off teaching slots.",
             fontSize = 13.sp,

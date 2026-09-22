@@ -116,12 +116,13 @@ fun TutorHomeScreen(
             }
         }
 
-        // Schedule Card
+        // Availability Card - the only way in to the availability screen; the
+        // calendar has its own tab in the bottom bar.
         item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNavigate("calendar") },
+                    .clickable { onNavigate("availability") },
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
@@ -131,8 +132,8 @@ fun TutorHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Tutor Schedule & Calendar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("View bookings & manage availability →", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Weekly Availability", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("Choose the days students can book you →", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                         Text("Open", fontWeight = FontWeight.Bold, fontSize = 11.sp)

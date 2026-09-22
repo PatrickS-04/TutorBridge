@@ -178,12 +178,56 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         userName = result.profile.fullName
                     )
                 }
-                completeAuth()
+                // A tutor an admin provisioned signs in with a temporary
+                // password, and goes no further until it is replaced.
+                if (result.profile.mustChangePassword) {
+                    _uiState.update { it.copy(currentRoute = "new_password") }
+                } else {
+                    completeAuth()
+                }
             }
             is AuthResult.Failure -> {
                 Firebase.auth.signOut()
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
             }
+        }
+    }
+
+    /**
+     * Replaces the temporary password on the new-password screen. The server
+     * sets it in Firebase, and a password change ends every session on the
+     * account - this one included - so sign straight back in with the new one.
+     */
+    fun setNewPassword(newPassword: String) {
+        val email = Firebase.auth.currentUser?.email
+        if (email == null) {
+            signOut()
+            return
+        }
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        viewModelScope.launch {
+            authRepository.changePassword(newPassword)
+                .onSuccess {
+                    try {
+                        Firebase.auth.signInWithEmailAndPassword(email, newPassword).await()
+                        _uiState.update { it.copy(isAuthLoading = false) }
+                        completeAuth()
+                    } catch (exception: Exception) {
+                        // The password did change; only the fresh session failed.
+                        Firebase.auth.signOut()
+                        _uiState.update {
+                            it.copy(
+                                isAuthLoading = false,
+                                currentRoute = "auth",
+                                authMode = AuthMode.SIGN_IN,
+                                authErrorMessage = "Password changed - sign in with your new password"
+                            )
+                        }
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = error.message ?: "Could not change the password") }
+                }
         }
     }
 
@@ -228,7 +272,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** Called by MainActivity when a notification is tapped. */
     fun openDeepLink(link: String) {
-        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock")
+        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock", "new_password")
         if (insideApp) routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
         else pendingDeepLink = link   // cold start: replayed once the user is through sign-in / biometrics
     }

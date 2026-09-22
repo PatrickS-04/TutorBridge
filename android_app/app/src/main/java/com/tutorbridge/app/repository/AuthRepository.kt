@@ -34,6 +34,15 @@ class AuthRepository(private val authApi: AuthApi) {
         }
     }
 
+    /** The server sets it in Firebase and clears mustChangePassword in one step. */
+    suspend fun changePassword(newPassword: String): Result<Unit> = try {
+        val response = authApi.changePassword(ChangePasswordRequest(newPassword))
+        if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(IllegalStateException(parseApiError(response)))
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
+
     suspend fun listInstitutions(): List<InstitutionSummary> {
         return try {
             val response = authApi.listInstitutions()

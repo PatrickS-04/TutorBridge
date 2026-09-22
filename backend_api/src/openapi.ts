@@ -205,6 +205,41 @@ export const openapiSpec = {
         },
       },
     },
+    "/auth/change-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Replace an admin-issued temporary password",
+        description: [
+          "For a tutor provisioned through `POST /institutions/me/tutors`, while",
+          "their profile still says `mustChangePassword`. The server sets the new",
+          "password in Firebase and clears the flag in the same step, so the flag",
+          "cannot be cleared without the password really changing.",
+          "",
+          "Firebase ends every session on an account whose password changes,",
+          "the caller's included, so sign in again with the new password.",
+        ].join("\n"),
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["newPassword"],
+            properties: {
+              newPassword: {
+                type: "string",
+                minLength: 6,
+                description: "Must differ from the temporary password.",
+              },
+            },
+          }),
+        },
+        responses: {
+          204: { description: "Changed. No body." },
+          400: res.badRequest,
+          ...authErrors,
+          409: res.conflict,
+        },
+      },
+    },
 
     "/reference/institutions": {
       get: {
@@ -409,6 +444,7 @@ export const openapiSpec = {
       get: {
         tags: ["Institutions"],
         summary: "Fetch the caller's institution",
+        description: "Any member of the institution, whatever their role. Every other route here is admin-only.",
         responses: {
           200: ok("The institution.", ref("Institution")),
           ...authErrors,
@@ -440,7 +476,8 @@ export const openapiSpec = {
       get: {
         tags: ["Institutions"],
         summary: "List the institution's tutors",
-        description: "Institution admins only. Unlike /users/tutors, this includes unverified ones.",
+        description:
+          "Institution admins only. Unlike /users/tutors, this includes unverified ones. Removed tutors are left out.",
         parameters: [pageParam],
         responses: { 200: ok("A page of tutors.", pageOf(ref("User"))), ...authErrors },
       },
@@ -448,8 +485,10 @@ export const openapiSpec = {
         tags: ["Institutions"],
         summary: "Provision a tutor account",
         description: [
-          "Institution admins only. Creates a pre-verified tutor and returns a",
-          "one-time password the tutor must change on first sign-in.",
+          "Institution admins only. Creates a pre-verified tutor with a Firebase",
+          "sign-in and returns a one-time password for it. The tutor signs in to",
+          "the app with it and must replace it (`POST /auth/change-password`)",
+          "before going any further.",
           "",
           "That password appears in this response and nowhere else.",
         ].join("\n"),
@@ -624,6 +663,7 @@ export const openapiSpec = {
         },
         responses: {
           200: ok("The updated request.", ref("TuitionRequest")),
+          400: res.badRequest,
           ...authErrors,
           404: res.notFound,
         },
@@ -1191,6 +1231,10 @@ export const openapiSpec = {
           fullName: { type: "string" },
           verificationStatus: enumOf(VerificationStatus),
           profileComplete: { type: "integer", minimum: 0, maximum: 100 },
+          mustChangePassword: {
+            type: "boolean",
+            description: "Still on an admin-issued temporary password - see `POST /auth/change-password`.",
+          },
         },
       },
       User: {
