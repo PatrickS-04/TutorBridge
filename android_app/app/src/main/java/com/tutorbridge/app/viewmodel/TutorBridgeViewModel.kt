@@ -797,27 +797,46 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     // ==================== TUTOR: AVAILABILITY ====================
 
-    fun setAvailabilityTab(tab: String) {
-        _uiState.update { it.copy(availabilityTab = tab) }
-    }
-
     /** [day] is a DayOfWeek name; toggling writes the whole week back to the server. */
     fun toggleActiveDay(day: String) {
         val state = _uiState.value
         val days = if (state.activeDays.contains(day)) state.activeDays - day else state.activeDays + day
         _uiState.update { it.copy(activeDays = days) }
+        saveWeeklyAvailability(state, days)
+    }
 
+    /** [day] is a DayOfWeek name; edits that day's hours and writes the whole week back. */
+    fun updateDayHours(day: String, startTime: String, endTime: String) {
+        val state = _uiState.value
+        saveWeeklyAvailability(state, state.activeDays, overrideDay = day, overrideStart = startTime, overrideEnd = endTime)
+    }
+
+    /**
+     * Builds the week's AvailabilityDto list from [days], keeping each day's
+     * existing hours except [overrideDay] (new days default to 09:00-17:00),
+     * and writes it to the server.
+     */
+    private fun saveWeeklyAvailability(
+        state: TutorBridgeUiState,
+        days: Set<String>,
+        overrideDay: String? = null,
+        overrideStart: String = "",
+        overrideEnd: String = ""
+    ) {
         viewModelScope.launch {
-            // Keep each day's existing hours; new days get the standard 09:00-17:00 window.
-            val existing = state.weeklyAvailability.associateBy { it.day.removeSuffix("s").uppercase(Locale.ENGLISH) }
+            val existing = state.weeklyAvailability.associateBy { it.dayName }
             val availability = days.mapNotNull { name ->
                 runCatching { DayOfWeek.valueOf(name) }.getOrNull()?.let { dayOfWeek ->
-                    val hours = existing[name]?.timeRange?.split("–")?.map { it.trim() }
-                    AvailabilityDto(
-                        day = dayOfWeek.name,
-                        startTime = hours?.getOrNull(0) ?: "09:00",
-                        endTime = hours?.getOrNull(1) ?: "17:00"
-                    )
+                    if (name == overrideDay) {
+                        AvailabilityDto(day = dayOfWeek.name, startTime = overrideStart, endTime = overrideEnd)
+                    } else {
+                        val hours = existing[name]?.timeRange?.split("–")?.map { it.trim() }
+                        AvailabilityDto(
+                            day = dayOfWeek.name,
+                            startTime = hours?.getOrNull(0) ?: "09:00",
+                            endTime = hours?.getOrNull(1) ?: "17:00"
+                        )
+                    }
                 }
             }
             repository.saveAvailability(availability)
@@ -828,7 +847,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 }
                 .onFailure {
-                    // Put the toggle back: the server did not take the change.
+                    // Put the days back: the server did not take the change.
                     _uiState.update { it.copy(activeDays = state.activeDays) }
                     reportError(it)
                 }

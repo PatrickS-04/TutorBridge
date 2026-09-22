@@ -268,8 +268,8 @@ fun TutorBridgeNavGraph(
                 "availability" -> TutorAvailabilityScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("tutor_home") },
-                    onTabChange = { viewModel.setAvailabilityTab(it) },
-                    onToggleDay = { viewModel.toggleActiveDay(it) }
+                    onToggleDay = { viewModel.toggleActiveDay(it) },
+                    onEditHours = { day, start, end -> viewModel.updateDayHours(day, start, end) }
                 )
                 "claims_export" -> TutorExportClaimsScreen(
                     uiState = uiState,
