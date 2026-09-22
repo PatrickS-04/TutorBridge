@@ -330,6 +330,10 @@ fun NewPasswordScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
+                    autoCorrect = false
+                ),
                 visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
             )
         }
@@ -348,6 +352,10 @@ fun NewPasswordScreen(
                 supportingText = if (confirm.isNotEmpty() && confirm != password) {
                     { Text("The passwords do not match") }
                 } else null,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
+                    autoCorrect = false
+                ),
                 visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
             )
         }
