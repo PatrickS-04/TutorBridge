@@ -12,6 +12,7 @@
 - [Setup](#setup)
 - [Version Control/GitHub Workflows](#version-controlgithub-workflows)
 - [References](#references)
+- [YouTube Video](#youtube-video-link)
 
 ---
 
