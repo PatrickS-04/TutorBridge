@@ -73,11 +73,13 @@ router.put(
         ([, value]) => value !== undefined
       )
     );
+    // Populated like GET /me: the app parses both into one UserDto, and bare
+    // ids there fail the parse even though the write went through.
     const user = await User.findByIdAndUpdate(
       req.auth!.userId,
       { $set: updates },
       { new: true, runValidators: true }
-    );
+    ).populate(["subjectIds", "areaId"]);
     if (!user) return res.status(404).json(apiError("NOT_FOUND", "User not found"));
     res.status(200).json(user);
   })

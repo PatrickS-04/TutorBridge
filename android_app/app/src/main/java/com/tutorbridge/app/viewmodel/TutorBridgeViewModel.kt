@@ -266,6 +266,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 userEmail = user?.email ?: state.userEmail)
         }
         refreshAll()
+        registerPushToken()
+        // After the route is set to home, so a notification tapped on a cold
+        // start opens its own screen rather than being overwritten by home.
+        consumePendingDeepLink()
     }
 
     private var pendingDeepLink: String? = null
