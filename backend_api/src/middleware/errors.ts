@@ -27,6 +27,15 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
     return res.status(404).json(apiError("NOT_FOUND", "Not found"));
   }
 
+  // express.json() turns away a body it cannot read - one that is not valid
+  // JSON (a line break or stray quote typed into a Swagger string), or one
+  // over the size limit - with a 4xx of its own. That is the client's mistake
+  // too. http-errors marks client errors `expose`, so the parser's message is
+  // safe to pass back.
+  if (err?.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json(apiError("VALIDATION_ERROR", err.message));
+  }
+
   console.error(err);
   return res.status(500).json(apiError("INTERNAL_ERROR", "Something went wrong"));
 }

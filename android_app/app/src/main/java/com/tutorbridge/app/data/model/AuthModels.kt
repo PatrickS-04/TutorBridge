@@ -14,6 +14,9 @@ data class BootstrapRequest(
     val fullName: String? = null
 )
 
+/** Body for POST /auth/change-password. */
+data class ChangePasswordRequest(val newPassword: String)
+
 // ==================== Responses ====================
 
 data class ProfileResponse(
@@ -22,7 +25,9 @@ data class ProfileResponse(
     val role: String,
     val fullName: String,
     val verificationStatus: String,
-    val profileComplete: Int
+    val profileComplete: Int,
+    /** An admin-provisioned tutor still on the temporary password they were issued. */
+    val mustChangePassword: Boolean = false
 )
 
 data class InstitutionSummary(

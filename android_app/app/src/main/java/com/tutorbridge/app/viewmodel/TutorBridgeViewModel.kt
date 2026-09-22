@@ -178,12 +178,56 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         userName = result.profile.fullName
                     )
                 }
-                completeAuth()
+                // A tutor an admin provisioned signs in with a temporary
+                // password, and goes no further until it is replaced.
+                if (result.profile.mustChangePassword) {
+                    _uiState.update { it.copy(currentRoute = "new_password") }
+                } else {
+                    completeAuth()
+                }
             }
             is AuthResult.Failure -> {
                 Firebase.auth.signOut()
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
             }
+        }
+    }
+
+    /**
+     * Replaces the temporary password on the new-password screen. The server
+     * sets it in Firebase, and a password change ends every session on the
+     * account - this one included - so sign straight back in with the new one.
+     */
+    fun setNewPassword(newPassword: String) {
+        val email = Firebase.auth.currentUser?.email
+        if (email == null) {
+            signOut()
+            return
+        }
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
+        viewModelScope.launch {
+            authRepository.changePassword(newPassword)
+                .onSuccess {
+                    try {
+                        Firebase.auth.signInWithEmailAndPassword(email, newPassword).await()
+                        _uiState.update { it.copy(isAuthLoading = false) }
+                        completeAuth()
+                    } catch (exception: Exception) {
+                        // The password did change; only the fresh session failed.
+                        Firebase.auth.signOut()
+                        _uiState.update {
+                            it.copy(
+                                isAuthLoading = false,
+                                currentRoute = "auth",
+                                authMode = AuthMode.SIGN_IN,
+                                authErrorMessage = "Password changed - sign in with your new password"
+                            )
+                        }
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = error.message ?: "Could not change the password") }
+                }
         }
     }
 
@@ -222,13 +266,17 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 userEmail = user?.email ?: state.userEmail)
         }
         refreshAll()
+        registerPushToken()
+        // After the route is set to home, so a notification tapped on a cold
+        // start opens its own screen rather than being overwritten by home.
+        consumePendingDeepLink()
     }
 
     private var pendingDeepLink: String? = null
 
     /** Called by MainActivity when a notification is tapped. */
     fun openDeepLink(link: String) {
-        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock")
+        val insideApp = _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock", "new_password")
         if (insideApp) routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
         else pendingDeepLink = link   // cold start: replayed once the user is through sign-in / biometrics
     }
@@ -749,27 +797,46 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     // ==================== TUTOR: AVAILABILITY ====================
 
-    fun setAvailabilityTab(tab: String) {
-        _uiState.update { it.copy(availabilityTab = tab) }
-    }
-
     /** [day] is a DayOfWeek name; toggling writes the whole week back to the server. */
     fun toggleActiveDay(day: String) {
         val state = _uiState.value
         val days = if (state.activeDays.contains(day)) state.activeDays - day else state.activeDays + day
         _uiState.update { it.copy(activeDays = days) }
+        saveWeeklyAvailability(state, days)
+    }
 
+    /** [day] is a DayOfWeek name; edits that day's hours and writes the whole week back. */
+    fun updateDayHours(day: String, startTime: String, endTime: String) {
+        val state = _uiState.value
+        saveWeeklyAvailability(state, state.activeDays, overrideDay = day, overrideStart = startTime, overrideEnd = endTime)
+    }
+
+    /**
+     * Builds the week's AvailabilityDto list from [days], keeping each day's
+     * existing hours except [overrideDay] (new days default to 09:00-17:00),
+     * and writes it to the server.
+     */
+    private fun saveWeeklyAvailability(
+        state: TutorBridgeUiState,
+        days: Set<String>,
+        overrideDay: String? = null,
+        overrideStart: String = "",
+        overrideEnd: String = ""
+    ) {
         viewModelScope.launch {
-            // Keep each day's existing hours; new days get the standard 09:00-17:00 window.
-            val existing = state.weeklyAvailability.associateBy { it.day.removeSuffix("s").uppercase(Locale.ENGLISH) }
+            val existing = state.weeklyAvailability.associateBy { it.dayName }
             val availability = days.mapNotNull { name ->
                 runCatching { DayOfWeek.valueOf(name) }.getOrNull()?.let { dayOfWeek ->
-                    val hours = existing[name]?.timeRange?.split("–")?.map { it.trim() }
-                    AvailabilityDto(
-                        day = dayOfWeek.name,
-                        startTime = hours?.getOrNull(0) ?: "09:00",
-                        endTime = hours?.getOrNull(1) ?: "17:00"
-                    )
+                    if (name == overrideDay) {
+                        AvailabilityDto(day = dayOfWeek.name, startTime = overrideStart, endTime = overrideEnd)
+                    } else {
+                        val hours = existing[name]?.timeRange?.split("–")?.map { it.trim() }
+                        AvailabilityDto(
+                            day = dayOfWeek.name,
+                            startTime = hours?.getOrNull(0) ?: "09:00",
+                            endTime = hours?.getOrNull(1) ?: "17:00"
+                        )
+                    }
                 }
             }
             repository.saveAvailability(availability)
@@ -780,7 +847,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 }
                 .onFailure {
-                    // Put the toggle back: the server did not take the change.
+                    // Put the days back: the server did not take the change.
                     _uiState.update { it.copy(activeDays = state.activeDays) }
                     reportError(it)
                 }

@@ -20,6 +20,9 @@ class RouteAccessTest {
     @Test
     fun `own and shared pages pass through`() {
         assertEquals("claims_export", routeForRole("claims_export", UserRole.TUTOR))
+        assertEquals("availability", routeForRole("availability", UserRole.TUTOR))
+        // The forced new-password step must never bounce a tutor on to their home.
+        assertEquals("new_password", routeForRole("new_password", UserRole.TUTOR))
         assertEquals("booking_flow", routeForRole("booking_flow", UserRole.STUDENT))
         assertEquals("calendar", routeForRole("calendar", UserRole.TUTOR))
         assertEquals("settings", routeForRole("settings", UserRole.STUDENT))

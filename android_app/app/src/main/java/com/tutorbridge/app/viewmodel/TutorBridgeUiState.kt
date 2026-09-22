@@ -85,8 +85,6 @@ data class TutorBridgeUiState(
     // Tutor: availability
     val weeklyAvailability: List<DayWindowUi> = emptyList(),
     val activeDays: Set<String> = emptySet(),
-    val oneOffSlots: List<OneOffSlotUi> = emptyList(),
-    val availabilityTab: String = "weekly", // "weekly" or "oneoff"
 
     // Profile (tutor edit profile)
     val tutorProfileCompleteness: Int = 0,

@@ -350,6 +350,7 @@ fun AvailabilityWindowUi.toDto(): AvailabilityDto =
 fun List<AvailabilityWindowUi>.toDayWindows(): List<DayWindowUi> = sortedBy { it.day.value }.map {
     DayWindowUi(
         day = it.day.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH) + "s",
+        dayName = it.day.name,
         timeRange = "${it.start} – ${it.end}",
         active = true
     )
