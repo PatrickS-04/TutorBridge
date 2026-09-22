@@ -196,6 +196,13 @@ fun AuthScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 singleLine = true,
+                // Without KeyboardType.Password the IME treats a random temp
+                // password like a dictionary word - autocorrect/autocapitalize
+                // can silently mangle it before it ever reaches Firebase.
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
+                    autoCorrect = false
+                ),
                 visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
             )
         }
