@@ -11,7 +11,6 @@
 - [Architecture](#architecture)
 - [Setup](#setup)
 - [Version Control/GitHub Workflows](#version-controlgithub-workflows)
-- [AI Disclosure](#ai-disclosure)
 - [References](#references)
 
 ---

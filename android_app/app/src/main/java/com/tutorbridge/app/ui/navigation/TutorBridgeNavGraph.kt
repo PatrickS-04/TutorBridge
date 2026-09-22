@@ -18,6 +18,7 @@ import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
+import com.tutorbridge.app.ui.screens.auth.NewPasswordScreen
 import com.tutorbridge.app.ui.screens.availability.TutorAvailabilityScreen
 import com.tutorbridge.app.ui.screens.booking.BookingConfirmationScreen
 import com.tutorbridge.app.ui.screens.booking.BookingDeclinedScreen
@@ -150,6 +151,11 @@ fun TutorBridgeNavGraph(
                         }
                     )}
                 )
+                "new_password" -> NewPasswordScreen(
+                    uiState = uiState,
+                    onSubmit = { viewModel.setNewPassword(it) },
+                    onSignOut = { viewModel.signOut() }
+                )
                 "biometric_lock" -> {
                     val activity = LocalContext.current as FragmentActivity
                     BiometricScreen(
@@ -262,8 +268,8 @@ fun TutorBridgeNavGraph(
                 "availability" -> TutorAvailabilityScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("tutor_home") },
-                    onTabChange = { viewModel.setAvailabilityTab(it) },
-                    onToggleDay = { viewModel.toggleActiveDay(it) }
+                    onToggleDay = { viewModel.toggleActiveDay(it) },
+                    onEditHours = { day, start, end -> viewModel.updateDayHours(day, start, end) }
                 )
                 "claims_export" -> TutorExportClaimsScreen(
                     uiState = uiState,

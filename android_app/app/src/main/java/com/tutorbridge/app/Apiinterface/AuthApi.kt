@@ -20,6 +20,10 @@ interface AuthApi {
     @POST("auth/bootstrap")
     suspend fun bootstrap(@Body body: BootstrapRequest): Response<ProfileResponse>
 
+    /** Replaces an admin-issued temporary password. 204, no body. */
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
+
     /** Public - the sign-up screen needs this before anybody is signed in. */
     @GET("reference/institutions")
     suspend fun listInstitutions(): Response<List<InstitutionSummary>>

@@ -2,8 +2,9 @@
 //   Available at: https://nodejs.org/docs/latest-v22.x/api/test.html [Accessed 21 September 2026].
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { Readable } from "node:stream";
 import mongoose from "mongoose";
-import { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { errorHandler } from "./errors";
 import { Booking, LessonMode } from "../models";
 
@@ -69,6 +70,23 @@ test("the error a bad id really throws is the one the handler catches", async ()
   assert.equal(err?.name, "CastError");
   assert.equal(err?.kind, "ObjectId");
   assert.equal(handle(err).status, 404);
+});
+
+test("a body that is not valid JSON is a 400, not a server fault", async () => {
+  // A line break typed inside a string - how a Swagger edit to a free-text
+  // field breaks the body. Run through the real parser for the real error.
+  const body = Buffer.from('{"description":"line one\nline two"}');
+  const req = Object.assign(Readable.from([body]), {
+    headers: { "content-type": "application/json", "content-length": String(body.length) },
+    // on-finished reads these to decide the body is still there to parse.
+    complete: false,
+    socket: { readable: true },
+  });
+  const err = await new Promise((resolve) => express.json()(req as any, {} as any, resolve));
+
+  const captured = handle(err);
+  assert.equal(captured.status, 400);
+  assert.equal(captured.body.error.code, "VALIDATION_ERROR");
 });
 
 test("a cast that is not an id is left alone, rather than called not found", () => {

@@ -181,15 +181,10 @@ data class InstitutionUi(
 
 data class DayWindowUi(
     val day: String,
+    /** DayOfWeek enum name (e.g. "MONDAY") - what edits and saves are keyed on. */
+    val dayName: String,
     val timeRange: String,
     val active: Boolean
-)
-
-data class OneOffSlotUi(
-    val id: String,
-    val date: String,
-    val timeRange: String,
-    val note: String = ""
 )
 
 // ==================== SESSION NOTES ====================
