@@ -298,7 +298,8 @@ fun TutorBridgeNavGraph(
                     onLoadProfile = { viewModel.refreshProfile() },
                     onSave = { email, bio, hourlyRate, department ->
                         viewModel.saveProfile(email, bio, hourlyRate, department) { viewModel.navigateTo("settings") }
-                    }
+                    },
+                    onBack = { viewModel.navigateTo("settings") }
                 )
                 "learning_history" -> LearningHistoryScreen(
                     uiState = uiState,

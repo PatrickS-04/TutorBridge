@@ -10,11 +10,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,14 +37,18 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+import androidx.compose.material3.ExperimentalMaterial3Api
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     uiState: TutorBridgeUiState,
     onLoadProfile: () -> Unit,
-    onSave: (email: String, bio: String, hourlyRate: Double?, department: String) -> Unit
+    onSave: (email: String, bio: String, hourlyRate: Double?, department: String) -> Unit,
+    onBack: () -> Unit
 ) {
     LaunchedEffect(Unit) { onLoadProfile() }
+    androidx.activity.compose.BackHandler { onBack() }
 
     val profile = uiState.currentProfile
     val isTutor = uiState.role == UserRole.TUTOR
@@ -48,56 +58,91 @@ fun EditProfileScreen(
     var hourlyRate by remember(profile) { mutableStateOf(profile?.hourlyRate?.toString() ?: "") }
     var department by remember(profile) { mutableStateOf(profile?.department ?: "") }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState())
-    ) {
-        Text("Edit Profile", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(20.dp))
-
-        OutlinedTextField(
-            value = email, onValueChange = { email = it },
-            label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true
-        )
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = bio, onValueChange = { bio = it },
-            label = { Text("Bio") }, modifier = Modifier.fillMaxWidth(), minLines = 3
-        )
-
-        if (isTutor) {
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = hourlyRate, onValueChange = { hourlyRate = it },
-                label = { Text("Hourly Rate (R)") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = department, onValueChange = { department = it },
-                label = { Text("Department / Faculty") }, modifier = Modifier.fillMaxWidth(), singleLine = true
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Profile") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
         }
-
-        uiState.authErrorMessage?.let { message ->
-            Spacer(Modifier.height(12.dp))
-            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-        }
-
-        uiState.profileStatusMessage?.let { message ->
-            Spacer(Modifier.height(12.dp))
-            Text(message, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
-        }
-
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { onSave(email, bio, if (isTutor) hourlyRate.toDoubleOrNull() else null, department) },
-            enabled = !uiState.isAuthLoading && email.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(20.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            if (uiState.isAuthLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-            } else {
-                Text("Save Changes", fontWeight = FontWeight.Bold)
+            Text(
+                "Edit Profile",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(20.dp))
+
+            OutlinedTextField(
+                value = email, onValueChange = { email = it },
+                label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = bio, onValueChange = { bio = it },
+                label = { Text("Bio") }, modifier = Modifier.fillMaxWidth(), minLines = 3
+            )
+
+            if (isTutor) {
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = hourlyRate,
+                    onValueChange = { hourlyRate = it },
+                    label = { Text("Hourly Rate (R)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = department,
+                    onValueChange = { department = it },
+                    label = { Text("Department / Faculty") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+
+            uiState.authErrorMessage?.let { message ->
+                Spacer(Modifier.height(12.dp))
+                Text(message, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            }
+
+            uiState.profileStatusMessage?.let { message ->
+                Spacer(Modifier.height(12.dp))
+                Text(message, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Button(
+                onClick = {
+                    onSave(
+                        email,
+                        bio,
+                        if (isTutor) hourlyRate.toDoubleOrNull() else null,
+                        department
+                    )
+                },
+                enabled = !uiState.isAuthLoading && email.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                if (uiState.isAuthLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
