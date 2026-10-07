@@ -46,7 +46,9 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     // ==================== TUTORS ====================
 
     suspend fun tutors(): Result<List<TutorUi>> =
-        call { api.tutors() }.map { page -> page.data.map { it.toTutorUi() } }
+        // The server already sends best fit first; sorting again keeps that true
+        // whatever order the page arrives in (the sort is stable, so ties stay by name).
+        call { api.tutors() }.map { page -> page.data.map { it.toTutorUi() }.sortedByDescending { it.matchPercent } }
 
     // ==================== TUITION REQUESTS ====================
 
@@ -72,6 +74,15 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     suspend fun createRequest(body: CreateTuitionRequest): Result<Unit> =
         call { api.createTuitionRequest(body) }.map { }
+
+    suspend fun updateRequest(requestId: String, body: UpdateTuitionRequest): Result<Unit> =
+        call { api.updateTuitionRequest(requestId, body) }.map { }
+
+    suspend fun closeRequest(requestId: String): Result<Unit> =
+        call { api.closeTuitionRequest(requestId) }.map { }
+
+    suspend fun withdrawRequest(requestId: String): Result<Unit> =
+        call { api.withdrawTuitionRequest(requestId) }.map { }
 
     suspend fun applyToRequest(requestId: String, message: String?, proposedRate: Double): Result<Unit> =
         call { api.applyToRequest(requestId, ApplyRequest(message, proposedRate)) }.map { }
@@ -110,6 +121,9 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     suspend fun cancelBooking(id: String, reason: String?): Result<BookingAckDto> =
         call { api.cancelBooking(id, CancelRequest(reason)) }
 
+    suspend fun rescheduleBooking(id: String, body: RescheduleRequest): Result<RescheduleAckDto> =
+        call { api.rescheduleBooking(id, body) }
+
     /** Saves the tutor's checklist and side notes for one session, in one write. */
     suspend fun saveSessionNotes(
         bookingId: String,
@@ -124,6 +138,21 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
             )
         )
     }
+
+    // ==================== MESSAGING ====================
+
+    suspend fun threads(selfId: String): Result<List<ThreadUi>> =
+        call { api.threads() }.map { page -> page.data.map { it.toThreadUi(selfId) } }
+
+    /** One page of a conversation, oldest first, with how many pages there are in all. */
+    suspend fun messages(threadId: String, selfId: String, page: Int): Result<Pair<List<MessageUi>, Int>> =
+        call { api.messages(threadId, page) }.map { result ->
+            result.data.map { it.toMessageUi(selfId) }.sortedBy { it.sentAt } to result.totalPages
+        }
+
+    suspend fun sendMessage(threadId: String, selfId: String, body: String, clientMessageId: String): Result<MessageUi> =
+        call { api.sendMessage(threadId, SendMessageRequest(body, clientMessageId)) }
+            .map { it.toMessageUi(selfId) }
 
     // ==================== NOTIFICATIONS ====================
 
@@ -162,8 +191,13 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     // ==================== CLAIMS ====================
 
-    suspend fun claims(institutionName: String): Result<List<InstitutionUi>> =
-        call { api.claimPeriods() }.map { claims -> listOf(claims.toInstitutionUi(institutionName)) }
+    /** The last [months] months; the server returns every month, so quiet ones are dropped in the mapper. */
+    suspend fun claims(institutionName: String, months: Int): Result<List<InstitutionUi>> =
+        call { api.claimPeriods(months) }.map { claims -> listOf(claims.toInstitutionUi(institutionName)) }
+
+    /** The server-built CSV for one month, [month] as `YYYY-MM`. */
+    suspend fun claimCsv(month: String): Result<String> =
+        call { api.claimCsv(month) }.mapCatching { it.string() }
 
     // ==================== PLUMBING ====================
 
@@ -206,7 +240,7 @@ fun UserDto.toTutorUi(): TutorUi {
         availableSlots = emptyList(), // filled per selected date - see slotsOn()
         bio = bio.orEmpty(),
         tagList = subjectIds.map { it.name },
-        matchPercent = 0,
+        matchPercent = matchScore.coerceIn(0, 100),
         activeNow = todaysWindows.any { now >= it.start && now < it.end },
         activeToday = todaysWindows.isNotEmpty(),
         staffOrTutorId = staffNumber.orEmpty(),
@@ -232,12 +266,16 @@ fun TuitionRequestDto.toRequestUi(): StudentRequestUi = StudentRequestUi(
     status = when (status) {
         "MATCHED" -> RequestStatus.MATCHED
         "CLOSED" -> RequestStatus.COMPLETED
+        "CANCELLED" -> RequestStatus.WITHDRAWN
         else -> RequestStatus.OPEN
     },
     timestamp = relativeTime(createdAt),
     preferredVenue = areaId?.name.orEmpty(),
     matchedTutorName = matchedTutorName.orEmpty(),
-    applicantCount = applicationCount
+    applicantCount = applicationCount,
+    subjectId = subjectId?._id.orEmpty(),
+    areaId = areaId?._id.orEmpty(),
+    availability = availability
 )
 
 /** A booking as the calendar renders it - [selfIsTutor] decides whose name is shown. */
@@ -268,9 +306,43 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         checklist = tutorNotes?.items.orEmpty().mapIndexed { index, item ->
             SessionGoalUi(id = "n$index", text = item.text, completed = item.done)
         },
-        sideNotes = tutorNotes?.text.orEmpty()
+        sideNotes = tutorNotes?.text.orEmpty(),
+        startIso = startTime,
+        endIso = endTime
     )
 }
+
+// ==================== MESSAGING ====================
+
+private val chatDay = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ENGLISH)
+private val chatToday = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
+
+/** "14:05" for something said today, "3 Oct 14:05" otherwise. */
+private fun chatTime(iso: String?): String {
+    val moment = parseInstant(iso) ?: return ""
+    return if (moment.toLocalDate() == LocalDate.now()) moment.format(chatToday) else moment.format(chatDay)
+}
+
+/** A thread from [selfId]'s side: the other participant is whoever is not them. */
+fun ThreadDto.toThreadUi(selfId: String): ThreadUi {
+    val other = participants.firstOrNull { it._id != selfId }
+    return ThreadUi(
+        id = _id,
+        otherName = other?.fullName?.ifBlank { null } ?: "TutorBridge user",
+        initials = initialsOf(other?.fullName),
+        preview = lastMessagePreview.orEmpty(),
+        time = chatTime(lastMessageAt),
+        unread = unread
+    )
+}
+
+fun MessageDto.toMessageUi(selfId: String): MessageUi = MessageUi(
+    id = _id,
+    body = body,
+    mine = senderId == selfId,
+    time = chatTime(sentAt),
+    sentAt = sentAt
+)
 
 /** A REQUESTED booking waiting for the tutor to confirm or decline. */
 fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
@@ -307,7 +379,9 @@ fun TimesheetPeriodsDto.toInstitutionUi(institutionName: String): InstitutionUi 
     faculty = department,
     staffId = staffNumber,
     rate = ratePerHour,
-    claimPeriods = periods.map { period ->
+    // The API answers every month in the range; a month with no sessions has
+    // nothing to claim, so only the current draft is kept regardless.
+    claimPeriods = periods.filter { it.isCurrent || it.sessionCount > 0 }.map { period ->
         ClaimPeriodUi(
             id = period.id,
             label = runCatching { YearMonth.parse(period.month).format(monthLabel) }.getOrDefault(period.month),

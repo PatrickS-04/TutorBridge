@@ -3,6 +3,11 @@ package com.tutorbridge.app.viewmodel
 import com.tutorbridge.app.data.model.*
 import java.time.LocalDate
 
+/** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
+const val CLAIM_MONTHS_DEFAULT = 12
+const val CLAIM_MONTHS_STEP = 6
+const val CLAIM_MONTHS_MAX = 24
+
 /**
  * Everything the screens render. The lists start empty and are filled from
  * backend_api once the user is signed in - see TutorBridgeViewModel.refreshAll().
@@ -16,6 +21,8 @@ data class TutorBridgeUiState(
     val authMode: AuthMode = AuthMode.SIGN_IN,
     val isAuthLoading: Boolean = false,
     val authErrorMessage: String? = null,
+    /** A non-error notice on the sign-in screen, e.g. that a reset link was sent. */
+    val authInfoMessage: String? = null,
     val institutionName: String = "",
     val institutionOptions: List<InstitutionSummary> = emptyList(),
     // Named distinctly from `selectedInstitutionId` below, which is an
@@ -46,6 +53,20 @@ data class TutorBridgeUiState(
 
     /** Set when a background refresh or a write to the server failed. */
     val dataErrorMessage: String? = null,
+    /** Good news worth a snackbar, e.g. that a session was moved. */
+    val noticeMessage: String? = null,
+    /** The signed-in user's TutorBridge id, which tells a chat which messages are theirs. */
+    val userId: String = "",
+
+    // Messaging
+    val threads: List<ThreadUi> = emptyList(),
+    val selectedThreadId: String? = null,
+    val selectedThreadName: String = "",
+    /** The open conversation, oldest first; grows upward as earlier pages load. */
+    val chatMessages: List<MessageUi> = emptyList(),
+    val chatPage: Int = 1,
+    val chatTotalPages: Int = 1,
+    val chatDraft: String = "",
     val isRefreshing: Boolean = false,
 
     // Reference data (subjects and campus areas), for the new-request wizard
@@ -81,6 +102,8 @@ data class TutorBridgeUiState(
     val institutions: List<InstitutionUi> = emptyList(),
     val selectedInstitutionId: String = "claims",
     val selectedClaimPeriodId: String = "",
+    /** How many months of claim history have been asked for; grows with "Load earlier". */
+    val claimMonthsLoaded: Int = CLAIM_MONTHS_DEFAULT,
 
     // Tutor: availability
     val weeklyAvailability: List<DayWindowUi> = emptyList(),

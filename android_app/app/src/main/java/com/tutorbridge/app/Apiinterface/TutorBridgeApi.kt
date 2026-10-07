@@ -1,6 +1,7 @@
 package com.tutorbridge.app.Apiinterface
 
 import com.tutorbridge.app.data.model.*
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -61,6 +62,18 @@ interface TutorBridgeApi {
     @POST("tuition-requests")
     suspend fun createTuitionRequest(@Body body: CreateTuitionRequest): Response<Map<String, Any>>
 
+    /** Edit an open request. Answers 409 once a tutor has been matched. */
+    @PUT("tuition-requests/{id}")
+    suspend fun updateTuitionRequest(@Path("id") id: String, @Body body: UpdateTuitionRequest): Response<Map<String, Any>>
+
+    /** The request is sorted - ends it as CLOSED. */
+    @PUT("tuition-requests/{id}/close")
+    suspend fun closeTuitionRequest(@Path("id") id: String): Response<Map<String, Any>>
+
+    /** The request is no longer wanted - ends it as CANCELLED. */
+    @PUT("tuition-requests/{id}/withdraw")
+    suspend fun withdrawTuitionRequest(@Path("id") id: String): Response<Map<String, Any>>
+
     @GET("tuition-requests/{id}/applications")
     suspend fun requestApplications(@Path("id") id: String): Response<PageResponse<RequestApplicationDto>>
 
@@ -94,9 +107,25 @@ interface TutorBridgeApi {
     @PUT("bookings/{id}/cancel")
     suspend fun cancelBooking(@Path("id") id: String, @Body body: CancelRequest): Response<BookingAckDto>
 
+    /** Moves a session; a student's move of a confirmed one goes back to the tutor to confirm. */
+    @PUT("bookings/{id}/reschedule")
+    suspend fun rescheduleBooking(@Path("id") id: String, @Body body: RescheduleRequest): Response<RescheduleAckDto>
+
     /** Replaces the tutor's prep notes for one session - checklist and side notes together. */
     @PUT("bookings/{id}/notes")
     suspend fun saveSessionNotes(@Path("id") id: String, @Body body: TutorNotesDto): Response<TutorNotesDto>
+
+    // ==================== MESSAGING ====================
+
+    @GET("threads")
+    suspend fun threads(): Response<PageResponse<ThreadDto>>
+
+    /** Newest first, 20 a page; opening a thread also marks it read. */
+    @GET("threads/{id}/messages")
+    suspend fun messages(@Path("id") id: String, @Query("page") page: Int = 1): Response<PageResponse<MessageDto>>
+
+    @POST("threads/{id}/messages")
+    suspend fun sendMessage(@Path("id") id: String, @Body body: SendMessageRequest): Response<MessageDto>
 
     // ==================== NOTIFICATIONS ====================
 
@@ -109,7 +138,11 @@ interface TutorBridgeApi {
     // ==================== TIMESHEETS / CLAIMS ====================
 
     @GET("timesheets/periods")
-    suspend fun claimPeriods(@Query("count") count: Int = 3): Response<TimesheetPeriodsDto>
+    suspend fun claimPeriods(@Query("count") count: Int = 12): Response<TimesheetPeriodsDto>
+
+    /** One month of completed sessions as a CSV file (`YYYY-MM`). */
+    @GET("timesheets")
+    suspend fun claimCsv(@Query("month") month: String): Response<ResponseBody>
 
     // ==================== GOOGLE CALENDAR ====================
 

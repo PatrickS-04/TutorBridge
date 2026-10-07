@@ -40,7 +40,8 @@ fun AuthScreen(
     onSignUp: (String, String, String) -> Unit, // fullName, email, password
     onGoogleSignIn: (String) -> Unit,
     onGoogleSignInError: (String) -> Unit,
-    onToggleAuthMode: () -> Unit
+    onToggleAuthMode: () -> Unit,
+    onForgotPassword: (String) -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -80,12 +81,12 @@ fun AuthScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("TutorBridge", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
-                Text("Higher Education Tutoring Network", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Higher Education Tutoring Network", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-            Text("SA Campuses", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("SA Campuses", fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -95,7 +96,7 @@ fun AuthScreen(
         // the server resolves on sign-in.
         if (isSignUp) {
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("INSTITUTIONAL PARTNER", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("INSTITUTIONAL PARTNER", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 ExposedDropdownMenuBox(
                     expanded = institutionDropdownExpanded,
                     onExpandedChange = { institutionDropdownExpanded = it }
@@ -145,13 +146,13 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Students: Sign in with your campus Google account to book tutors & join sessions.",
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     color = NavySecondary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     "Tutors: Log in with your admin-provisioned faculty credentials to access timesheets and export claims.",
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     color = NavySecondary
                 )
             }
@@ -165,7 +166,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
-                    placeholder = { Text("e.g. Liam Naidoo", fontSize = 11.5.sp) },
+                    placeholder = { Text("e.g. Liam Naidoo", fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true
@@ -179,7 +180,7 @@ fun AuthScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("e.g. ndxlia003@myuct.ac.za or tutor.clara@uct.ac", fontSize = 11.5.sp) },
+                placeholder = { Text("e.g. ndxlia003@myuct.ac.za or tutor.clara@uct.ac", fontSize = 12.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 singleLine = true
@@ -207,7 +208,16 @@ fun AuthScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        // Sign-in only: a brand-new account has no password to forget.
+        if (!isSignUp) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = { onForgotPassword(email) }, enabled = !uiState.isAuthLoading) {
+                    Text("Forgot password?", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier.height(18.dp))
+        }
 
         Button(
             onClick = {
@@ -243,7 +253,10 @@ fun AuthScreen(
         }
 
         uiState.authErrorMessage?.let { message ->
-            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 11.5.sp, textAlign = TextAlign.Center)
+            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, textAlign = TextAlign.Center)
+        }
+        uiState.authInfoMessage?.let { message ->
+            Text(message, color = NavySecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -273,7 +286,7 @@ fun AuthScreen(
 
         Text(
             "Integrated with South African Higher Education SSO • POPIA Compliant",
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -378,7 +391,7 @@ fun NewPasswordScreen(
 
         uiState.authErrorMessage?.let { message ->
             Spacer(modifier = Modifier.height(10.dp))
-            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 11.5.sp, textAlign = TextAlign.Center)
+            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
 
         Spacer(modifier = Modifier.height(10.dp))

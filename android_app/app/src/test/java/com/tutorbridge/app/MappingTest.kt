@@ -4,6 +4,7 @@ import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.data.repository.toCalendarEvent
 import com.tutorbridge.app.data.repository.toRequestUi
+import com.tutorbridge.app.data.repository.toInstitutionUi
 import com.tutorbridge.app.data.repository.toTutorUi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -139,5 +140,40 @@ class MappingTest {
         assertEquals("Thabo Mokoena", request.matchedTutorName)
         assertEquals(2, request.applicantCount)
         assertEquals("Wed 14:00–17:00", request.timeWindow)
+    }
+
+    @Test
+    fun `a request keeps the ids and hours the edit form is prefilled from`() {
+        val request = TuitionRequestDto(
+            _id = "r1",
+            subjectId = SubjectDto("s1", "Mathematics"),
+            areaId = AreaDto("a1", "Upper Campus"),
+            availability = listOf(AvailabilityDto("WEDNESDAY", "14:00", "17:00"))
+        ).toRequestUi()
+
+        assertEquals("s1", request.subjectId)
+        assertEquals("a1", request.areaId)
+        assertEquals("14:00", request.availability.first().startTime)
+    }
+
+    @Test
+    fun `a cancelled request reads as withdrawn, a closed one as closed`() {
+        assertEquals(RequestStatus.WITHDRAWN, TuitionRequestDto(_id = "r1", status = "CANCELLED").toRequestUi().status)
+        assertEquals(RequestStatus.COMPLETED, TuitionRequestDto(_id = "r2", status = "CLOSED").toRequestUi().status)
+        assertEquals(RequestStatus.OPEN, TuitionRequestDto(_id = "r3", status = "OPEN").toRequestUi().status)
+    }
+
+    @Test
+    fun `claim history drops months with nothing to claim but keeps the current draft`() {
+        val claims = TimesheetPeriodsDto(
+            periods = listOf(
+                TimesheetPeriodDto(id = "2026-10", month = "2026-10", isCurrent = true, sessionCount = 0),
+                TimesheetPeriodDto(id = "2026-09", month = "2026-09", sessionCount = 4),
+                TimesheetPeriodDto(id = "2026-08", month = "2026-08", sessionCount = 0),
+                TimesheetPeriodDto(id = "2026-07", month = "2026-07", sessionCount = 2)
+            )
+        ).toInstitutionUi("Test University")
+
+        assertEquals(listOf("2026-10", "2026-09", "2026-07"), claims.claimPeriods.map { it.id })
     }
 }

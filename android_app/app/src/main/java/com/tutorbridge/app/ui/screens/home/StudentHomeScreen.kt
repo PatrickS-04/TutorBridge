@@ -45,11 +45,19 @@ fun StudentHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("HELLO, $firstName", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("HELLO, $firstName", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Let's learn today", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { onNavigate("notifications") }) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val unread = uiState.threads.sumOf { it.unread }
+                    IconButton(onClick = { onNavigate("messages") }) {
+                        BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
+                            Icon(Icons.Default.Chat, contentDescription = "Messages")
+                        }
+                    }
+                    IconButton(onClick = { onNavigate("notifications") }) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                    }
                 }
             }
         }
@@ -77,10 +85,10 @@ fun StudentHomeScreen(
                                 nextEvent?.let { "Next Session • ${it.startTime}" } ?: "No sessions booked",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.5.sp
+                                fontSize = 12.sp
                             )
                         }
-                        Text("Schedule & Room →", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        Text("Schedule & Room →", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -112,7 +120,7 @@ fun StudentHomeScreen(
                             Text(
                                 nextEvent?.location.orEmpty(),
                                 color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 11.sp
+                                fontSize = 12.sp
                             )
                         }
                     }
@@ -133,7 +141,7 @@ fun StudentHomeScreen(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Upcoming on Your Calendar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("Full Calendar →", color = CrimsonPrimary, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                Text("Full Calendar →", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -150,24 +158,35 @@ fun StudentHomeScreen(
                 ) {
                     Column {
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
-                        Text("${event.date} • ${event.startTime}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${event.date} • ${event.startTime}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text(event.location.split("—").firstOrNull()?.trim() ?: "Campus", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(event.location.split("—").firstOrNull()?.trim() ?: "Campus", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // Top Tutors For You
+        // "For You" is only claimed when the ranking is real: the server scores a
+        // tutor against the student's own requests, and a student with none (or
+        // no tutor that fits) gets a plain list instead of a made-up match.
+        val personalised = uiState.tutors.any { it.matchPercent > 0 }
+        val shownTutors = if (personalised) uiState.tutors.filter { it.matchPercent > 0 } else uiState.tutors
+
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Top Tutors For You", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("See All", color = CrimsonPrimary, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                Text(if (personalised) "Top Tutors For You" else "Tutors on Campus", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    "See All",
+                    color = CrimsonPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigate("find_tutors") }
+                )
             }
         }
 
-        items(uiState.tutors.take(3)) { tutor ->
+        items(shownTutors.take(3)) { tutor ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("find_tutors") },
                 shape = RoundedCornerShape(18.dp),
@@ -187,18 +206,18 @@ fun StudentHomeScreen(
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 11.5.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Text(
                             listOfNotNull(
                                 if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else null,
                                 if (tutor.reviewsCount > 0) "★ ${tutor.rating}" else null,
                                 if (tutor.verified) "✓ Verified" else null
                             ).joinToString(" • "),
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -221,7 +240,7 @@ private fun QuickAction(icon: androidx.compose.ui.graphics.vector.ImageVector, l
         ) {
             Icon(icon, contentDescription = label, tint = NavySecondary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(label, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }

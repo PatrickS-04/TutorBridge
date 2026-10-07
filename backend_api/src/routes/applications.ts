@@ -11,6 +11,7 @@ import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, requireRole, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
+import { ensureThread } from "../utils/threads";
 
 const router = Router();
 router.use(authenticate);
@@ -55,6 +56,10 @@ router.put(
     if (decision === "accept") {
       await TuitionRequest.findByIdAndUpdate(owningRequest._id, {
         $set: { status: TuitionRequestStatus.MATCHED },
+      });
+      //A match is the moment two people need to be able to talk about times and venue.
+      await ensureThread(req.auth!.institutionId, req.auth!.userId, String(application.tutorId), {
+        applicationId: application._id,
       });
     }
 

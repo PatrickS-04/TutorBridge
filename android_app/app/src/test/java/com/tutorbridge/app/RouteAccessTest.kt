@@ -1,6 +1,7 @@
 package com.tutorbridge.app
 
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.viewmodel.routeForDeepLink
 import com.tutorbridge.app.viewmodel.routeForRole
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -27,5 +28,19 @@ class RouteAccessTest {
         assertEquals("calendar", routeForRole("calendar", UserRole.TUTOR))
         assertEquals("settings", routeForRole("settings", UserRole.STUDENT))
         assertEquals("auth", routeForRole("auth", null))
+    }
+
+    @Test
+    fun `messages are open to both roles`() {
+        for (role in listOf(UserRole.STUDENT, UserRole.TUTOR)) {
+            assertEquals("messages", routeForRole("messages", role))
+            assertEquals("chat", routeForRole("chat", role))
+        }
+    }
+
+    @Test
+    fun `a message notification opens the conversation list`() {
+        assertEquals("messages", routeForDeepLink("tutorbridge://threads/66f1a2b3c4d5e6f708192a3b", UserRole.STUDENT))
+        assertEquals("messages", routeForDeepLink("tutorbridge://threads/66f1a2b3c4d5e6f708192a3b", UserRole.TUTOR))
     }
 }

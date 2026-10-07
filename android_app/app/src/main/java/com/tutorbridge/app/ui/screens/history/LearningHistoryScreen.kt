@@ -82,7 +82,7 @@ fun LearningHistoryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Past Completed Sessions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("Active student since Sept 2026 • ${uiState.studentHealthIndexPercent}% Mastery", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Active student since Sept 2026 • ${uiState.studentHealthIndexPercent}% Mastery", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
@@ -95,7 +95,7 @@ fun LearningHistoryScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(entry.title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, modifier = Modifier.weight(1f))
-                        Text(entry.date, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(entry.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(entry.summary, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

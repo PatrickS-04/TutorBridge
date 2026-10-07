@@ -1,0 +1,161 @@
+package com.tutorbridge.app.ui.screens.messages
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.MessageUi
+import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.ui.theme.TutorBridgeTheme
+import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+
+/** One conversation: messages oldest to newest, with the compose box pinned below. */
+@Composable
+fun ChatScreen(
+    uiState: TutorBridgeUiState,
+    onBack: () -> Unit,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onLoadEarlier: () -> Unit
+) {
+    val listState = rememberLazyListState()
+    val hasEarlier = uiState.chatPage < uiState.chatTotalPages
+
+    // Follow the conversation down when a message arrives or is sent.
+    LaunchedEffect(uiState.chatMessages.lastOrNull()?.id) {
+        if (uiState.chatMessages.isNotEmpty()) listState.animateScrollToItem(uiState.chatMessages.size - 1 + if (hasEarlier) 1 else 0)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .imePadding()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Text(uiState.selectedThreadName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (hasEarlier) {
+                item {
+                    TextButton(onClick = onLoadEarlier, modifier = Modifier.fillMaxWidth()) {
+                        Text("Load earlier messages", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            if (uiState.chatMessages.isEmpty()) {
+                item {
+                    Text(
+                        "No messages yet - say hello.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                }
+            }
+            items(uiState.chatMessages, key = { it.id }) { message -> Bubble(message) }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = uiState.chatDraft,
+                onValueChange = onDraftChange,
+                placeholder = { Text("Message") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                maxLines = 4,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { onSend() })
+            )
+            FilledIconButton(
+                onClick = onSend,
+                enabled = uiState.chatDraft.isNotBlank(),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = NavySecondary)
+            ) {
+                Icon(Icons.Default.Send, contentDescription = "Send")
+            }
+        }
+    }
+}
+
+@Composable
+private fun Bubble(message: MessageUi) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (message.mine) Arrangement.End else Arrangement.Start
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 280.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (message.mine) NavySecondary else MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Text(
+                message.body,
+                fontSize = 14.sp,
+                color = if (message.mine) Color.White else MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                message.time,
+                fontSize = 12.sp,
+                color = if (message.mine) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ChatScreenPreview() {
+    TutorBridgeTheme {
+        ChatScreen(
+            uiState = TutorBridgeUiState(
+                selectedThreadName = "Naledi Dlamini",
+                chatMessages = listOf(
+                    MessageUi("1", "Can we move to 3pm?", mine = true, time = "14:05", sentAt = "2026-10-07T12:05:00Z"),
+                    MessageUi("2", "Sure, see you then.", mine = false, time = "14:07", sentAt = "2026-10-07T12:07:00Z")
+                )
+            ),
+            onBack = {},
+            onDraftChange = {},
+            onSend = {},
+            onLoadEarlier = {}
+        )
+    }
+}

@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.ClaimStatus
+import com.tutorbridge.app.viewmodel.CLAIM_MONTHS_MAX
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
@@ -35,7 +36,9 @@ fun TutorExportClaimsScreen(
     uiState: TutorBridgeUiState,
     onBack: () -> Unit,
     onSelectInstitution: (String) -> Unit = {},
-    onSelectClaimPeriod: (String) -> Unit = {}
+    onSelectClaimPeriod: (String) -> Unit = {},
+    onLoadEarlier: () -> Unit = {},
+    onFetchCsv: (month: String, onResult: (Result<String>) -> Unit) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId }
@@ -84,7 +87,7 @@ fun TutorExportClaimsScreen(
                 }
                 Column {
                     Text("Timesheets & Claims", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Institution Payment Export", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Institution Payment Export", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -104,14 +107,14 @@ fun TutorExportClaimsScreen(
                     Box(
                         modifier = Modifier.size(36.dp).clip(CircleShape).background(NavySecondary),
                         contentAlignment = Alignment.Center
-                    ) { Text(institution.shortName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+                    ) { Text(institution.shortName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(institution.fullName, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        Text("${institution.faculty} • Staff #${institution.staffId}", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${institution.faculty} • Staff #${institution.staffId}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("R${institution.rate.toInt()}/hr", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("Rate", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Rate", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -142,10 +145,19 @@ fun TutorExportClaimsScreen(
                         )
                         Text(
                             if (p.status == ClaimStatus.PAID) "Paid" else "Active",
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             color = if (selected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+            }
+        }
+
+        // Only offered while the API has more history to give.
+        if (uiState.claimMonthsLoaded < CLAIM_MONTHS_MAX) {
+            item {
+                TextButton(onClick = onLoadEarlier) {
+                    Text("Load earlier months", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -164,16 +176,16 @@ fun TutorExportClaimsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("CLAIM PERIOD", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("CLAIM PERIOD", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(period.label, fontWeight = FontWeight.Bold, fontSize = 17.sp)
                         }
                         if (period.status == ClaimStatus.PAID) {
                             Badge(containerColor = EmeraldTint) {
-                                Text("✓ Paid to Bank", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+                                Text("✓ Paid to Bank", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         } else {
                             Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                Text("⏱ Draft (Claimable)", color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+                                Text("⏱ Draft (Claimable)", color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                     }
@@ -194,8 +206,8 @@ fun TutorExportClaimsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Claim Ref: ${period.claimRef}", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                            Text("Copy Ref", color = CrimsonPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("Claim Ref: ${period.claimRef}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Copy Ref", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -207,8 +219,25 @@ fun TutorExportClaimsScreen(
                         ) {
                             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Export Voucher", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("PDF Voucher", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
+                        OutlinedButton(
+                            onClick = {
+                                // The server builds the CSV; the period id is its YYYY-MM month.
+                                onFetchCsv(period.id) { result ->
+                                    result.onSuccess { csv -> shareClaimCsv(context, institution, period, csv) }
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = RoundedCornerShape(22.dp)
+                        ) {
+                            Icon(Icons.Default.TableChart, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("CSV Export", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (period.status == ClaimStatus.PAID) {
                             OutlinedButton(
                                 onClick = {},
@@ -242,7 +271,7 @@ fun TutorExportClaimsScreen(
             item {
                 Column {
                     Text("Itemized Tutoring Sessions  ${period.sessionsCount}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("Verified with student attendance check-in", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Verified with student attendance check-in", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -259,19 +288,19 @@ fun TutorExportClaimsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Badge(containerColor = NavySecondary) {
-                                Text(session.courseCode, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text(session.courseCode, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                             Text(session.amount, fontWeight = FontWeight.Bold, color = CrimsonPrimary, fontSize = 13.sp)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("${session.date} • ${session.timeRange}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${session.date} • ${session.timeRange}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text("${session.studentName} (${session.studentIdTag})", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         if (session.topic.isNotBlank()) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("Topic: ${session.topic}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Topic: ${session.topic}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text("${session.hours} hrs @ R${institution.rate.toInt()}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${session.hours} hrs @ R${institution.rate.toInt()}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -282,7 +311,7 @@ fun TutorExportClaimsScreen(
 @Composable
 private fun StatBlock(label: String, value: String, emphasized: Boolean = false) {
     Column {
-        Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             value,
             fontWeight = FontWeight.Bold,

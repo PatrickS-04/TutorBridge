@@ -302,7 +302,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.delete_account_subtitle),
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

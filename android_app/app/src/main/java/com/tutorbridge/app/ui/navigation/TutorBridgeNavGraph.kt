@@ -30,6 +30,8 @@ import com.tutorbridge.app.ui.screens.claims.TutorExportClaimsScreen
 import com.tutorbridge.app.ui.screens.find.FindTutorsScreen
 import com.tutorbridge.app.ui.screens.find.TutorProfileScreen
 import com.tutorbridge.app.ui.screens.history.LearningHistoryScreen
+import com.tutorbridge.app.ui.screens.messages.ChatScreen
+import com.tutorbridge.app.ui.screens.messages.MessagesScreen
 import com.tutorbridge.app.ui.screens.home.StudentHomeScreen
 import com.tutorbridge.app.ui.screens.home.TutorHomeScreen
 import com.tutorbridge.app.ui.screens.notifications.NotificationsScreen
@@ -83,6 +85,13 @@ fun TutorBridgeNavGraph(
         uiState.dataErrorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.dismissDataError()
+        }
+    }
+
+    LaunchedEffect(uiState.noticeMessage) {
+        uiState.noticeMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissNotice()
         }
     }
 
@@ -142,6 +151,7 @@ fun TutorBridgeNavGraph(
                     onSignUp = { fullName, email, password -> viewModel.signUp(fullName, email, password) },
                     onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
                     onGoogleSignInError = { message -> viewModel.setAuthError(message) },
+                    onForgotPassword = { email -> viewModel.sendPasswordResetTo(email) },
                     onToggleAuthMode = {viewModel.setAuthMode(
                         if (uiState.authMode == AuthMode.SIGN_IN) {
                             AuthMode.SIGN_UP
@@ -227,18 +237,33 @@ fun TutorBridgeNavGraph(
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
-                    onAddEvent = { viewModel.navigateTo("find_tutors") }
+                    onAddEvent = { viewModel.navigateTo("find_tutors") },
+                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                )
+
+                // ===== Messaging =====
+                "messages" -> MessagesScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") },
+                    onOpenThread = { viewModel.openThread(it) }
+                )
+                "chat" -> ChatScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo("messages") },
+                    onDraftChange = { viewModel.setChatDraft(it) },
+                    onSend = { viewModel.sendChatMessage() },
+                    onLoadEarlier = { viewModel.loadEarlierMessages() }
                 )
 
                 // ===== Student requests flow =====
                 "my_requests" -> MyRequestsScreen(
                     uiState = uiState,
-                    onNewRequest = { viewModel.navigateTo("new_request") },
+                    onNewRequest = { viewModel.startNewRequest() },
                     onSelectRequest = { viewModel.selectRequest(it) }
                 )
                 "new_request" -> NewTuitionRequestScreen(
                     uiState = uiState,
-                    onBack = { viewModel.navigateTo("my_requests") },
+                    onBack = { viewModel.discardRequestDraft() },
                     onNext = { viewModel.updateDraftStep(uiState.requestDraft.step + 1) },
                     onPrevious = { viewModel.updateDraftStep(uiState.requestDraft.step - 1) },
                     onSelectSubject = { id, name -> viewModel.selectDraftSubject(id, name) },
@@ -252,7 +277,10 @@ fun TutorBridgeNavGraph(
                 "request_detail" -> RequestDetailScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("my_requests") },
-                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) }
+                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) },
+                    onEdit = { viewModel.startEditingRequest(it) },
+                    onClose = { viewModel.endRequest(it.id, withdraw = false) },
+                    onWithdraw = { viewModel.endRequest(it.id, withdraw = true) }
                 )
 
                 // ===== Tutor requests board =====
@@ -275,7 +303,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("tutor_home") },
                     onSelectInstitution = { viewModel.selectInstitution(it) },
-                    onSelectClaimPeriod = { viewModel.selectClaimPeriod(it) }
+                    onSelectClaimPeriod = { viewModel.selectClaimPeriod(it) },
+                    onLoadEarlier = { viewModel.loadEarlierClaims() },
+                    onFetchCsv = { month, onResult -> viewModel.fetchClaimCsv(month, onResult) }
                 )
                 "session_prep" -> SessionPrepScreen(
                     uiState = uiState,

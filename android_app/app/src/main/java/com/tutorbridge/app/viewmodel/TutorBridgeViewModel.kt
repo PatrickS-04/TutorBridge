@@ -28,11 +28,19 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.tasks.await
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
+import java.time.Duration
+import java.time.Instant
+import java.util.UUID
 
 // References:
 // Android Developers. 2026. Guide to app architecture. [Online].
@@ -104,7 +112,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun setAuthMode(mode: AuthMode) {
-        _uiState.update { it.copy(authMode = mode, authErrorMessage = null) }
+        _uiState.update { it.copy(authMode = mode, authErrorMessage = null, authInfoMessage = null) }
     }
 
     // Reference: Firebase. 2026. Authenticate with Firebase using password-based accounts on Android. [Online].
@@ -251,6 +259,36 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    // Reference: Firebase. 2026. Authenticate with Firebase using password-based accounts on Android. [Online].
+    //   Available at: https://firebase.google.com/docs/auth/android/password-auth [Accessed 21 September 2026].
+    /**
+     * The sign-in screen's "Forgot password?": emails a reset link to whatever
+     * address was typed, signed in or not. The answer is the same whether or not
+     * the address has an account, so the screen cannot be used to find out
+     * who is registered.
+     */
+    fun sendPasswordResetTo(email: String) {
+        val address = email.trim()
+        if (address.isEmpty()) {
+            _uiState.update { it.copy(authInfoMessage = null, authErrorMessage = "Enter your campus email first, then tap Forgot password") }
+            return
+        }
+        _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, authInfoMessage = null) }
+        viewModelScope.launch {
+            val sent = "If $address has an account, we've emailed it a link to reset the password."
+            try {
+                Firebase.auth.sendPasswordResetEmail(address).await()
+                _uiState.update { it.copy(isAuthLoading = false, authInfoMessage = sent) }
+            } catch (exception: FirebaseAuthInvalidUserException) {
+                _uiState.update { it.copy(isAuthLoading = false, authInfoMessage = sent) }
+            } catch (exception: FirebaseAuthInvalidCredentialsException) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "That doesn't look like a valid email address") }
+            } catch (exception: Exception) {
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not send the reset email") }
+            }
+        }
+    }
+
     fun setAuthError(message: String) {
         _uiState.update { it.copy(authErrorMessage = message) }
     }
@@ -288,6 +326,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun signOut() {
+        chatPoller?.cancel()
         viewModelScope.launch {
             // Timeout so a bad connection can't leave the user stuck on "Sign out".
             withTimeoutOrNull(3_000) { unregisterPushToken() }
@@ -303,9 +342,15 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun navigateTo(requested: String) {
         val route = routeForRole(requested, _uiState.value.role)
         _uiState.update { it.copy(currentRoute = route) }
+        if (route != "chat") chatPoller?.cancel()
         // Screens that are worth having fresh the moment they are opened.
         when (route) {
-            "calendar", "student_home", "tutor_home" -> loadBookings()
+            "student_home", "tutor_home" -> {
+                loadBookings()
+                loadThreads()
+            }
+            "messages" -> loadThreads()
+            "calendar" -> loadBookings()
             "notifications" -> loadNotifications(markRead = true)
             "find_tutors" -> loadTutors()
             "my_requests", "tutor_requests" -> loadRequests()
@@ -315,6 +360,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun dismissDataError() {
         _uiState.update { it.copy(dataErrorMessage = null) }
+    }
+
+    fun dismissNotice() {
+        _uiState.update { it.copy(noticeMessage = null) }
     }
 
     // ==================== LOADING FROM THE API ====================
@@ -337,6 +386,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 val windows = user.availability.mapNotNull { it.toWindowUi() }
                 _uiState.update { state ->
                     state.copy(
+                        userId = user._id,
                         role = roleFromBackend(user.role),
                         userName = user.fullName.ifBlank { state.userName },
                         userEmail = user.email.ifBlank { state.userEmail },
@@ -355,6 +405,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         activeDays = windows.map { it.day.name }.toSet()
                     )
                 }
+                // The conversations are read from the caller's side, so they wait on the id.
+                loadThreads()
             }.onFailure { reportError(it) }
         }
     }
@@ -499,16 +551,39 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         if (_uiState.value.role != UserRole.TUTOR) return
         viewModelScope.launch {
             val institutionName = repository.institution().getOrNull()?.name ?: _uiState.value.institutionName
-            repository.claims(institutionName).onSuccess { institutions ->
+            repository.claims(institutionName, _uiState.value.claimMonthsLoaded).onSuccess { institutions ->
                 _uiState.update { state ->
+                    val periods = institutions.firstOrNull()?.claimPeriods.orEmpty()
                     state.copy(
                         institutions = institutions,
                         selectedInstitutionId = institutions.firstOrNull()?.id ?: state.selectedInstitutionId,
-                        selectedClaimPeriodId = institutions.firstOrNull()?.claimPeriods?.firstOrNull()?.id
+                        // Keep the month being looked at when more history arrives.
+                        selectedClaimPeriodId = periods.firstOrNull { it.id == state.selectedClaimPeriodId }?.id
+                            ?: periods.firstOrNull()?.id
                             ?: state.selectedClaimPeriodId
                     )
                 }
             }.onFailure { reportError(it) }
+        }
+    }
+
+    /** "Load earlier months": widens the window by [CLAIM_MONTHS_STEP], up to what the API allows. */
+    fun loadEarlierClaims() {
+        _uiState.update {
+            it.copy(claimMonthsLoaded = (it.claimMonthsLoaded + CLAIM_MONTHS_STEP).coerceAtMost(CLAIM_MONTHS_MAX))
+        }
+        loadClaims()
+    }
+
+    /**
+     * Fetches one month's CSV from the server and hands it to [onResult]; the
+     * screen owns the file and the share sheet, so no Context is needed here.
+     */
+    fun fetchClaimCsv(month: String, onResult: (Result<String>) -> Unit) {
+        viewModelScope.launch {
+            repository.claimCsv(month)
+                .onFailure { reportError(it) }
+                .let(onResult)
         }
     }
 
@@ -702,6 +777,38 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(requestDraft = it.requestDraft.copy(step = step)) }
     }
 
+    /** The "New" button: always a blank wizard, even if an edit was abandoned half way. */
+    fun startNewRequest() {
+        _uiState.update { it.copy(requestDraft = RequestDraft(), currentRoute = "new_request") }
+    }
+
+    /** Leaves the wizard, dropping whatever was typed - new request or edit alike. */
+    fun discardRequestDraft() {
+        _uiState.update { it.copy(requestDraft = RequestDraft(), currentRoute = "my_requests") }
+    }
+
+    /** Opens the wizard on an existing open request, prefilled from it. */
+    fun startEditingRequest(request: StudentRequestUi) {
+        val slots = request.availability
+        _uiState.update {
+            it.copy(
+                requestDraft = RequestDraft(
+                    subject = request.subject,
+                    subjectId = request.subjectId,
+                    level = request.level,
+                    preferredVenue = request.preferredVenue,
+                    areaId = request.areaId,
+                    days = slots.mapNotNull { slot -> runCatching { DayOfWeek.valueOf(slot.day) }.getOrNull() }.toSet(),
+                    startTime = slots.firstOrNull()?.startTime ?: "14:00",
+                    endTime = slots.firstOrNull()?.endTime ?: "17:00",
+                    notes = request.description,
+                    editingRequestId = request.id
+                ),
+                currentRoute = "new_request"
+            )
+        }
+    }
+
     fun submitTuitionRequest() {
         val draft = _uiState.value.requestDraft
         if (draft.subjectId.isBlank() || draft.areaId.isBlank()) {
@@ -711,15 +818,32 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
         _uiState.update { it.copy(isRefreshing = true, dataErrorMessage = null) }
         viewModelScope.launch {
-            val body = CreateTuitionRequest(
-                subjectId = draft.subjectId,
-                areaId = draft.areaId,
-                gradeLevel = draft.level.ifBlank { null },
-                mode = "IN_PERSON", // the wizard is campus-based; no online option is offered
-                description = draft.notes,
-                availability = draft.days.map { AvailabilityDto(it.name, draft.startTime, draft.endTime) }
-            )
-            repository.createRequest(body)
+            val availability = draft.days.map { AvailabilityDto(it.name, draft.startTime, draft.endTime) }
+            val editing = draft.editingRequestId
+            val result = if (editing != null) {
+                repository.updateRequest(
+                    editing,
+                    UpdateTuitionRequest(
+                        subjectId = draft.subjectId,
+                        areaId = draft.areaId,
+                        gradeLevel = draft.level.ifBlank { null },
+                        description = draft.notes,
+                        availability = availability
+                    )
+                )
+            } else {
+                repository.createRequest(
+                    CreateTuitionRequest(
+                        subjectId = draft.subjectId,
+                        areaId = draft.areaId,
+                        gradeLevel = draft.level.ifBlank { null },
+                        mode = "IN_PERSON", // the wizard is campus-based; no online option is offered
+                        description = draft.notes,
+                        availability = availability
+                    )
+                )
+            }
+            result
                 .onSuccess {
                     _uiState.update {
                         it.copy(isRefreshing = false, currentRoute = "my_requests", requestDraft = RequestDraft())
@@ -728,9 +852,26 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 .onFailure {
                     _uiState.update { state ->
-                        state.copy(isRefreshing = false, dataErrorMessage = it.message ?: "Could not post the request")
+                        state.copy(
+                            isRefreshing = false,
+                            dataErrorMessage = it.message
+                                ?: if (editing != null) "Could not save the changes" else "Could not post the request"
+                        )
                     }
                 }
+        }
+    }
+
+    /** The student no longer needs the request - [withdraw] cancels it, otherwise it is closed as sorted. */
+    fun endRequest(requestId: String, withdraw: Boolean) {
+        viewModelScope.launch {
+            val result = if (withdraw) repository.withdrawRequest(requestId) else repository.closeRequest(requestId)
+            result
+                .onSuccess {
+                    _uiState.update { it.copy(selectedRequest = null, currentRoute = "my_requests") }
+                    loadRequests()
+                }
+                .onFailure { reportError(it) }
         }
     }
 
@@ -984,6 +1125,155 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             }
             .onFailure { reportError(it) }
             .isSuccess
+    }
+
+    // ==================== RESCHEDULING ====================
+
+    /**
+     * Moves a session to [date] at [time], keeping its length. The server decides
+     * what that means: a tutor's move stands, a student's move of a confirmed
+     * session goes back to the tutor to confirm - and the message says which.
+     */
+    fun rescheduleSession(event: CalendarEventUi, date: LocalDate, time: LocalTime) {
+        val oldStart = runCatching { Instant.parse(event.startIso) }.getOrNull()
+        val oldEnd = runCatching { Instant.parse(event.endIso) }.getOrNull()
+        val length = if (oldStart != null && oldEnd != null) Duration.between(oldStart, oldEnd) else Duration.ofHours(1)
+        val start = date.atTime(time).atZone(ZoneId.systemDefault()).toInstant()
+        val isTutor = _uiState.value.role == UserRole.TUTOR
+
+        viewModelScope.launch {
+            repository.rescheduleBooking(event.id, RescheduleRequest(start.toString(), start.plus(length).toString()))
+                .onSuccess { ack ->
+                    _uiState.update {
+                        it.copy(
+                            selectedCalendarDate = date,
+                            noticeMessage = if (ack.status == "REQUESTED" && !isTutor) {
+                                "Sent to your tutor - they need to confirm the new time."
+                            } else {
+                                "Session moved to ${date} at ${time}."
+                            }
+                        )
+                    }
+                    loadBookings()
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
+    // ==================== MESSAGING ====================
+
+    private var chatPoller: Job? = null
+
+    fun loadThreads() {
+        val me = _uiState.value.userId
+        if (me.isBlank()) return
+        viewModelScope.launch {
+            repository.threads(me)
+                .onSuccess { threads -> _uiState.update { it.copy(threads = threads) } }
+                .onFailure { reportError(it) }
+        }
+    }
+
+    fun openThread(thread: ThreadUi) {
+        _uiState.update {
+            it.copy(
+                selectedThreadId = thread.id,
+                selectedThreadName = thread.otherName,
+                chatMessages = emptyList(),
+                chatPage = 1,
+                chatTotalPages = 1,
+                chatDraft = "",
+                currentRoute = "chat"
+            )
+        }
+        viewModelScope.launch { fetchMessages(page = 1, quiet = false) }
+
+        // There is no push channel into an open chat, so look for new messages
+        // while it is on screen; navigateTo() stops this the moment it is not.
+        chatPoller?.cancel()
+        chatPoller = viewModelScope.launch {
+            while (isActive) {
+                delay(CHAT_POLL_MILLIS)
+                if (_uiState.value.currentRoute != "chat") break
+                fetchMessages(page = 1, quiet = true)
+            }
+        }
+    }
+
+    /** "Load earlier messages": the next page back in time. */
+    fun loadEarlierMessages() {
+        val next = _uiState.value.chatPage + 1
+        if (next > _uiState.value.chatTotalPages) return
+        viewModelScope.launch { fetchMessages(page = next, quiet = false) }
+    }
+
+    /** [quiet] is for the poll: a dropped connection every few seconds should not become a snackbar every few seconds. */
+    private suspend fun fetchMessages(page: Int, quiet: Boolean) {
+        val state = _uiState.value
+        val threadId = state.selectedThreadId ?: return
+        repository.messages(threadId, state.userId, page)
+            .onSuccess { (messages, totalPages) ->
+                _uiState.update { current ->
+                    // The user may have moved on to another conversation while this was in flight.
+                    if (current.selectedThreadId != threadId) {
+                        current
+                    } else {
+                        current.copy(
+                            chatMessages = mergeMessages(current.chatMessages, messages),
+                            chatTotalPages = totalPages,
+                            chatPage = maxOf(current.chatPage, page)
+                        )
+                    }
+                }
+            }
+            .onFailure { if (!quiet) reportError(it) }
+    }
+
+    fun setChatDraft(text: String) {
+        // Capped where the server caps it, so a long paste fails here and not on send.
+        if (text.length <= MAX_MESSAGE_LENGTH) _uiState.update { it.copy(chatDraft = text) }
+    }
+
+    /**
+     * Shows the message at once and sends it in the background. The id the
+     * server gets is generated here, so if the reply is lost and the send is
+     * repeated the server hands back the stored message instead of a duplicate.
+     */
+    fun sendChatMessage() {
+        val state = _uiState.value
+        val threadId = state.selectedThreadId ?: return
+        val text = state.chatDraft.trim()
+        if (text.isEmpty()) return
+
+        val clientMessageId = UUID.randomUUID().toString()
+        val local = MessageUi(
+            id = "local-$clientMessageId",
+            body = text,
+            mine = true,
+            time = "Sending…",
+            sentAt = Instant.now().toString(),
+            pending = true
+        )
+        _uiState.update { it.copy(chatMessages = it.chatMessages + local, chatDraft = "") }
+
+        viewModelScope.launch {
+            repository.sendMessage(threadId, state.userId, text, clientMessageId)
+                .onSuccess { sent ->
+                    _uiState.update { current ->
+                        current.copy(chatMessages = mergeMessages(current.chatMessages.filterNot { it.id == local.id }, listOf(sent)))
+                    }
+                }
+                .onFailure { error ->
+                    // Take the unsent bubble back and give the words back to the box.
+                    _uiState.update { current ->
+                        current.copy(
+                            chatMessages = current.chatMessages.filterNot { it.id == local.id },
+                            chatDraft = current.chatDraft.ifBlank { text }
+                        )
+                    }
+                    reportError(error)
+                }
+        }
     }
 
     // ==================== STUDENT ACCOUNT DELETION (POPIA) ====================

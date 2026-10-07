@@ -69,7 +69,7 @@ fun TutorProfileScreen(
                     )
                     Text(
                         listOf(tutor.department, tutor.staffOrTutorId).filter { it.isNotBlank() }.joinToString(" • "),
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -135,7 +135,7 @@ private fun ProfileInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = label, tint = NavySecondary, modifier = Modifier.size(18.dp))
         Column {
-            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
         }
     }

@@ -73,7 +73,7 @@ fun TutorAvailabilityScreen(
                         Text("Recurring Teaching Days", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text(
                             "Tap days when you are available for student bookings.",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -135,7 +135,7 @@ fun TutorAvailabilityScreen(
                                 Text(window.timeRange, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Badge(containerColor = EmeraldTint) {
-                                Text(if (window.active) "Active" else "Inactive", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                Text(if (window.active) "Active" else "Inactive", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                         if (isEditing) {
@@ -147,7 +147,7 @@ fun TutorAvailabilityScreen(
                                 OutlinedTextField(
                                     value = editStart,
                                     onValueChange = { editStart = it },
-                                    label = { Text("From (HH:mm)", fontSize = 11.sp) },
+                                    label = { Text("From (HH:mm)", fontSize = 12.sp) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     singleLine = true
@@ -155,7 +155,7 @@ fun TutorAvailabilityScreen(
                                 OutlinedTextField(
                                     value = editEnd,
                                     onValueChange = { editEnd = it },
-                                    label = { Text("To (HH:mm)", fontSize = 11.sp) },
+                                    label = { Text("To (HH:mm)", fontSize = 12.sp) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     singleLine = true

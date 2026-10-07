@@ -17,7 +17,7 @@ enum class EventStatus {
 }
 
 enum class RequestStatus {
-    OPEN, MATCHED, OFFERED, COMPLETED
+    OPEN, MATCHED, OFFERED, COMPLETED, WITHDRAWN
 }
 
 enum class ClaimStatus {
@@ -73,7 +73,11 @@ data class StudentRequestUi(
     val matchedTutorName: String = "",
     /** How many tutors applied; the applicants themselves load on the detail screen. */
     val applicantCount: Int = 0,
-    val applicants: List<TutorApplicant> = emptyList()
+    val applicants: List<TutorApplicant> = emptyList(),
+    /** Ids and hours the edit form is prefilled from. */
+    val subjectId: String = "",
+    val areaId: String = "",
+    val availability: List<AvailabilityDto> = emptyList()
 )
 
 data class TutorApplicant(
@@ -103,7 +107,34 @@ data class CalendarEventUi(
     /** The tutor's prep checklist for this session; empty for the student. */
     val checklist: List<SessionGoalUi> = emptyList(),
     /** The tutor's free-text side notes about this student or guardian. */
-    val sideNotes: String = ""
+    val sideNotes: String = "",
+    /** The session's window as the server sent it (ISO-8601), which a reschedule keeps the length of. */
+    val startIso: String = "",
+    val endIso: String = ""
+)
+
+// ==================== MESSAGING ====================
+
+/** One row of the Messages list: the other person, and what was said last. */
+data class ThreadUi(
+    val id: String,
+    val otherName: String,
+    val initials: String,
+    val preview: String,
+    val time: String,
+    val unread: Int
+)
+
+data class MessageUi(
+    val id: String,
+    val body: String,
+    /** Sent by the signed-in user, so it sits on the right. */
+    val mine: Boolean,
+    val time: String,
+    /** The server's ISO sentAt, which is also what orders the conversation. */
+    val sentAt: String,
+    /** Still on its way: shown straight away, replaced by the stored copy once the server answers. */
+    val pending: Boolean = false
 )
 
 /** A booking a student requested, waiting for the tutor to confirm or decline. */
@@ -138,7 +169,9 @@ data class RequestDraft(
     val startTime: String = "14:00",
     val endTime: String = "17:00",
     val topic: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    /** Set while an existing request is being edited; null for a new one. */
+    val editingRequestId: String? = null
 )
 
 // ==================== TUTOR: CLAIMS & TIMESHEETS ====================

@@ -42,11 +42,14 @@ students with proper and chosen resources with the option out and off campus tut
 | Feature | Status | What it does |
 |---|---|---|
 | Biometric unlock | Done | Turned on in Settings, it keeps you signed in and asks for a biometric scan (or the phone's screen lock) each time the app starts |
-| Single sign-on | Done | Sign in with a Google account, or with email and password (Firebase Authentication) |
-| Payroll claim export | Done | Tutors see their hours and earnings for each monthly claim period, built from completed sessions, and export a claim voucher as a PDF. The API can also export a month as CSV |
+| Single sign-on | Done | Sign in with a Google account, or with email and password (Firebase Authentication). "Forgot password?" on the sign-in screen emails a reset link |
+| Payroll claim export | Done | Tutors see their hours and earnings for each monthly claim period (up to 24 months back, loaded in steps), built from completed sessions, and export it as a PDF voucher or as the API's CSV |
+| Reschedule a session | Done | Either person can move an upcoming session instead of cancelling it. A tutor's move stands; a student's move of a confirmed session goes back to the tutor to confirm. The other person is notified and the Google Calendar event follows |
+| Manage your requests | Done | A student can edit an open request, or close it (sorted) or withdraw it (no longer wanted). Tutors who offered are told |
+| Messaging | Done | A chat opens between a student and a tutor when an offer is accepted or a tutor is booked. Unread counts, push notification on a new message |
 | Two-phase booking with overlap rejection | Done | A student requests a slot and the tutor confirms it. A slot that overlaps one of the tutor's confirmed sessions is rejected, both when it's requested and again when it's confirmed |
 | Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited |
-| Match relevance | Not built yet | The "% match" badge is in the UI, but no score is calculated yet |
+| Match relevance | Done | The API scores each tutor against the student's own requests (shared subject, shared campus area, completed sessions). "Top Tutors For You" ranks on it and the "% match" badge shows it; with nothing to match on, the section is just "Tutors on Campus" |
 | Session materials pack | Partly done | Tutors keep a private to-do list and notes for each session on the Session Prep screen |
 | Institutional structure | Done | Each user belongs to an institution and only sees that institution's tutors. Institution admins add tutor accounts and review verification documents through the API; the app has no admin screens yet |
 
@@ -250,7 +253,7 @@ GOOGLE_OAUTH_CLIENT_SECRET=<web client secret>
 ```bash
 npm run seed
 ```
-This adds an institution, subjects, provinces and areas, plus a test tutor and admin. Without it the app's pickers are empty and there is no one to book. To use the seeded tutor or admin, sign **up** in the app with the email the script prints, using any password.
+This adds an institution, subjects, provinces and areas, plus a test tutor, an institution admin and a platform admin (`platform@tutorbridge.test`, the only role allowed to change the shared subject, province and area lists). Without it the app's pickers are empty and there is no one to book. To use the seeded tutor or admin, sign **up** in the app with the email the script prints, using any password.
 
 ### Start the API
 ```bash
@@ -260,12 +263,17 @@ The API runs at http://localhost:5000, and its interactive docs are at http://lo
 
 ### Run the Android app
 1. Open the **`android_app/`** folder (not the repo root) in Android Studio and let Gradle sync.
-2. On an **emulator** there's nothing to change: the app calls `http://10.0.2.2:5000/`, the emulator's address for your computer.
-   On a **physical phone**, connect it over USB and add this line to `android_app/local.properties`:
-   ```properties
-   API_BASE_URL=http://127.0.0.1:5000/
-   ```
-   Each build then runs `adb reverse`, so the phone reaches the API on your computer. Rebuild if you reconnect the phone.
+2. There's nothing to change to try the app: out of the box it calls the deployed API on Azure (`https://tutorbridge-api-dvc3cwehfnd0fmgp.southafricanorth-01.azurewebsites.net/`), on an emulator or a phone.
+   To develop against the API running on your own computer instead, set `API_BASE_URL` in `android_app/local.properties` (this file isn't committed):
+   * On an **emulator**, use the emulator's address for your computer:
+     ```properties
+     API_BASE_URL=http://10.0.2.2:5000/
+     ```
+   * On a **physical phone** connected over USB:
+     ```properties
+     API_BASE_URL=http://127.0.0.1:5000/
+     ```
+     Each build then runs `adb reverse`, so the phone reaches the API on your computer. Rebuild if you reconnect the phone.
 3. Select the **app** run configuration and press **Run**.
 
 > **Google sign-in** only works on builds whose signing key is registered in the Firebase project. On your own machine, sign in with email and password, or add the SHA-1 from `./gradlew signingReport` in Firebase console → Project settings → Your apps.

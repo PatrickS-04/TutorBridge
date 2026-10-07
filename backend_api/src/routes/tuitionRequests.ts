@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import {
   TuitionRequest,
   Application,
@@ -96,18 +96,116 @@ router.get(
   })
 );
 
+//What a student may change on their own request. The status, the owner and
+//the application count are deliberately not on the list.
+const EDITABLE_FIELDS = [
+  "subjectId",
+  "areaId",
+  "gradeLevel",
+  "mode",
+  "description",
+  "preferredRateBand",
+  "availability",
+] as const;
+
+/**
+ * Edit a request the student posted. Only while it is still open: once a
+ * tutor has been matched the terms are agreed, so changing the subject or
+ * time underneath them would be a quiet breach of that agreement.
+ */
 router.put(
   "/:id",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { description, preferredRateBand } = req.body;
-    const tuitionRequest = await TuitionRequest.findOneAndUpdate(
-      { _id: req.params.id, studentId: req.auth!.userId, institutionId: req.auth!.institutionId },
-      { $set: { description, preferredRateBand } },
-      { new: true, runValidators: true }
+    const updates = Object.fromEntries(
+      EDITABLE_FIELDS.filter((field) => req.body[field] !== undefined).map((field) => [field, req.body[field]])
     );
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "Nothing to update"));
+    }
+
+    const tuitionRequest = await TuitionRequest.findOne({
+      _id: req.params.id,
+      studentId: req.auth!.userId,
+      institutionId: req.auth!.institutionId,
+    });
     if (!tuitionRequest) return res.status(404).json(apiError("NOT_FOUND", "Tuition request not found or not owned by caller"));
+
+    if (tuitionRequest.status !== TuitionRequestStatus.OPEN) {
+      return res.status(409).json(apiError("INVALID_STATE", "Only an open request can be edited"));
+    }
+
+    tuitionRequest.set(updates);
+    await tuitionRequest.save();
+
+    //Tutors who already offered need to know the request they offered on moved.
+    const pending = await Application.find({
+      tuitionRequestId: tuitionRequest._id,
+      status: ApplicationStatus.PENDING,
+    });
+    for (const application of pending) {
+      notify(
+        req.auth!.institutionId,
+        String(application.tutorId),
+        NotificationCategory.APPLICATION,
+        "A request you applied to changed",
+        "The student edited their tuition request - check it still suits you.",
+        `tutorbridge://requests/${tuitionRequest._id}`
+      );
+    }
+
     res.status(200).json(tuitionRequest);
   })
+);
+
+/**
+ * Shared by close and withdraw: both end the request, and differ only in the
+ * status they leave behind (CLOSED = sorted, CANCELLED = no longer wanted).
+ */
+async function endRequest(req: AuthRequest, res: Response, finalStatus: TuitionRequestStatus) {
+  const tuitionRequest = await TuitionRequest.findOne({
+    _id: req.params.id,
+    studentId: req.auth!.userId,
+    institutionId: req.auth!.institutionId,
+  });
+  if (!tuitionRequest) return res.status(404).json(apiError("NOT_FOUND", "Tuition request not found or not owned by caller"));
+
+  if (![TuitionRequestStatus.OPEN, TuitionRequestStatus.MATCHED].includes(tuitionRequest.status)) {
+    return res.status(409).json(apiError("INVALID_STATE", "This request has already ended"));
+  }
+
+  tuitionRequest.status = finalStatus;
+  await tuitionRequest.save();
+
+  //Offers nobody will answer now: decline them so tutors stop waiting.
+  const pending = await Application.find({
+    tuitionRequestId: tuitionRequest._id,
+    status: ApplicationStatus.PENDING,
+  });
+  for (const application of pending) {
+    application.status = ApplicationStatus.REJECTED;
+    application.decidedAt = new Date();
+    await application.save();
+    notify(
+      req.auth!.institutionId,
+      String(application.tutorId),
+      NotificationCategory.APPLICATION,
+      "A request you applied to is closed",
+      "The student is no longer looking for a tutor for this request.",
+      `tutorbridge://applications/${application._id}`
+    );
+  }
+
+  res.status(200).json({ id: tuitionRequest._id, status: tuitionRequest.status });
+}
+
+router.put(
+  "/:id/close",
+  asyncHandler(async (req: AuthRequest, res) => endRequest(req, res, TuitionRequestStatus.CLOSED))
+);
+
+router.put(
+  "/:id/withdraw",
+  asyncHandler(async (req: AuthRequest, res) => endRequest(req, res, TuitionRequestStatus.CANCELLED))
 );
 
 router.post(

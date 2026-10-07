@@ -110,7 +110,7 @@ private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) ->
                     Text(req.subject, color = CrimsonPrimary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Text("🕐 ${req.timeWindow} • 📍 ${req.preferredVenue}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("🕐 ${req.timeWindow} • 📍 ${req.preferredVenue}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 "\"${req.topic}\"",
                 fontSize = 12.5.sp,
@@ -150,7 +150,7 @@ private fun MyApplicationCard(req: StudentRequestUi) {
                 Text("Student: ${req.studentName}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Badge(containerColor = EmeraldTint) {
-                Text("Offered", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                Text("Offered", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

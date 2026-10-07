@@ -87,11 +87,11 @@ fun MyRequestsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "${req.level} • ${req.timeWindow}",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (req.preferredVenue.isNotBlank()) {
-                            Text("📍 ${req.preferredVenue}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("📍 ${req.preferredVenue}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         when (req.status) {
@@ -146,10 +146,11 @@ private fun StatusBadge(status: RequestStatus) {
         RequestStatus.OPEN -> Triple("Open Request", MaterialTheme.colorScheme.primaryContainer, CrimsonPrimary)
         RequestStatus.MATCHED -> Triple("✓ Matched", EmeraldTint, EmeraldSuccess)
         RequestStatus.OFFERED -> Triple("Offered", EmeraldTint, EmeraldSuccess)
-        RequestStatus.COMPLETED -> Triple("Completed", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+        RequestStatus.COMPLETED -> Triple("Closed", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+        RequestStatus.WITHDRAWN -> Triple("Withdrawn", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Badge(containerColor = bg) {
-        Text(label, color = fg, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+        Text(label, color = fg, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 

@@ -1,5 +1,5 @@
 import { Express, Router } from "express";
-import { Subject, Province, Area } from "../models";
+import { Subject, Province, Area, User, TuitionRequest } from "../models";
 import { createCrudRouter } from "../utils/createCrudRouter";
 
 import authRoutes from "./auth";
@@ -36,9 +36,15 @@ export const routeMounts: Record<string, Router> = {
   "/timesheets": timesheetRoutes,
   "/notifications": notificationRoutes,
 
-  "/admin/subjects": createCrudRouter(Subject),
-  "/admin/provinces": createCrudRouter(Province),
-  "/admin/areas": createCrudRouter(Area),
+  "/admin/subjects": createCrudRouter(Subject, {
+    inUse: async (id) => !!(await User.exists({ subjectIds: id })) || !!(await TuitionRequest.exists({ subjectId: id })),
+  }),
+  "/admin/provinces": createCrudRouter(Province, {
+    inUse: async (id) => !!(await Area.exists({ provinceId: id })),
+  }),
+  "/admin/areas": createCrudRouter(Area, {
+    inUse: async (id) => !!(await User.exists({ areaId: id })) || !!(await TuitionRequest.exists({ areaId: id })),
+  }),
 };
 
 export function registerRoutes(app: Express) {

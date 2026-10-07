@@ -15,7 +15,8 @@ import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
-import { syncBookingCreated, syncBookingCancelled } from "../utils/googleCalendar";
+import { ensureThread } from "../utils/threads";
+import { syncBookingCreated, syncBookingCancelled, syncBookingRescheduled } from "../utils/googleCalendar";
 
 const router = Router();
 router.use(authenticate);
@@ -180,6 +181,9 @@ router.post(
       agreedRatePerHour: tutor.hourlyRate ?? 0,
     });
 
+    //So the tutor can ask the student about the session before confirming it.
+    await ensureThread(req.auth!.institutionId, req.auth!.userId, String(tutor._id), { bookingId: booking._id });
+
     notify(
       req.auth!.institutionId,
       String(tutor._id),
@@ -295,6 +299,109 @@ router.put(
       status: booking.status,
       cancelledBy: booking.cancelledBy,
       reason: booking.cancellationReason,
+    });
+  })
+);
+
+/**
+ * Move a session to a new time without cancelling it and booking again.
+ *
+ * Either party may ask. A tutor moving their own session keeps it confirmed
+ * and the student is told; a student moving one changes the tutor's diary, so
+ * it goes back to REQUESTED for the tutor to confirm (and the calendar event
+ * comes down until they do). Only sessions that have not happened yet and are
+ * still on can move, and never onto a time the tutor already has a confirmed
+ * session in.
+ */
+router.put(
+  "/:id/reschedule",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { startTime, endTime, location } = req.body;
+    if (!startTime || !endTime) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "startTime and endTime are required"));
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "endTime must be a valid time after startTime", "endTime"));
+    }
+    if (start <= new Date()) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "A session can only be moved to a future time", "startTime"));
+    }
+
+    const booking = await Booking.findOne({
+      _id: req.params.id,
+      institutionId: req.auth!.institutionId,
+      $or: [{ tutorId: req.auth!.userId }, { studentId: req.auth!.userId }],
+    });
+    if (!booking) return res.status(404).json(apiError("NOT_FOUND", "Booking not found"));
+
+    if (![BookingStatus.REQUESTED, BookingStatus.CONFIRMED].includes(booking.status)) {
+      return res.status(409).json(apiError("INVALID_STATE", "Only an upcoming session can be rescheduled"));
+    }
+
+    const clash = await Booking.findOne({
+      _id: { $ne: booking._id },
+      tutorId: booking.tutorId,
+      status: BookingStatus.CONFIRMED,
+      startTime: { $lt: end },
+      endTime: { $gt: start },
+    });
+    if (clash) {
+      return res
+        .status(409)
+        .json(apiError("SLOT_CONFLICT", "That slot is already taken - please pick another", "startTime"));
+    }
+
+    const byTutor = String(booking.tutorId) === req.auth!.userId;
+    const wasConfirmed = booking.status === BookingStatus.CONFIRMED;
+
+    booking.startTime = start;
+    booking.endTime = end;
+    if (typeof location === "string" && location.trim()) booking.location = location.trim();
+
+    if (byTutor) {
+      //The tutor choosing the time is the tutor agreeing to it, so a session
+      //they move is confirmed even if it was still only requested.
+      booking.status = BookingStatus.CONFIRMED;
+      if (!wasConfirmed) {
+        booking.confirmedAt = new Date();
+        booking.addressDisclosed = true;
+      }
+    } else if (wasConfirmed) {
+      //A student moving a confirmed session changes the tutor's diary, so the
+      //tutor has to say yes to the new time.
+      booking.status = BookingStatus.REQUESTED;
+      booking.confirmedAt = undefined;
+    }
+    await booking.save();
+
+    if (byTutor) {
+      if (wasConfirmed) syncBookingRescheduled(booking);
+      else syncBookingCreated(booking);
+    } else if (wasConfirmed) {
+      //The old slot is off the calendar until the tutor confirms the new one.
+      syncBookingCancelled(booking);
+    }
+
+    const when = start.toISOString().slice(0, 16).replace("T", " ");
+    notify(
+      req.auth!.institutionId,
+      String(byTutor ? booking.studentId : booking.tutorId),
+      NotificationCategory.BOOKING,
+      byTutor ? "Session rescheduled" : "Reschedule requested",
+      byTutor
+        ? `${booking.subjectName} was moved to ${when}.`
+        : `${booking.subjectName} was moved to ${when} - confirm the new time.`,
+      `tutorbridge://bookings/${booking._id}`
+    );
+
+    res.status(200).json({
+      id: booking._id,
+      status: booking.status,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
     });
   })
 );

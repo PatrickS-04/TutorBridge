@@ -75,12 +75,12 @@ fun FindTutorsScreen(
                 FilterChip(
                     selected = activeNowOnly,
                     onClick = { activeNowOnly = !activeNowOnly },
-                    label = { Text("Active on campus now", fontSize = 11.5.sp) }
+                    label = { Text("Active on campus now", fontSize = 12.sp) }
                 )
                 FilterChip(
                     selected = topRatedOnly,
                     onClick = { topRatedOnly = !topRatedOnly },
-                    label = { Text("★ Top Rated (4.9+)", fontSize = 11.5.sp) }
+                    label = { Text("★ Top Rated (4.9+)", fontSize = 12.sp) }
                 )
             }
         }
@@ -107,11 +107,11 @@ fun FindTutorsScreen(
                             // No match scoring behind this yet - shown only when there is one.
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text("${tutor.subject}\n(${tutor.courseCode})", fontSize = 11.5.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text("${tutor.subject}\n(${tutor.courseCode})", fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -120,19 +120,19 @@ fun FindTutorsScreen(
                                     tutor.activeToday -> "Active today"
                                     else -> "Not available today"
                                 },
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = if (tutor.activeNow) EmeraldSuccess else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                             // Ratings only appear once there are reviews behind them.
                             if (tutor.reviewsCount > 0) {
-                                Text("  •  ★ ${tutor.rating}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("  •  ★ ${tutor.rating}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         if (tutor.staffOrTutorId.isNotBlank()) {
                             Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                                Text(tutor.staffOrTutorId, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                Text(tutor.staffOrTutorId, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }

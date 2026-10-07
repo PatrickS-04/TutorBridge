@@ -236,7 +236,7 @@ fun SessionPrepScreen(
                     Text("Anything worth remembering about this student or guardian", fontSize = 13.sp)
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
-                supportingText = { Text("Only you can see these notes.", fontSize = 11.sp) }
+                supportingText = { Text("Only you can see these notes.", fontSize = 12.sp) }
             )
         }
 

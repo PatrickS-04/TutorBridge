@@ -63,7 +63,7 @@ fun EditTutorProfileScreen(
                 )
                 if (uiState.tutorProfileCompleteness < 100) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("• Add languages spoken to reach 100%", fontSize = 11.5.sp, color = CrimsonPrimary)
+                    Text("• Add languages spoken to reach 100%", fontSize = 12.sp, color = CrimsonPrimary)
                 }
             }
         }

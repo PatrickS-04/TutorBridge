@@ -86,7 +86,8 @@ const noContent = { description: "Deleted. No body." };
  */
 function crudPaths(resource: string, schema: string) {
   const tags = ["Admin reference data"];
-  const adminOnly = "Institution admins only.";
+  const adminOnly =
+    "Platform admins only: these lists are shared by every institution, so an institution admin cannot change them.";
   const noun = schema.toLowerCase();
   const a = /^[aeiou]/.test(noun) ? "an" : "a";
   return {
@@ -123,9 +124,9 @@ function crudPaths(resource: string, schema: string) {
       delete: {
         tags,
         summary: `Delete ${a} ${noun}`,
-        description: adminOnly,
+        description: `${adminOnly} A record that existing users, requests or areas still use answers 409.`,
         parameters: [pathId("id", `${schema} id.`)],
-        responses: { 204: noContent, ...authErrors, 404: res.notFound },
+        responses: { 204: noContent, ...authErrors, 404: res.notFound, 409: res.conflict },
       },
     },
   };
@@ -285,15 +286,28 @@ export const openapiSpec = {
       get: {
         tags: ["Users"],
         summary: "List bookable tutors at the caller's institution",
-        description: "Verified tutors not pending deletion - what the Find a Tutor screen lists.",
+        description: [
+          "Verified tutors not pending deletion - what the Find a Tutor screen lists.",
+          "",
+          "Each tutor carries a `matchScore` for the caller, worked out from the",
+          "caller's own tuition requests: a shared subject (live requests count",
+          "most), a shared campus area, and the tutor's completed sessions. A tutor",
+          "who shares neither a subject nor an area scores 0. Best fit comes first.",
+        ].join("\n"),
         parameters: [pageParam],
         responses: {
           200: ok(
-            "A page of tutors, each with the number of sessions actually taught.",
+            "A page of tutors, each with sessions actually taught and a match score.",
             pageOf({
               allOf: [
                 ref("User"),
-                { type: "object", properties: { completedSessions: { type: "integer", example: 12 } } },
+                {
+                  type: "object",
+                  properties: {
+                    completedSessions: { type: "integer", example: 12 },
+                    matchScore: { type: "integer", minimum: 0, maximum: 100, example: 80 },
+                  },
+                },
               ],
             })
           ),
@@ -650,14 +664,21 @@ export const openapiSpec = {
       put: {
         tags: ["Tuition requests"],
         summary: "Edit your own request",
+        description:
+          "Only while the request is still `OPEN`; once a tutor is matched it answers 409. Tutors who already applied are notified.",
         parameters: [pathId("id", "Request id.")],
         requestBody: {
           required: true,
           ...json({
             type: "object",
             properties: {
+              subjectId: objectId("Subject being requested."),
+              areaId: objectId("Area the session should happen in."),
+              gradeLevel: { type: "string", example: "Grade 11" },
+              mode: enumOf(LessonMode),
               description: { type: "string", maxLength: 1000 },
               preferredRateBand: ref("RateBand"),
+              availability: { type: "array", items: ref("AvailabilitySlot") },
             },
           }),
         },
@@ -666,6 +687,43 @@ export const openapiSpec = {
           400: res.badRequest,
           ...authErrors,
           404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/tuition-requests/{id}/close": {
+      put: {
+        tags: ["Tuition requests"],
+        summary: "Close your own request",
+        description:
+          "For a request that is sorted. Open or matched requests only; pending applications are declined and their tutors told.",
+        parameters: [pathId("id", "Request id.")],
+        responses: {
+          200: ok("The request's new status.", {
+            type: "object",
+            properties: { id: objectId("Request id."), status: enumOf(TuitionRequestStatus) },
+          }),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/tuition-requests/{id}/withdraw": {
+      put: {
+        tags: ["Tuition requests"],
+        summary: "Withdraw your own request",
+        description:
+          "For a request that is no longer wanted; leaves it `CANCELLED`. Open or matched requests only; pending applications are declined and their tutors told.",
+        parameters: [pathId("id", "Request id.")],
+        responses: {
+          200: ok("The request's new status.", {
+            type: "object",
+            properties: { id: objectId("Request id."), status: enumOf(TuitionRequestStatus) },
+          }),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
         },
       },
     },
@@ -866,6 +924,48 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/{id}/reschedule": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Move a session to a new time",
+        description: [
+          "Either party may ask, for a session that is still requested or confirmed",
+          "and not yet started. A tutor moving a session keeps it confirmed (and a",
+          "requested one becomes confirmed); a student moving a confirmed session",
+          "sends it back to `REQUESTED` for the tutor to confirm. The other party is",
+          "notified and the Google Calendar event follows. A time the tutor already",
+          "has a confirmed session in answers 409 `SLOT_CONFLICT`.",
+        ].join("\n"),
+        parameters: [pathId("id", "Booking id.")],
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["startTime", "endTime"],
+            properties: {
+              startTime: dateTime("New start."),
+              endTime: dateTime("New end, after the start."),
+              location: { type: "string", maxLength: 120 },
+            },
+          }),
+        },
+        responses: {
+          200: ok("The moved booking.", {
+            type: "object",
+            properties: {
+              id: objectId("Booking id."),
+              status: enumOf(BookingStatus),
+              startTime: dateTime("New start."),
+              endTime: dateTime("New end."),
+            },
+          }),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
     "/bookings/{id}/notes": {
       put: {
         tags: ["Bookings"],
@@ -889,14 +989,31 @@ export const openapiSpec = {
       get: {
         tags: ["Threads"],
         summary: "List your conversations",
+        description: [
+          "Most recently active first. Conversations are opened by the API when",
+          "a student accepts a tutor's offer or books a tutor directly, one per",
+          "student-tutor pair. Participants carry only `fullName` and `role`.",
+        ].join("\n"),
         parameters: [pageParam],
-        responses: { 200: ok("A page of threads.", pageOf(ref("Thread"))), ...authErrors },
+        responses: {
+          200: ok(
+            "A page of threads, each with the caller's unread count.",
+            pageOf({
+              allOf: [
+                ref("Thread"),
+                { type: "object", properties: { unread: { type: "integer", example: 2 } } },
+              ],
+            })
+          ),
+          ...authErrors,
+        },
       },
     },
     "/threads/{id}/messages": {
       get: {
         tags: ["Threads"],
         summary: "Read a thread",
+        description: "Opening a thread marks the other person's messages as read and clears the caller's unread count.",
         parameters: [pathId("id", "Thread id."), pageParam],
         responses: {
           200: ok("A page of messages, newest first.", pageOf(ref("Message"))),
@@ -1075,10 +1192,10 @@ export const openapiSpec = {
           "month is the working draft and every earlier one is closed.",
         ].join("\n"),
         parameters: [
-          query("count", "How many months back, 1-12.", {
+          query("count", "How many months back, 1-24.", {
             type: "integer",
             minimum: 1,
-            maximum: 12,
+            maximum: 24,
             default: 3,
           }),
           query("tutorId", "Required for non-tutors; tutors always get their own."),

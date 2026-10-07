@@ -4,6 +4,9 @@ export enum UserRole {
   GUARDIAN_LEARNER = "GUARDIAN_LEARNER",
   TUTOR = "TUTOR",
   INSTITUTION_ADMIN = "INSTITUTION_ADMIN",
+  //Runs the platform itself. Subjects, provinces and areas are shared by every
+  //institution, so no single institution's admin may change them.
+  PLATFORM_ADMIN = "PLATFORM_ADMIN",
 }
 
 export enum AuthProvider {

@@ -198,6 +198,43 @@ async function createEvent(booking: IBooking) {
 }
 
 /**
+ * Move the event when a session is rescheduled. A booking that never reached
+ * a calendar (neither party had linked one then) has no event to move, so it is
+ * written fresh instead - the reschedule may be the first time it can be.
+ */
+export function syncBookingRescheduled(booking: IBooking) {
+  const sync = booking.googleCalendarEventId ? updateEvent(booking) : createEvent(booking);
+  sync.catch((error) => console.error("calendar reschedule failed:", error));
+}
+
+// Reference: Google for Developers. 2026. Events: patch. [Online].
+//   Available at: https://developers.google.com/workspace/calendar/api/v3/reference/events/patch [Accessed 7 October 2026].
+async function updateEvent(booking: IBooking) {
+  const link = await CalendarLink.findOne({ userId: booking.googleCalendarUserId ?? booking.tutorId }).select(
+    "+refreshTokenEnc"
+  );
+  if (!link) return;
+
+  try {
+    const accessToken = await accessTokenFor(decryptToken(link.refreshTokenEnc));
+    const { start, end, location } = buildEvent(booking, "");
+    const response = await fetch(`${eventsUrl(link.calendarId, booking.googleCalendarEventId!)}?sendUpdates=all`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end, ...(location ? { location } : {}) }),
+    });
+    if (!response.ok) {
+      const failure: any = await response.json().catch(() => ({}));
+      throw new Error(failure.error?.message ?? `Calendar API ${response.status}`);
+    }
+    await link.updateOne({ $set: { lastSyncedAt: new Date() }, $unset: { lastSyncError: "" } });
+  } catch (error) {
+    await link.updateOne({ $set: { lastSyncError: String(error) } });
+    throw error;
+  }
+}
+
+/**
  * Drop the event again when the booking is cancelled, so the calendar cannot
  * keep showing a session that is off.
  */

@@ -60,7 +60,11 @@ fun NewTuitionRequestScreen(
             IconButton(onClick = if (step > 1) onPrevious else onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
             }
-            Text("New Tuition Request", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                if (draft.editingRequestId != null) "Edit Tuition Request" else "New Tuition Request",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         // Step progress dots
@@ -77,7 +81,7 @@ fun NewTuitionRequestScreen(
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Step $step of $totalSteps — ${stepTitles[step - 1]}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Step $step of $totalSteps — ${stepTitles[step - 1]}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         when (step) {
@@ -126,7 +130,7 @@ fun NewTuitionRequestScreen(
                     OutlinedTextField(
                         value = draft.startTime,
                         onValueChange = { onHoursChange(it, draft.endTime) },
-                        label = { Text("From (HH:mm)", fontSize = 11.sp) },
+                        label = { Text("From (HH:mm)", fontSize = 12.sp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true
@@ -134,7 +138,7 @@ fun NewTuitionRequestScreen(
                     OutlinedTextField(
                         value = draft.endTime,
                         onValueChange = { onHoursChange(draft.startTime, it) },
-                        label = { Text("To (HH:mm)", fontSize = 11.sp) },
+                        label = { Text("To (HH:mm)", fontSize = 12.sp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true
@@ -174,7 +178,7 @@ fun NewTuitionRequestScreen(
             Icon(Icons.Default.Bookmark, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
             Text(
                 "Your request goes to every verified tutor for this subject at your institution.",
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 color = NavySecondary
             )
         }
@@ -201,7 +205,8 @@ fun NewTuitionRequestScreen(
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
             ) {
-                Text(if (step < totalSteps) "Next Step" else "Submit Request", fontWeight = FontWeight.Bold)
+                val submitLabel = if (draft.editingRequestId != null) "Save Changes" else "Submit Request"
+                Text(if (step < totalSteps) "Next Step" else submitLabel, fontWeight = FontWeight.Bold)
             }
         }
     }

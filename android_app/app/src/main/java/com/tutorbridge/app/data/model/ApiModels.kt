@@ -60,7 +60,9 @@ data class UserDto(
     val profileCompleteness: Int = 0,
     val locale: String = "EN",
     /** Completed sessions, added by GET /users/tutors only. */
-    val completedSessions: Int = 0
+    val completedSessions: Int = 0,
+    /** 0-100 fit with the caller's own requests, added by GET /users/tutors only. */
+    val matchScore: Int = 0
 )
 
 /** A populated `tutorId` / `studentId` reference - the same document, fewer fields read. */
@@ -130,6 +132,15 @@ data class CreateTuitionRequest(
     val mode: String = "IN_PERSON",
     val description: String? = null,
     val availability: List<AvailabilityDto> = emptyList()
+)
+
+/** PUT /tuition-requests/:id - only the fields that are set are changed. */
+data class UpdateTuitionRequest(
+    val subjectId: String? = null,
+    val areaId: String? = null,
+    val gradeLevel: String? = null,
+    val description: String? = null,
+    val availability: List<AvailabilityDto>? = null
 )
 
 /** GET /tuition-requests/:id/applications - `tutorId` is populated here. */
@@ -204,6 +215,40 @@ data class DirectBookingRequest(
 data class BookingAckDto(val id: String, val status: String)
 
 data class CancelRequest(val reason: String?)
+
+/** PUT /bookings/:id/reschedule - the new window, as ISO-8601 instants. */
+data class RescheduleRequest(
+    val startTime: String,
+    val endTime: String,
+    val location: String? = null
+)
+
+/** The moved booking; [status] tells whether it still stands or now waits on the tutor. */
+data class RescheduleAckDto(val id: String, val status: String)
+
+// ==================== MESSAGING ====================
+
+/** GET /threads - `participants` carry only a name, and `unread` is the caller's own count. */
+data class ThreadDto(
+    val _id: String,
+    val participants: List<UserBriefDto> = emptyList(),
+    val lastMessagePreview: String? = null,
+    val lastMessageAt: String? = null,
+    val unread: Int = 0
+)
+
+/** `senderId` is a bare id here - messages are not populated. */
+data class MessageDto(
+    val _id: String,
+    val senderId: String = "",
+    val body: String = "",
+    val sentAt: String = "",
+    val status: String = "SENT",
+    val clientMessageId: String = ""
+)
+
+/** [clientMessageId] makes a retried send safe: the server returns the stored message instead of a duplicate. */
+data class SendMessageRequest(val body: String, val clientMessageId: String)
 
 // ==================== NOTIFICATIONS ====================
 

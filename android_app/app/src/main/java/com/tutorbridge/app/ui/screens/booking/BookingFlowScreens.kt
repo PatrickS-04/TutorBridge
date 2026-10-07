@@ -109,7 +109,7 @@ fun BookingFlowScreen(
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(dayNum.first, fontSize = 12.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
                 }
             }
@@ -269,7 +269,7 @@ fun ReviewBookingScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(Icons.Default.Place, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
-            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 11.5.sp, color = NavySecondary)
+            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 12.sp, color = NavySecondary)
         }
 
         Spacer(modifier = Modifier.weight(1f))

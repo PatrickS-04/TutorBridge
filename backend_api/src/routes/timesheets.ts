@@ -6,6 +6,9 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 const router = Router();
 router.use(authenticate);
 
+//Two years of history: enough for a tutor to look back at last year's claims.
+const MAX_PERIODS = 24;
+
 router.get(
   "/summary",
   asyncHandler(async (req: AuthRequest, res) => {
@@ -47,7 +50,7 @@ router.get(
 router.get(
   "/periods",
   asyncHandler(async (req: AuthRequest, res) => {
-    const count = Math.min(12, Math.max(1, parseInt(String(req.query.count ?? "3"), 10) || 3));
+    const count = Math.min(MAX_PERIODS, Math.max(1, parseInt(String(req.query.count ?? "3"), 10) || 3));
     const tutorId = req.auth!.role === UserRole.TUTOR ? req.auth!.userId : String(req.query.tutorId ?? "");
     if (!tutorId) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "tutorId is required for non-tutors", "tutorId"));
@@ -146,7 +149,9 @@ router.get(
           hours.toFixed(1),
           b.agreedRatePerHour,
           round1(hours * b.agreedRatePerHour),
-        ].join(",")
+        ]
+          .map(csvCell)
+          .join(",")
       );
     }
 
@@ -154,6 +159,16 @@ router.get(
     res.status(200).send(rows.join("\n"));
   })
 );
+
+/**
+ * One CSV field. A name or subject with a comma, quote or line break would
+ * otherwise split into extra columns; those are quoted, with quotes doubled
+ * (RFC 4180).
+ */
+export function csvCell(value: unknown): string {
+  const text = String(value ?? "");
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
 
 function monthBounds(month: string) {
   const [year, m] = month.split("-").map(Number);

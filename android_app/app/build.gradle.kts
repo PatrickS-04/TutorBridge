@@ -15,13 +15,19 @@ val localProperties = Properties().apply {
         ?.inputStream()?.use { load(it) }
 }
 
-// 10.0.2.2 is the emulator's alias for the host's localhost and is unroutable
-// from a physical device. For a phone, set API_BASE_URL=http://127.0.0.1:5000/
-// in local.properties: every build then tunnels that port on each connected
-// device to this machine over adb, whatever network the phone is on.
+// A fresh clone talks to the deployed API on Azure App Service, so it runs on an
+// emulator or a phone with no setup. To develop against a local API instead, set
+// API_BASE_URL in local.properties:
+//   emulator -> http://10.0.2.2:5000/ (the emulator's alias for the host's localhost,
+//               unroutable from a physical device)
+//   phone    -> http://127.0.0.1:5000/ (every build then tunnels that port on each
+//               connected device to this machine over adb, whatever network the phone is on)
 // Reference: Android Developers. 2026. Android Emulator networking. [Online].
 //   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
-val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")
+val apiBaseUrl: String = localProperties.getProperty(
+    "API_BASE_URL",
+    "https://tutorbridge-api-dvc3cwehfnd0fmgp.southafricanorth-01.azurewebsites.net/"
+)
 
 android {
     namespace = "com.tutorbridge.app"

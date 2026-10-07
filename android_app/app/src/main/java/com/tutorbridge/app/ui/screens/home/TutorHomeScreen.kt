@@ -53,11 +53,19 @@ fun TutorHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("FACULTY TUTOR PORTAL", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                    Text("FACULTY TUTOR PORTAL", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                     Text(uiState.userName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { onNavigate("notifications") }) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val unread = uiState.threads.sumOf { it.unread }
+                    IconButton(onClick = { onNavigate("messages") }) {
+                        BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
+                            Icon(Icons.Default.Chat, contentDescription = "Messages")
+                        }
+                    }
+                    IconButton(onClick = { onNavigate("notifications") }) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                    }
                 }
             }
         }
@@ -92,21 +100,21 @@ fun TutorHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("TIMESHEETS & CLAIMS", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("TIMESHEETS & CLAIMS", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             Text("${activePeriod?.label ?: "This month"} Pay Period", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
                         Badge(containerColor = CrimsonPrimary) {
-                            Text("CLAIMABLE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                            Text("CLAIMABLE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            Text("Logged Hours", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+                            Text("Logged Hours", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                             Text("${activePeriod?.totalHours ?: 0.0} hrs", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                         Column {
-                            Text("Claim Amount", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+                            Text("Claim Amount", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                             Text("R${(activePeriod?.claimValue ?: 0.0).toInt()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                     }
@@ -136,7 +144,7 @@ fun TutorHomeScreen(
                         Text("Choose the days students can book you →", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text("Open", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("Open", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -184,10 +192,10 @@ fun TutorHomeScreen(
                                 listOf(booking.subjectName, booking.whenLabel)
                                     .filter { it.isNotBlank() }
                                     .joinToString(" • "),
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            VenueLink(booking.location, fontSize = 11.sp)
+                            VenueLink(booking.location, fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -223,7 +231,7 @@ fun TutorHomeScreen(
                     Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                     Text(
                         "${event.date} • ${event.startTime}",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

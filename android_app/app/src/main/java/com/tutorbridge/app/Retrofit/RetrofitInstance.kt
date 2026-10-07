@@ -18,9 +18,8 @@ import java.util.concurrent.TimeUnit
 //   Available at: https://github.com/google/gson [Accessed 21 September 2026].
 object RetrofitInstance {
 
-    // 10.0.2.2 = the host machine's localhost, as seen from the Android
-    // emulator, matching backend_api running locally on :5000. Point this at
-    // the deployed Azure App Service URL for a physical device / release build.
+    // Set in app/build.gradle.kts: the deployed Azure App Service API unless
+    // local.properties overrides API_BASE_URL (10.0.2.2 for a local API from an emulator).
     private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
