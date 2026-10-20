@@ -15,18 +15,17 @@ val localProperties = Properties().apply {
         ?.inputStream()?.use { load(it) }
 }
 
-// A fresh clone talks to the deployed API on Azure App Service, so it runs on an
-// emulator or a phone with no setup. To develop against a local API instead, set
-// API_BASE_URL in local.properties:
+// A fresh clone talks to the API on this machine (npm run dev, port 5000). The
+// default 127.0.0.1 makes every build tunnel that port on each connected device or
+// emulator to this machine over adb, whatever network the phone is on. To override,
+// set API_BASE_URL in local.properties:
 //   emulator -> http://10.0.2.2:5000/ (the emulator's alias for the host's localhost,
 //               unroutable from a physical device)
-//   phone    -> http://127.0.0.1:5000/ (every build then tunnels that port on each
-//               connected device to this machine over adb, whatever network the phone is on)
 // Reference: Android Developers. 2026. Android Emulator networking. [Online].
 //   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
 val apiBaseUrl: String = localProperties.getProperty(
     "API_BASE_URL",
-    "https://tutorbridge-api-dvc3cwehfnd0fmgp.southafricanorth-01.azurewebsites.net/"
+    "http://127.0.0.1:5000/"
 )
 
 android {

@@ -27,22 +27,6 @@ jobs:
       - run: npm test
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/backend_api/serviceAccount.json
-      # Pushes to master deploy to Azure App Service: dist/ plus runtime deps only.
-      # References:
-      # Microsoft. 2025. Deploy by using GitHub Actions. [Online].
-      #   Available at: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions [Accessed 21 September 2026].
-      # Microsoft. 2026. azure/webapps-deploy (Version 3). [Computer program].
-      #   Available at: https://github.com/Azure/webapps-deploy [Accessed 21 September 2026].
-      # Microsoft. 2025. Quickstart: create a Node.js web app. [Online].
-      #   Available at: https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs [Accessed 21 September 2026].
-      - if: github.ref == 'refs/heads/master'
-        run: npm prune --omit=dev
-      - if: github.ref == 'refs/heads/master'
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: tutorbridge-api
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: backend_api
 
   # Reference: GitHub. n.d. Building and testing Java with Gradle. [Online].
   #   Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
