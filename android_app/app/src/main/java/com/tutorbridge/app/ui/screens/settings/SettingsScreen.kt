@@ -259,6 +259,13 @@ fun SettingsScreen(
                         checked = uiState.isDarkTheme,
                         onCheckedChange = onToggleDark
                     )
+                    Divider()
+                    SettingsCheckRow(
+                        icon = Icons.Default.CloudOff,
+                        label = stringResource(R.string.force_offline_label),
+                        checked = uiState.isOffline,
+                        onCheckedChange = onToggleOffline
+                    )
                 }
             }
         }

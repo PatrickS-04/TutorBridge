@@ -20,4 +20,11 @@
     <string name="sign_out_action">Teken Uit</string>
     <string name="delete_account_action">Skrap Studenterekening</string>
     <string name="delete_account_subtitle">Skrap studenteprofiel, versoeke en kampusbesprekings permanent.</string>
+    <string name="force_offline_label">Forseer vanlyn-modus</string>
+    <string name="offline_banner_network">Jy is vanlyn. Sommige funksies het \'n konneksie nodig.</string>
+    <string name="offline_banner_forced">Vanlyn-modus is aan. Skakel dit af in Instellings om weer te koppel.</string>
+    <plurals name="pending_sync">
+        <item quantity="one">%d verandering wag om te sinkroniseer</item>
+        <item quantity="other">%d veranderinge wag om te sinkroniseer</item>
+    </plurals>
 </resources>

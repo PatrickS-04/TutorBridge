@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.navigation
 
 import android.hardware.biometrics.BiometricManager
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,6 +17,7 @@ import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.OfflineBanner
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
 import com.tutorbridge.app.ui.screens.auth.NewPasswordScreen
@@ -138,7 +140,9 @@ fun TutorBridgeNavGraph(
             }
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
+        Column(modifier = Modifier.padding(innerPadding)) {
+        OfflineBanner(uiState)
+        Surface(modifier = Modifier.weight(1f)) {
             when (uiState.currentRoute) {
                 "splash" -> SplashScreen(
                     onGetStarted = { viewModel.navigateTo("auth") }
@@ -386,6 +390,7 @@ fun TutorBridgeNavGraph(
                     onNavigate = { viewModel.navigateTo(it) }
                 )
             }
+        }
         }
     }
 }

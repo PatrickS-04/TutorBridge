@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.network.NetworkMonitor
+import com.tutorbridge.app.network.OfflineMode
 import com.tutorbridge.app.data.repository.AuthRepository
 import com.tutorbridge.app.data.repository.AuthResult
 import com.tutorbridge.app.data.repository.TutorBridgeRepository
@@ -53,6 +55,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     private val authRepository = AuthRepository(RetrofitInstance.authApi)
     private val repository = TutorBridgeRepository(RetrofitInstance.tutorBridgeApi)
+    private val networkMonitor = NetworkMonitor(application)
 
     // Reference: Android Developers. 2026. StateFlow and SharedFlow. [Online].
     //   Available at: https://developer.android.com/kotlin/flow/stateflow-and-sharedflow [Accessed 21 September 2026].
@@ -87,6 +90,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates) }
         }
         loadInstitutions()
+
+        // The phone's connection, for the offline banner and for refreshing when it comes back.
+        viewModelScope.launch { networkMonitor.isOnline.collect { onNetworkChanged(it) } }
     }
 
     private fun loadInstitutions() {
@@ -334,7 +340,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             AppPreferences(getApplication()).clear()
             lastBookingId = null
             pendingDeepLink = null           // added in C5
-            _uiState.update { TutorBridgeUiState() }
+            _uiState.update { signedOutState() }
             loadInstitutions()
         }
     }
@@ -1317,7 +1323,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 user.delete().await()
                 AppPreferences(getApplication()).clear()
-                _uiState.update { TutorBridgeUiState() }
+                _uiState.update { signedOutState() }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and log back in before deleting your account") }
@@ -1334,8 +1340,32 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         saveSettings(UpdateSettingsRequest(theme = if (isDark) "DARK" else "LIGHT"))
     }
 
+    /**
+     * The "Force offline mode" switch. The OkHttp client reads the same flag
+     * (OfflineGateInterceptor), so while it is on no request leaves the phone;
+     * turning it off brings the data back up to date.
+     */
     fun toggleOfflineMode(offline: Boolean) {
+        Log.i(TAG, "Force offline mode ${if (offline) "on" else "off"}")
+        OfflineMode.forced = offline
         _uiState.update { it.copy(isOffline = offline) }
+        if (!offline) refreshIfSignedIn()
+    }
+
+    /** Called with every change in the phone's connectivity. */
+    private fun onNetworkChanged(available: Boolean) {
+        val before = _uiState.value
+        if (before.networkAvailable == available) return
+        Log.i(TAG, "Network ${if (available) "available" else "lost"}")
+        _uiState.update { it.copy(networkAvailable = available) }
+        if (available && !before.isOffline) refreshIfSignedIn()
+    }
+
+    /** Back online: pull fresh data, but only for someone who is actually inside the app. */
+    private fun refreshIfSignedIn() {
+        val insideApp = Firebase.auth.currentUser != null &&
+            _uiState.value.currentRoute !in setOf("splash", "auth", "biometric_lock", "new_password")
+        if (insideApp) refreshAll()
     }
 
     fun setLanguage(language: String) {
@@ -1504,4 +1534,19 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         catch (e: Exception) { Log.w("Push", "Could not unregister push token", e) }
     }
 
+    // ==================== SIGNED-OUT STATE ====================
+
+    /**
+     * A clean slate for the next person to sign in. Whether the phone has a
+     * connection is not about the user, so it is carried over - the monitor only
+     * reports changes, and would never say again that the network is gone.
+     */
+    private fun signedOutState(): TutorBridgeUiState {
+        OfflineMode.forced = false
+        return TutorBridgeUiState(networkAvailable = _uiState.value.networkAvailable)
+    }
+
+    private companion object {
+        const val TAG = "TutorBridgeVM"
+    }
 }

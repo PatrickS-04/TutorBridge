@@ -1,6 +1,7 @@
 package com.tutorbridge.app.viewmodel
 
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.network.effectivelyOnline
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -34,7 +35,12 @@ data class TutorBridgeUiState(
     /** The tutor's own rate, offered when they apply to a request. */
     val tutorHourlyRate: Double = 0.0,
     val isDarkTheme: Boolean = false,
+    /** The Settings switch "Force offline mode" - the user's choice, not what the network is doing. */
     val isOffline: Boolean = false,
+    /** Whether the phone has a working internet connection, from NetworkMonitor. */
+    val networkAvailable: Boolean = true,
+    /** Things done offline that have not reached the server yet (the outbox). */
+    val pendingSyncCount: Int = 0,
     val selectedLanguage: String = "English",
     val bookingUpdatesEnabled: Boolean = true,
     val sessionRemindersEnabled: Boolean = true,
@@ -139,6 +145,10 @@ data class TutorBridgeUiState(
     val targetGrade: String = "A-",
     val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
 ) {
+    /** What the app should act on: connected, and not forced offline. */
+    val isOnline: Boolean
+        get() = effectivelyOnline(networkAvailable, isOffline)
+
     /** The session the prep screen is showing, derived so it cannot go stale. */
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }

@@ -20,4 +20,11 @@
     <string name="sign_out_action">Sign Out</string>
     <string name="delete_account_action">Delete Student Account</string>
     <string name="delete_account_subtitle">Permanently purge student profile, requests, and campus bookings.</string>
+    <string name="force_offline_label">Force offline mode</string>
+    <string name="offline_banner_network">You\'re offline. Some features need a connection.</string>
+    <string name="offline_banner_forced">Offline mode is on. Turn it off in Settings to reconnect.</string>
+    <plurals name="pending_sync">
+        <item quantity="one">%d change waiting to sync</item>
+        <item quantity="other">%d changes waiting to sync</item>
+    </plurals>
 </resources>
