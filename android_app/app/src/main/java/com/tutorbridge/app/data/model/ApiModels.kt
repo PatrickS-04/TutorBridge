@@ -131,7 +131,9 @@ data class CreateTuitionRequest(
     val gradeLevel: String? = null,
     val mode: String = "IN_PERSON",
     val description: String? = null,
-    val availability: List<AvailabilityDto> = emptyList()
+    val availability: List<AvailabilityDto> = emptyList(),
+    /** Made when the student taps Post and sent unchanged on any retry, so the server can tell a repeat from a new request. */
+    val clientRequestId: String? = null
 )
 
 /** PUT /tuition-requests/:id - only the fields that are set are changed. */

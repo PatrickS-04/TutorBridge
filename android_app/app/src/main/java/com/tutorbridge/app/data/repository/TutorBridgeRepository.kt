@@ -137,15 +137,11 @@ class TutorBridgeRepository(
         bookingId: String,
         checklist: List<SessionGoalUi>,
         sideNotes: String
-    ): Result<TutorNotesDto> = call {
-        api.saveSessionNotes(
-            bookingId,
-            TutorNotesDto(
-                items = checklist.map { TutorNoteItemDto(text = it.text, done = it.completed) },
-                text = sideNotes
-            )
-        )
-    }
+    ): Result<TutorNotesDto> = saveSessionNotes(bookingId, notesOf(checklist, sideNotes))
+
+    /** The same save from the document itself - what the offline queue stores and replays. */
+    suspend fun saveSessionNotes(bookingId: String, notes: TutorNotesDto): Result<TutorNotesDto> =
+        call { api.saveSessionNotes(bookingId, notes) }
 
     // ==================== MESSAGING ====================
 
@@ -261,6 +257,12 @@ class TutorBridgeRepository(
 class ApiException(val code: Int, message: String) : IllegalStateException(message)
 
 // ==================== MAPPERS ====================
+
+/** The checklist and side notes as the one document the server stores. */
+fun notesOf(checklist: List<SessionGoalUi>, sideNotes: String) = TutorNotesDto(
+    items = checklist.map { TutorNoteItemDto(text = it.text, done = it.completed) },
+    text = sideNotes
+)
 
 private val timeOfDay = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
 private val monthLabel = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
@@ -387,7 +389,10 @@ fun MessageDto.toMessageUi(selfId: String): MessageUi = MessageUi(
     body = body,
     mine = senderId == selfId,
     time = chatTime(sentAt),
-    sentAt = sentAt
+    sentAt = sentAt,
+    // Gson leaves a field the JSON lacks as null whatever default Kotlin declares, and a
+    // message saved by an older app version, or sent by an older server, has no clientMessageId.
+    clientId = (clientMessageId as String?).orEmpty()
 )
 
 /** A REQUESTED booking waiting for the tutor to confirm or decline. */

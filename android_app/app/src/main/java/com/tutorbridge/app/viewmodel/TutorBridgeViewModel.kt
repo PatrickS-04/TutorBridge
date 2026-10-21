@@ -5,8 +5,20 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.R
 import com.tutorbridge.app.TutorBridgeApp
 import com.tutorbridge.app.data.local.LocalCache
+import com.tutorbridge.app.data.local.MessagePayload
+import com.tutorbridge.app.data.local.NotesPayload
+import com.tutorbridge.app.data.local.OutboxState
+import com.tutorbridge.app.data.local.OutboxType
+import com.tutorbridge.app.data.local.RequestPayload
+import com.tutorbridge.app.data.local.SettingsPayload
+import com.tutorbridge.app.data.local.pendingNotesByBooking
+import com.tutorbridge.app.data.local.pendingSettings
+import com.tutorbridge.app.data.local.withPending
+import com.tutorbridge.app.data.repository.notesOf
+import com.tutorbridge.app.sync.SyncScheduler
 import com.tutorbridge.app.network.NetworkMonitor
 import java.io.IOException
 import com.tutorbridge.app.network.OfflineMode
@@ -67,6 +79,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** Follows when the cache was last refreshed, for the "data saved at" line on the offline banner. */
     private var cacheClockJob: Job? = null
+
+    // What the user did offline and has not been sent yet; see sendOrQueue().
+    private val outbox = (application as TutorBridgeApp).outbox
+
+    /** Follows the outbox, so screens show queued work and the app notices when it has been delivered. */
+    private var outboxJob: Job? = null
 
     // Reference: Android Developers. 2026. StateFlow and SharedFlow. [Online].
     //   Available at: https://developer.android.com/kotlin/flow/stateflow-and-sharedflow [Accessed 21 September 2026].
@@ -324,11 +342,97 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 userEmail = user?.email ?: state.userEmail)
         }
         watchCacheClock()
+        watchOutbox()
         refreshAll()
+        requestSync()        // anything queued before the last sign-out goes now
         registerPushToken()
         // After the route is set to home, so a notification tapped on a cold
         // start opens its own screen rather than being overwritten by home.
         consumePendingDeepLink()
+    }
+
+    // ==================== OFFLINE QUEUE ====================
+
+    /** How a write ended: the server has it, it is queued for later, or the server said no. */
+    private sealed class Delivery {
+        object Sent : Delivery()
+        object Queued : Delivery()
+        data class Refused(val error: Throwable) : Delivery()
+    }
+
+    /**
+     * Does what the user asked now if it can, and queues it if it cannot.
+     *
+     * Offline, or with the connection dropping mid-request, the work goes in the
+     * outbox and is sent when the connection is back, so nothing the user did is
+     * lost. A server that answers with a refusal is different: that is the real
+     * answer, not a connectivity problem, and it is passed back to be shown.
+     *
+     * While anything is already queued, new work queues behind it rather than
+     * going straight out. Sending it ahead would reorder what the user did - a
+     * newer save of the same notes arriving, then the older queued one replacing it.
+     */
+    private suspend fun <P : Any> sendOrQueue(
+        type: OutboxType,
+        payload: P,
+        dedupeKey: String? = null,
+        send: suspend () -> Result<*>
+    ): Delivery {
+        val state = _uiState.value
+        if (!state.isOnline || state.pendingSyncCount > 0) return queueForLater(type, payload, dedupeKey)
+
+        val result = send()
+        if (result.isSuccess) return Delivery.Sent
+        val error = result.exceptionOrNull() ?: return Delivery.Sent
+        return if (error is IOException) queueForLater(type, payload, dedupeKey) else Delivery.Refused(error)
+    }
+
+    private suspend fun <P : Any> queueForLater(type: OutboxType, payload: P, dedupeKey: String?): Delivery {
+        if (outbox.enqueue(type, payload, dedupeKey) == null) {
+            return Delivery.Refused(IllegalStateException("Sign in to save your changes"))
+        }
+        requestSync()
+        return Delivery.Queued
+    }
+
+    /** Asks the background worker to send the outbox. Held back while offline mode is forced - it would only be refused. */
+    private fun requestSync() {
+        if (_uiState.value.isOnline) SyncScheduler.request(getApplication())
+    }
+
+    /** For a "Sync now" button: another go at anything the server refused, and a push on the rest. */
+    fun syncNow() {
+        viewModelScope.launch {
+            outbox.retryFailed()
+            requestSync()
+        }
+    }
+
+    /** Needs a signed-in user: the outbox is per user. */
+    private fun watchOutbox() {
+        outboxJob?.cancel()
+        outboxJob = viewModelScope.launch {
+            var waiting = emptySet<Long>()
+            outbox.observe().collect { items ->
+                _uiState.update { it.copy(outboxItems = items) }
+
+                // What was waiting and is now gone has been delivered.
+                val ids = items.map { it.id }.toSet()
+                val delivered = waiting.count { it !in ids }
+                waiting = items.filter { it.state == OutboxState.PENDING }.map { it.id }.toSet()
+                if (delivered > 0) onDelivered(delivered)
+            }
+        }
+    }
+
+    /** Queued work has reached the server: say so, and bring the screens up to date with it. */
+    private fun onDelivered(count: Int) {
+        Log.i(TAG, "$count queued change(s) delivered")
+        val resources = getApplication<Application>().resources
+        _uiState.update { it.copy(noticeMessage = resources.getQuantityString(R.plurals.synced_changes, count, count)) }
+        refreshIfSignedIn()
+        // The chat on screen would otherwise wait for its next poll to swap "Waiting to send" for the real message.
+        if (_uiState.value.currentRoute == "chat") viewModelScope.launch { fetchMessages(page = 1, quiet = true) }
     }
 
     /** Needs a signed-in user: the cache is per user, and its clock is that user's. */
@@ -359,6 +463,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun signOut() {
         chatPoller?.cancel()
         cacheClockJob?.cancel()
+        outboxJob?.cancel()
         viewModelScope.launch {
             // Timeout so a bad connection can't leave the user stuck on "Sign out".
             withTimeoutOrNull(3_000) { unregisterPushToken() }
@@ -486,7 +591,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun loadSettings() {
         viewModelScope.launch {
-            repository.settings().onSuccess { settings ->
+            // What the server (or the cache) says, with changes made offline and not yet sent on top -
+            // otherwise a reload would flip a switch back that the user just turned.
+            repository.settings().map { it.withPending(_uiState.value.outboxItems.pendingSettings()) }.onSuccess { settings ->
                 _uiState.update {
                     it.copy(
                         selectedLanguage = when (settings.language) {
@@ -553,10 +660,21 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             val isTutor = _uiState.value.role == UserRole.TUTOR
             repository.bookings().onSuccess { bookings ->
                 _uiState.update { state ->
+                    // Notes saved offline and not yet sent win over what the server still has.
+                    val unsentNotes = state.outboxItems.pendingNotesByBooking()
                     state.copy(
                         calendarEvents = bookings
                             .filter { it.status != "CANCELLED" }
-                            .mapNotNull { it.toCalendarEvent(isTutor) },
+                            .mapNotNull { it.toCalendarEvent(isTutor) }
+                            .map { event ->
+                                val notes = unsentNotes[event.id] ?: return@map event
+                                event.copy(
+                                    checklist = notes.items.mapIndexed { index, item ->
+                                        SessionGoalUi(id = "n$index", text = item.text, completed = item.done)
+                                    },
+                                    sideNotes = notes.text
+                                )
+                            },
                         pendingBookings = if (isTutor) {
                             bookings.filter { it.status == "REQUESTED" }.mapNotNull { it.toPendingBookingUi() }
                         } else {
@@ -874,7 +992,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             val availability = draft.days.map { AvailabilityDto(it.name, draft.startTime, draft.endTime) }
             val editing = draft.editingRequestId
-            val result = if (editing != null) {
+
+            val failure: Throwable? = if (editing != null) {
+                // Editing needs the server to say whether the request is still open, so it is online-only.
                 repository.updateRequest(
                     editing,
                     UpdateTuitionRequest(
@@ -884,35 +1004,38 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         description = draft.notes,
                         availability = availability
                     )
-                )
+                ).exceptionOrNull()
             } else {
-                repository.createRequest(
-                    CreateTuitionRequest(
-                        subjectId = draft.subjectId,
-                        areaId = draft.areaId,
-                        gradeLevel = draft.level.ifBlank { null },
-                        mode = "IN_PERSON", // the wizard is campus-based; no online option is offered
-                        description = draft.notes,
-                        availability = availability
-                    )
+                val request = CreateTuitionRequest(
+                    subjectId = draft.subjectId,
+                    areaId = draft.areaId,
+                    gradeLevel = draft.level.ifBlank { null },
+                    mode = "IN_PERSON", // the wizard is campus-based; no online option is offered
+                    description = draft.notes,
+                    availability = availability,
+                    // Made now and sent on every try, so a retry or a replay of the offline
+                    // queue is recognised by the server as this same post, not a new one.
+                    clientRequestId = UUID.randomUUID().toString()
                 )
+                val payload = RequestPayload(request, subjectName = draft.subject, areaName = draft.preferredVenue)
+                (sendOrQueue(OutboxType.CREATE_REQUEST, payload) { repository.createRequest(request) } as? Delivery.Refused)?.error
             }
-            result
-                .onSuccess {
-                    _uiState.update {
-                        it.copy(isRefreshing = false, currentRoute = "my_requests", requestDraft = RequestDraft())
-                    }
-                    loadRequests()
+
+            if (failure == null) {
+                // Sent, or queued and showing on the board as "Waiting to sync" - either way the student is done.
+                _uiState.update {
+                    it.copy(isRefreshing = false, currentRoute = "my_requests", requestDraft = RequestDraft())
                 }
-                .onFailure {
-                    _uiState.update { state ->
-                        state.copy(
-                            isRefreshing = false,
-                            dataErrorMessage = it.message
-                                ?: if (editing != null) "Could not save the changes" else "Could not post the request"
-                        )
-                    }
+                loadRequests()
+            } else {
+                _uiState.update { state ->
+                    state.copy(
+                        isRefreshing = false,
+                        dataErrorMessage = if (failure is IOException) friendlyMessage(failure) else failure.message
+                            ?: if (editing != null) "Could not save the changes" else "Could not post the request"
+                    )
                 }
+            }
         }
     }
 
@@ -1163,22 +1286,29 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         val checklist = state.sessionChecklist
         val sideNotes = state.sessionSideNotes
 
-        return repository.saveSessionNotes(sessionId, checklist, sideNotes)
-            .onSuccess {
-                _uiState.update { current ->
-                    current.copy(
-                        calendarEvents = current.calendarEvents.map { event ->
-                            if (event.id == sessionId) {
-                                event.copy(checklist = checklist, sideNotes = sideNotes)
-                            } else {
-                                event
-                            }
-                        }
-                    )
+        val notes = notesOf(checklist, sideNotes)
+        // The whole document is one thing: with a key, a newer save replaces an unsent older one.
+        val delivery = sendOrQueue(OutboxType.SAVE_NOTES, NotesPayload(sessionId, notes), dedupeKey = "notes:$sessionId") {
+            repository.saveSessionNotes(sessionId, notes)
+        }
+
+        if (delivery is Delivery.Refused) {
+            reportError(delivery.error)
+            return false
+        }
+        // Sent or queued: the tutor's screen shows their notes either way.
+        _uiState.update { current ->
+            current.copy(
+                calendarEvents = current.calendarEvents.map { event ->
+                    if (event.id == sessionId) {
+                        event.copy(checklist = checklist, sideNotes = sideNotes)
+                    } else {
+                        event
+                    }
                 }
-            }
-            .onFailure { reportError(it) }
-            .isSuccess
+            )
+        }
+        return true
     }
 
     // ==================== RESCHEDULING ====================
@@ -1306,18 +1436,29 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             mine = true,
             time = "Sending…",
             sentAt = Instant.now().toString(),
+            clientId = clientMessageId,
             pending = true
         )
         _uiState.update { it.copy(chatMessages = it.chatMessages + local, chatDraft = "") }
 
         viewModelScope.launch {
-            repository.sendMessage(threadId, state.userId, text, clientMessageId)
-                .onSuccess { sent ->
+            val payload = MessagePayload(threadId, text, clientMessageId)
+            when (val delivery = sendOrQueue(OutboxType.SEND_MESSAGE, payload) {
+                repository.sendMessage(threadId, state.userId, text, clientMessageId)
+            }) {
+                Delivery.Sent -> {
+                    // The server's copy is fetched on the next poll; until then the bubble stays as "Sending…".
+                    fetchMessages(page = 1, quiet = true)
+                }
+                Delivery.Queued -> {
+                    // Stays on screen, now as "Waiting to send"; the sync swaps it for the real message.
                     _uiState.update { current ->
-                        current.copy(chatMessages = mergeMessages(current.chatMessages.filterNot { it.id == local.id }, listOf(sent)))
+                        current.copy(chatMessages = current.chatMessages.map {
+                            if (it.id == local.id) it.copy(time = "Waiting to send") else it
+                        })
                     }
                 }
-                .onFailure { error ->
+                is Delivery.Refused -> {
                     // Take the unsent bubble back and give the words back to the box.
                     _uiState.update { current ->
                         current.copy(
@@ -1325,8 +1466,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             chatDraft = current.chatDraft.ifBlank { text }
                         )
                     }
-                    reportError(error)
+                    reportError(delivery.error)
                 }
+            }
         }
     }
 
@@ -1369,8 +1511,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                     return@launch
                 }
+                // The account is going, so anything it had queued has nowhere to be sent.
+                outbox.clearUser()
                 user.delete().await()
                 cacheClockJob?.cancel()
+                outboxJob?.cancel()
                 localCache.clear()
                 AppPreferences(getApplication()).clear()
                 _uiState.update { signedOutState() }
@@ -1399,7 +1544,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         Log.i(TAG, "Force offline mode ${if (offline) "on" else "off"}")
         OfflineMode.forced = offline
         _uiState.update { it.copy(isOffline = offline) }
-        if (!offline) refreshIfSignedIn()
+        if (!offline) {
+            requestSync()
+            refreshIfSignedIn()
+        }
     }
 
     /** Called with every change in the phone's connectivity. */
@@ -1408,7 +1556,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         if (before.networkAvailable == available) return
         Log.i(TAG, "Network ${if (available) "available" else "lost"}")
         _uiState.update { it.copy(networkAvailable = available) }
-        if (available && !before.isOffline) refreshIfSignedIn()
+        if (available && !before.isOffline) {
+            requestSync()
+            refreshIfSignedIn()
+        }
     }
 
     /** Back online: pull fresh data, but only for someone who is actually inside the app. */
@@ -1542,9 +1693,15 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         )
     }
 
+    /**
+     * Settings are applied on screen straight away; this is only about getting
+     * them to the server. Offline, each change is queued and replayed in order,
+     * the last value for a setting winning.
+     */
     private fun saveSettings(body: UpdateSettingsRequest) {
         viewModelScope.launch {
-            repository.saveSettings(body).onFailure { reportError(it) }
+            val delivery = sendOrQueue(OutboxType.SAVE_SETTINGS, SettingsPayload(body)) { repository.saveSettings(body) }
+            if (delivery is Delivery.Refused) reportError(delivery.error)
         }
     }
 

@@ -17,6 +17,13 @@ export interface ITuitionRequest extends Document {
   status: TuitionRequestStatus;
   applicationCount: number;
   matchScore?: number;
+  /**
+   * Made up by the app when the student taps Post, and sent again unchanged if
+   * the app has to retry - after a lost reply, or from the offline queue. It is
+   * what lets the server recognise a repeat and answer with the request it
+   * already made instead of posting a second one.
+   */
+  clientRequestId?: string;
 }
 
 const TuitionRequestSchema = new Schema<ITuitionRequest>(
@@ -37,8 +44,16 @@ const TuitionRequestSchema = new Schema<ITuitionRequest>(
     },
     applicationCount: { type: Number, default: 0 },
     matchScore: { type: Number, min: 0, max: 100 },
+    clientRequestId: { type: String, maxlength: 100 },
   },
   { timestamps: true }
+);
+
+//One request per (student, clientRequestId). Partial, so requests posted without
+//one - older app versions - are not all treated as having the same missing id.
+TuitionRequestSchema.index(
+  { studentId: 1, clientRequestId: 1 },
+  { unique: true, partialFilterExpression: { clientRequestId: { $type: "string" } } }
 );
 
 export const TuitionRequest = mongoose.model<ITuitionRequest>("TuitionRequest", TuitionRequestSchema);

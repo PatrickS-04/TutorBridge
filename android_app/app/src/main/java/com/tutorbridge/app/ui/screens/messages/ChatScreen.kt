@@ -41,8 +41,8 @@ fun ChatScreen(
     val hasEarlier = uiState.chatPage < uiState.chatTotalPages
 
     // Follow the conversation down when a message arrives or is sent.
-    LaunchedEffect(uiState.chatMessages.lastOrNull()?.id) {
-        if (uiState.chatMessages.isNotEmpty()) listState.animateScrollToItem(uiState.chatMessages.size - 1 + if (hasEarlier) 1 else 0)
+    LaunchedEffect(uiState.visibleChat.lastOrNull()?.id) {
+        if (uiState.visibleChat.isNotEmpty()) listState.animateScrollToItem(uiState.visibleChat.size - 1 + if (hasEarlier) 1 else 0)
     }
 
     Column(
@@ -74,7 +74,7 @@ fun ChatScreen(
                     }
                 }
             }
-            if (uiState.chatMessages.isEmpty()) {
+            if (uiState.visibleChat.isEmpty()) {
                 item {
                     Text(
                         "No messages yet - say hello.",
@@ -84,7 +84,7 @@ fun ChatScreen(
                     )
                 }
             }
-            items(uiState.chatMessages, key = { it.id }) { message -> Bubble(message) }
+            items(uiState.visibleChat, key = { it.id }) { message -> Bubble(message) }
         }
 
         Row(

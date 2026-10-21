@@ -64,9 +64,10 @@ fun MyRequestsScreen(
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            items(uiState.myRequests) { req ->
+            items(uiState.visibleMyRequests) { req ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onSelectRequest(req) },
+                    // Posted offline and not sent yet: there is nothing on the server to open.
+                    modifier = Modifier.fillMaxWidth().clickable(enabled = !req.pendingSync) { onSelectRequest(req) },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -82,7 +83,13 @@ fun MyRequestsScreen(
                                 fontSize = 14.5.sp,
                                 modifier = Modifier.weight(1f)
                             )
-                            StatusBadge(req.status)
+                            if (req.pendingSync) {
+                                Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                                    Text("Waiting to sync", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            } else {
+                                StatusBadge(req.status)
+                            }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(

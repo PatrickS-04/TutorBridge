@@ -33,13 +33,21 @@ internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault
 }
 
 /**
- * A strip across the top of every screen while the app is offline. It says why
- * (no connection, or offline mode switched on) and, once there is an outbox,
- * how many things are waiting to be sent. Draws nothing when online.
+ * A strip across the top of every screen when there is something to say about
+ * the connection or the outbox:
+ *
+ *  - offline: why (no connection, or offline mode switched on), how fresh the
+ *    saved data on screen is, and how many changes are waiting to be sent;
+ *  - online with changes the server refused: how many, so they are not lost
+ *    silently.
+ *
+ * Draws nothing when online with nothing refused.
  */
 @Composable
 fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier) {
-    if (uiState.isOnline) return
+    val offline = !uiState.isOnline
+    val failed = uiState.failedSyncCount
+    if (!offline && failed == 0) return
 
     Column(
         modifier = modifier
@@ -47,35 +55,40 @@ fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(
-                Icons.Default.CloudOff,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = stringResource(if (uiState.isOffline) R.string.offline_banner_forced else R.string.offline_banner_network),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
+        if (offline) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    Icons.Default.CloudOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = stringResource(if (uiState.isOffline) R.string.offline_banner_forced else R.string.offline_banner_network),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            uiState.cacheSavedAtMillis?.let { savedAt ->
+                BannerLine(stringResource(R.string.offline_showing_saved, savedAtLabel(savedAt)))
+            }
+            if (uiState.pendingSyncCount > 0) {
+                BannerLine(pluralStringResource(R.plurals.pending_sync, uiState.pendingSyncCount, uiState.pendingSyncCount))
+            }
         }
-        uiState.cacheSavedAtMillis?.let { savedAt ->
-            Text(
-                text = stringResource(R.string.offline_showing_saved, savedAtLabel(savedAt)),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(start = 26.dp)
-            )
-        }
-        if (uiState.pendingSyncCount > 0) {
-            Text(
-                text = pluralStringResource(R.plurals.pending_sync, uiState.pendingSyncCount, uiState.pendingSyncCount),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(start = 26.dp)
-            )
+        if (failed > 0) {
+            BannerLine(pluralStringResource(R.plurals.failed_sync, failed, failed), indent = offline)
         }
     }
+}
+
+@Composable
+private fun BannerLine(text: String, indent: Boolean = true) {
+    Text(
+        text = text,
+        fontSize = 12.sp,
+        color = MaterialTheme.colorScheme.onErrorContainer,
+        modifier = Modifier.padding(start = if (indent) 26.dp else 0.dp)
+    )
 }

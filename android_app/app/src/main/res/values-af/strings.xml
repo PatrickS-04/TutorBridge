@@ -28,4 +28,12 @@
         <item quantity="one">%d verandering wag om te sinkroniseer</item>
         <item quantity="other">%d veranderinge wag om te sinkroniseer</item>
     </plurals>
+    <plurals name="failed_sync">
+        <item quantity="one">%d verandering kon nie gestuur word nie</item>
+        <item quantity="other">%d veranderinge kon nie gestuur word nie</item>
+    </plurals>
+    <plurals name="synced_changes">
+        <item quantity="one">%d verandering gesinkroniseer</item>
+        <item quantity="other">%d veranderinge gesinkroniseer</item>
+    </plurals>
 </resources>

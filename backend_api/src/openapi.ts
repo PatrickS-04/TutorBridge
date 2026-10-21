@@ -395,6 +395,9 @@ export const openapiSpec = {
       put: {
         tags: ["Users"],
         summary: "Update app settings",
+        description:
+          "Safe to repeat: the same body twice leaves the same settings, which is what lets the app " +
+          "replay changes made offline. When edits to one setting are replayed in order, the last one wins.",
         requestBody: { required: true, ...json(ref("UserSettings")) },
         responses: { 200: ok("The updated settings.", ref("UserSettings")), ...authErrors },
       },
@@ -587,7 +590,14 @@ export const openapiSpec = {
       post: {
         tags: ["Tuition requests"],
         summary: "Post a tuition request",
-        description: "Students and guardians only.",
+        description: [
+          "Students and guardians only.",
+          "",
+          "`clientRequestId` makes this safe to retry: posting the same one again",
+          "(the app does this after a lost reply, and when it replays requests made",
+          "offline) answers `200` with the request already made instead of creating",
+          "a second. It is unique per student.",
+        ].join("\n"),
         requestBody: {
           required: true,
           ...json({
@@ -601,10 +611,24 @@ export const openapiSpec = {
               description: { type: "string", maxLength: 1000 },
               preferredRateBand: ref("RateBand"),
               availability: { type: "array", items: ref("AvailabilitySlot") },
+              clientRequestId: {
+                type: "string",
+                maxLength: 100,
+                description: "Client-generated id, unique per student.",
+              },
             },
           }),
         },
         responses: {
+          200: ok("A request with this `clientRequestId` already existed; here it is.", {
+            type: "object",
+            properties: {
+              id: objectId("Request id."),
+              status: enumOf(TuitionRequestStatus),
+              matchScore: { type: "number", nullable: true },
+              createdAt: dateTime("When it was posted."),
+            },
+          }),
           201: ok("The new request.", {
             type: "object",
             properties: {
@@ -973,7 +997,8 @@ export const openapiSpec = {
         description:
           "The tutor's own checklist and side notes about the student or guardian. Private to " +
           "the tutor who wrote them: they are returned with GET /bookings for that tutor and " +
-          "never for the student. The whole set is replaced on every save.",
+          "never for the student. The whole set is replaced on every save, so saving the same notes " +
+          "twice changes nothing and, when notes edited offline are replayed, the last save wins.",
         parameters: [pathId("id", "Booking id.")],
         requestBody: { required: true, ...json(ref("TutorNotes")) },
         responses: {
@@ -1464,6 +1489,7 @@ export const openapiSpec = {
           status: enumOf(TuitionRequestStatus),
           applicationCount: { type: "integer" },
           matchScore: { type: "number", minimum: 0, maximum: 100, nullable: true },
+          clientRequestId: { type: "string", description: "The app's retry-safety id, if it sent one." },
           createdAt: dateTime("When it was posted."),
         },
       },

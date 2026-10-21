@@ -1,5 +1,10 @@
 package com.tutorbridge.app.viewmodel
 
+import com.tutorbridge.app.data.local.OutboxEntity
+import com.tutorbridge.app.data.local.failedCount
+import com.tutorbridge.app.data.local.pendingCount
+import com.tutorbridge.app.data.local.pendingMessagesFor
+import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.network.effectivelyOnline
 import java.time.LocalDate
@@ -41,8 +46,8 @@ data class TutorBridgeUiState(
     val networkAvailable: Boolean = true,
     /** When the offline cache was last refreshed from the API (epoch millis); null if nothing is saved yet. */
     val cacheSavedAtMillis: Long? = null,
-    /** Things done offline that have not reached the server yet (the outbox). */
-    val pendingSyncCount: Int = 0,
+    /** Everything in the outbox for the signed-in user: what was done offline and has not reached the server, or was refused. */
+    val outboxItems: List<OutboxEntity> = emptyList(),
     val selectedLanguage: String = "English",
     val bookingUpdatesEnabled: Boolean = true,
     val sessionRemindersEnabled: Boolean = true,
@@ -147,6 +152,22 @@ data class TutorBridgeUiState(
     val targetGrade: String = "A-",
     val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
 ) {
+    /** Things done offline that are still waiting to be sent. */
+    val pendingSyncCount: Int
+        get() = outboxItems.pendingCount()
+
+    /** Things the server refused; they stay until the user retries or discards them. */
+    val failedSyncCount: Int
+        get() = outboxItems.failedCount()
+
+    /** The open conversation as the user should see it: what the server has, plus what they wrote that is still on its way. */
+    val visibleChat: List<MessageUi>
+        get() = mergeMessages(existing = outboxItems.pendingMessagesFor(selectedThreadId), incoming = chatMessages)
+
+    /** The student's own requests, with ones posted offline on top as "Waiting to sync". */
+    val visibleMyRequests: List<StudentRequestUi>
+        get() = outboxItems.pendingRequestCards() + myRequests
+
     /** What the app should act on: connected, and not forced offline. */
     val isOnline: Boolean
         get() = effectivelyOnline(networkAvailable, isOffline)

@@ -74,6 +74,8 @@ data class StudentRequestUi(
     /** How many tutors applied; the applicants themselves load on the detail screen. */
     val applicantCount: Int = 0,
     val applicants: List<TutorApplicant> = emptyList(),
+    /** Made offline and not yet sent: drawn as a card, but there is nothing on the server to open. */
+    val pendingSync: Boolean = false,
     /** Ids and hours the edit form is prefilled from. */
     val subjectId: String = "",
     val areaId: String = "",
@@ -133,6 +135,8 @@ data class MessageUi(
     val time: String,
     /** The server's ISO sentAt, which is also what orders the conversation. */
     val sentAt: String,
+    /** Made by the app when the message was written; the same id comes back on the server's copy, which is how the two are matched up. */
+    val clientId: String = "",
     /** Still on its way: shown straight away, replaced by the stored copy once the server answers. */
     val pending: Boolean = false
 )

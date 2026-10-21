@@ -28,4 +28,12 @@
         <item quantity="one">%d change waiting to sync</item>
         <item quantity="other">%d changes waiting to sync</item>
     </plurals>
+    <plurals name="failed_sync">
+        <item quantity="one">%d change couldn\'t be sent</item>
+        <item quantity="other">%d changes couldn\'t be sent</item>
+    </plurals>
+    <plurals name="synced_changes">
+        <item quantity="one">%d change synced</item>
+        <item quantity="other">%d changes synced</item>
+    </plurals>
 </resources>

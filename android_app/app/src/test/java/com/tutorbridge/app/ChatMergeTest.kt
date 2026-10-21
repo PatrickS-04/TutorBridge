@@ -38,6 +38,25 @@ class ChatMergeTest {
     }
 
     @Test
+    fun `a message on its way is dropped once the server's copy of it arrives`() {
+        val waiting = MessageUi("local-c1", "hi", mine = true, time = "", sentAt = "2026-10-07T10:05:00.000Z", clientId = "c1", pending = true)
+        val other = message("a", "2026-10-07T10:00:00.000Z")
+        val serverCopy = MessageUi("m7", "hi", mine = true, time = "", sentAt = "2026-10-07T10:05:01.000Z", clientId = "c1")
+
+        val merged = mergeMessages(listOf(other, waiting), listOf(serverCopy))
+
+        assertEquals(listOf("a", "m7"), merged.map { it.id })
+    }
+
+    @Test
+    fun `a message on its way with a different client id is left alone`() {
+        val waiting = MessageUi("local-c1", "hi", mine = true, time = "", sentAt = "2026-10-07T10:05:00.000Z", clientId = "c1", pending = true)
+        val someoneElses = MessageUi("m7", "yo", mine = false, time = "", sentAt = "2026-10-07T10:05:01.000Z", clientId = "z9")
+
+        assertEquals(listOf("local-c1", "m7"), mergeMessages(listOf(waiting), listOf(someoneElses)).map { it.id })
+    }
+
+    @Test
     fun `a message still being sent stays until it is swapped for the stored one`() {
         val pending = message("local-1", "2026-10-07T10:05:00.000Z", pending = true)
         val shown = listOf(message("a", "2026-10-07T10:00:00.000Z"), pending)
