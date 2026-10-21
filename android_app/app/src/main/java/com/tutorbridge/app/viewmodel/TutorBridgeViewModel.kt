@@ -5,7 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.TutorBridgeApp
+import com.tutorbridge.app.data.local.LocalCache
 import com.tutorbridge.app.network.NetworkMonitor
+import java.io.IOException
 import com.tutorbridge.app.network.OfflineMode
 import com.tutorbridge.app.data.repository.AuthRepository
 import com.tutorbridge.app.data.repository.AuthResult
@@ -54,8 +57,16 @@ import java.util.UUID
 class TutorBridgeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository(RetrofitInstance.authApi)
-    private val repository = TutorBridgeRepository(RetrofitInstance.tutorBridgeApi)
+    // What the phone remembers of the API between sessions, per signed-in user.
+    private val localCache = LocalCache(
+        dao = (application as TutorBridgeApp).database.cachedResources(),
+        userId = { Firebase.auth.currentUser?.uid }
+    )
+    private val repository = TutorBridgeRepository(RetrofitInstance.tutorBridgeApi, localCache)
     private val networkMonitor = NetworkMonitor(application)
+
+    /** Follows when the cache was last refreshed, for the "data saved at" line on the offline banner. */
+    private var cacheClockJob: Job? = null
 
     // Reference: Android Developers. 2026. StateFlow and SharedFlow. [Online].
     //   Available at: https://developer.android.com/kotlin/flow/stateflow-and-sharedflow [Accessed 21 September 2026].
@@ -85,6 +96,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         } else {
             if (Firebase.auth.currentUser != null) {
                 Firebase.auth.signOut()
+                // Signed out without the user asking (no biometric lock to resume
+                // from), so what was saved for them goes too.
+                viewModelScope.launch { localCache.clear() }
             }
             _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback,
                 sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates) }
@@ -309,11 +323,22 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 user?.email?.substringBefore("@") ?: state.userName,
                 userEmail = user?.email ?: state.userEmail)
         }
+        watchCacheClock()
         refreshAll()
         registerPushToken()
         // After the route is set to home, so a notification tapped on a cold
         // start opens its own screen rather than being overwritten by home.
         consumePendingDeepLink()
+    }
+
+    /** Needs a signed-in user: the cache is per user, and its clock is that user's. */
+    private fun watchCacheClock() {
+        cacheClockJob?.cancel()
+        cacheClockJob = viewModelScope.launch {
+            localCache.newestUpdate().collect { savedAt ->
+                _uiState.update { it.copy(cacheSavedAtMillis = savedAt) }
+            }
+        }
     }
 
     private var pendingDeepLink: String? = null
@@ -333,10 +358,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun signOut() {
         chatPoller?.cancel()
+        cacheClockJob?.cancel()
         viewModelScope.launch {
             // Timeout so a bad connection can't leave the user stuck on "Sign out".
             withTimeoutOrNull(3_000) { unregisterPushToken() }
             Firebase.auth.signOut()          // only after the DELETE
+            localCache.clear()               // nothing of this user stays on the phone
             AppPreferences(getApplication()).clear()
             lastBookingId = null
             pendingDeepLink = null           // added in C5
@@ -413,7 +440,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 // The conversations are read from the caller's side, so they wait on the id.
                 loadThreads()
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -473,7 +500,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         sessionRemindersEnabled = settings.notifications.message
                     )
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -486,7 +513,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         areaOptions = reference.provinces.flatMap { it.areas }
                     )
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -500,7 +527,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         selectedTutor = tutors.firstOrNull { it.id == state.selectedTutor?.id } ?: state.selectedTutor
                     )
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -509,14 +536,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             if (_uiState.value.role == UserRole.TUTOR) {
                 repository.openRequests().onSuccess { requests ->
                     _uiState.update { it.copy(openRequests = requests) }
-                }.onFailure { reportError(it) }
+                }.onFailure { reportLoadError(it) }
                 repository.myApplications().onSuccess { applications ->
                     _uiState.update { it.copy(myApplications = applications) }
-                }.onFailure { reportError(it) }
+                }.onFailure { reportLoadError(it) }
             } else {
                 repository.myRequests().onSuccess { requests ->
                     _uiState.update { it.copy(myRequests = requests) }
-                }.onFailure { reportError(it) }
+                }.onFailure { reportLoadError(it) }
             }
         }
     }
@@ -537,7 +564,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         }
                     )
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -549,7 +576,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 if (markRead) {
                     notifications.filter { it.unread }.forEach { repository.markNotificationRead(it.id) }
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -569,7 +596,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             ?: state.selectedClaimPeriodId
                     )
                 }
-            }.onFailure { reportError(it) }
+            }.onFailure { reportLoadError(it) }
         }
     }
 
@@ -594,7 +621,28 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     private fun reportError(error: Throwable) {
-        _uiState.update { it.copy(dataErrorMessage = error.message ?: "Could not reach the server") }
+        _uiState.update { it.copy(dataErrorMessage = friendlyMessage(error)) }
+    }
+
+    /**
+     * For loading data in the background, as opposed to something the user just
+     * did. With no connection the offline banner has already said so, and a
+     * dozen loaders each adding a snackbar would only bury the screen - so a
+     * dropped connection is logged, not shown. Anything else still is.
+     */
+    private fun reportLoadError(error: Throwable) {
+        if (error is IOException && !_uiState.value.isOnline) {
+            Log.d(TAG, "Offline, not showing: ${error.message}")
+            return
+        }
+        reportError(error)
+    }
+
+    /** A dropped connection says "Unable to resolve host ..." to a developer; say what it means to a user. */
+    private fun friendlyMessage(error: Throwable): String = when {
+        error is IOException && !_uiState.value.isOnline -> "You're offline. Try again when you're back online."
+        error is IOException -> "Can't reach the server. Check your connection and try again."
+        else -> error.message ?: "Could not reach the server"
     }
 
     // ==================== CALENDAR ====================
@@ -1176,7 +1224,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             repository.threads(me)
                 .onSuccess { threads -> _uiState.update { it.copy(threads = threads) } }
-                .onFailure { reportError(it) }
+                .onFailure { reportLoadError(it) }
         }
     }
 
@@ -1232,7 +1280,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 }
             }
-            .onFailure { if (!quiet) reportError(it) }
+            .onFailure { if (!quiet) reportLoadError(it) }
     }
 
     fun setChatDraft(text: String) {
@@ -1322,6 +1370,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     return@launch
                 }
                 user.delete().await()
+                cacheClockJob?.cancel()
+                localCache.clear()
                 AppPreferences(getApplication()).clear()
                 _uiState.update { signedOutState() }
                 onComplete()

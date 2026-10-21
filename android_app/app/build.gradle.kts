@@ -68,6 +68,11 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // android.util.Log is not on the JVM unit-test classpath; without this the
+        // first Log call in code under test throws "not mocked" instead of returning.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 // Room writes each schema version here, so a migration can be checked against

@@ -23,6 +23,7 @@
     <string name="force_offline_label">Phoqa imodi yokungaxhumeki</string>
     <string name="offline_banner_network">Awuxhumekile ku-inthanethi. Eminye imisebenzi idinga uxhumano.</string>
     <string name="offline_banner_forced">Imodi yokungaxhumeki ivuliwe. Yivale kuMasethingi ukuze uxhume futhi.</string>
+    <string name="offline_showing_saved">Kuboniswa idatha elondolozwe ngo-%1$s</string>
     <plurals name="pending_sync">
         <item quantity="one">Isinguquko esingu-%d silindele ukuvumelanisa</item>
         <item quantity="other">Izinguquko ezingu-%d zilindele ukuvumelanisa</item>

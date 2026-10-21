@@ -17,6 +17,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.R
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val timeToday = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+private val timeOtherDay = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
+
+/** "14:05" if it was saved today, "3 Oct 14:05" if not - so old data is never mistaken for fresh. */
+internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault(), today: LocalDate = LocalDate.now(zone)): String {
+    val moment = Instant.ofEpochMilli(epochMillis).atZone(zone)
+    return moment.format(if (moment.toLocalDate() == today) timeToday else timeOtherDay)
+}
 
 /**
  * A strip across the top of every screen while the app is offline. It says why
@@ -45,6 +59,14 @@ fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier) {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+        uiState.cacheSavedAtMillis?.let { savedAt ->
+            Text(
+                text = stringResource(R.string.offline_showing_saved, savedAtLabel(savedAt)),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(start = 26.dp)
             )
         }
         if (uiState.pendingSyncCount > 0) {

@@ -39,6 +39,8 @@ data class TutorBridgeUiState(
     val isOffline: Boolean = false,
     /** Whether the phone has a working internet connection, from NetworkMonitor. */
     val networkAvailable: Boolean = true,
+    /** When the offline cache was last refreshed from the API (epoch millis); null if nothing is saved yet. */
+    val cacheSavedAtMillis: Long? = null,
     /** Things done offline that have not reached the server yet (the outbox). */
     val pendingSyncCount: Int = 0,
     val selectedLanguage: String = "English",

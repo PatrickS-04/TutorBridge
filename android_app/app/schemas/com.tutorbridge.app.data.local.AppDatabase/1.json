@@ -2,15 +2,27 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "cc41aa2c7de80ba7a2c49937c1889581",
+    "identityHash": "da34cbf291131358c2ebed46495f928c",
     "entities": [
       {
-        "tableName": "cache_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `updatedAtMillis` INTEGER NOT NULL, PRIMARY KEY(`key`))",
+        "tableName": "cached_resource",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `resource` TEXT NOT NULL, `payload` TEXT NOT NULL, `updatedAtMillis` INTEGER NOT NULL, PRIMARY KEY(`userId`, `resource`))",
         "fields": [
           {
-            "fieldPath": "key",
-            "columnName": "key",
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resource",
+            "columnName": "resource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -24,14 +36,15 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "key"
+            "userId",
+            "resource"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cc41aa2c7de80ba7a2c49937c1889581')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'da34cbf291131358c2ebed46495f928c')"
     ]
   }
 }
