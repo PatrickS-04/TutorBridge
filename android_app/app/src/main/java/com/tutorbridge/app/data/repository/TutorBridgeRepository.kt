@@ -249,7 +249,7 @@ class TutorBridgeRepository(
     }
 
     private companion object {
-        const val TAG = "Repository"
+        const val TAG = "Cache"
     }
 }
 

@@ -33,6 +33,10 @@ internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault
     return moment.format(if (moment.toLocalDate() == today) timeToday else timeOtherDay)
 }
 
+/** The banner has something to say: the app is offline, or the server has refused something the user did. */
+internal fun bannerVisible(uiState: TutorBridgeUiState): Boolean =
+    !uiState.isOnline || uiState.failedSyncCount > 0
+
 /**
  * A strip across the top of every screen when there is something to say about
  * the connection or the outbox:
@@ -46,9 +50,9 @@ internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault
  */
 @Composable
 fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+    if (!bannerVisible(uiState)) return
     val offline = !uiState.isOnline
     val failed = uiState.failedSyncCount
-    if (!offline && failed == 0) return
 
     Column(
         modifier = modifier

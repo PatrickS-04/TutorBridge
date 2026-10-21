@@ -53,6 +53,6 @@ class NetworkMonitor(context: Context) {
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
 
     private companion object {
-        const val TAG = "NetworkMonitor"
+        const val TAG = "Network"
     }
 }

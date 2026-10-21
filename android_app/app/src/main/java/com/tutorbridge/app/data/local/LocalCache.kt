@@ -34,6 +34,7 @@ class LocalCache(
         val user = userId() ?: return
         try {
             dao.put(CachedResourceEntity(user, resource, gson.toJson(value), clock()))
+            Log.d(TAG, "Saved $resource")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -82,6 +83,6 @@ class LocalCache(
     }
 
     private companion object {
-        const val TAG = "LocalCache"
+        const val TAG = "Cache"
     }
 }

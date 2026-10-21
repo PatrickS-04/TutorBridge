@@ -381,12 +381,28 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         send: suspend () -> Result<*>
     ): Delivery {
         val state = _uiState.value
-        if (!state.isOnline || state.pendingSyncCount > 0) return queueForLater(type, payload, dedupeKey, announce)
+        if (!state.isOnline) {
+            Log.i(OUTBOX, "$type: offline, queueing")
+            return queueForLater(type, payload, dedupeKey, announce)
+        }
+        if (state.pendingSyncCount > 0) {
+            Log.i(OUTBOX, "$type: ${state.pendingSyncCount} already queued, queueing behind them to keep order")
+            return queueForLater(type, payload, dedupeKey, announce)
+        }
 
         val result = send()
-        if (result.isSuccess) return Delivery.Sent
+        if (result.isSuccess) {
+            Log.i(OUTBOX, "$type: sent now")
+            return Delivery.Sent
+        }
         val error = result.exceptionOrNull() ?: return Delivery.Sent
-        return if (error is IOException) queueForLater(type, payload, dedupeKey, announce) else Delivery.Refused(error)
+        return if (error is IOException) {
+            Log.i(OUTBOX, "$type: connection dropped (${error.message}), queueing")
+            queueForLater(type, payload, dedupeKey, announce)
+        } else {
+            Log.w(OUTBOX, "$type: refused by the server: ${error.message}")
+            Delivery.Refused(error)
+        }
     }
 
     private suspend fun <P : Any> queueForLater(type: OutboxType, payload: P, dedupeKey: String?, announce: Boolean): Delivery {
@@ -441,7 +457,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** Queued work has reached the server: say so, and bring the screens up to date with it. */
     private fun onDelivered(count: Int) {
-        Log.i(TAG, "$count queued change(s) delivered")
+        Log.i("Sync", "$count queued change(s) delivered")
         val resources = getApplication<Application>().resources
         _uiState.update { it.copy(noticeMessage = resources.getQuantityString(R.plurals.synced_changes, count, count)) }
         refreshIfSignedIn()
@@ -766,7 +782,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      */
     private fun reportLoadError(error: Throwable) {
         if (error is IOException && !_uiState.value.isOnline) {
-            Log.d(TAG, "Offline, not showing: ${error.message}")
+            Log.d(NETWORK, "Offline, not showing: ${error.message}")
             return
         }
         reportError(error)
@@ -1557,7 +1573,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * turning it off brings the data back up to date.
      */
     fun toggleOfflineMode(offline: Boolean) {
-        Log.i(TAG, "Force offline mode ${if (offline) "on" else "off"}")
+        Log.i(NETWORK, "Force offline mode ${if (offline) "on" else "off"}")
         OfflineMode.forced = offline
         _uiState.update { it.copy(isOffline = offline) }
         if (!offline) {
@@ -1570,7 +1586,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun onNetworkChanged(available: Boolean) {
         val before = _uiState.value
         if (before.networkAvailable == available) return
-        Log.i(TAG, "Network ${if (available) "available" else "lost"}")
+        Log.i(NETWORK, "Network ${if (available) "available" else "lost"}")
         _uiState.update { it.copy(networkAvailable = available) }
         if (available && !before.isOffline) {
             requestSync()
@@ -1771,5 +1787,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     private companion object {
         const val TAG = "TutorBridgeVM"
+
+        // Shared with the other offline classes, so one logcat filter follows a change from tap to server.
+        const val NETWORK = "Network"
+        const val OUTBOX = "Outbox"
     }
 }

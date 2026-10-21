@@ -1,5 +1,6 @@
 package com.tutorbridge.app.network
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
@@ -34,8 +35,15 @@ fun effectivelyOnline(networkAvailable: Boolean, forcedOffline: Boolean): Boolea
  * that is not going anywhere.
  */
 class OfflineGateInterceptor(private val isForced: () -> Boolean = { OfflineMode.forced }) : Interceptor {
+    private companion object {
+        const val TAG = "Network"
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
-        if (isForced()) throw IOException(OfflineMode.BLOCKED_MESSAGE)
+        if (isForced()) {
+            Log.d(TAG, "Blocked ${chain.request().method} ${chain.request().url.encodedPath}: offline mode is forced")
+            throw IOException(OfflineMode.BLOCKED_MESSAGE)
+        }
         return chain.proceed(chain.request())
     }
 }

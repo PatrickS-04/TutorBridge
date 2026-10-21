@@ -20,48 +20,4 @@
     <string name="sign_out_action">Teken Uit</string>
     <string name="delete_account_action">Skrap Studenterekening</string>
     <string name="delete_account_subtitle">Skrap studenteprofiel, versoeke en kampusbesprekings permanent.</string>
-    <string name="force_offline_label">Forseer vanlyn-modus</string>
-    <string name="offline_banner_network">Jy is vanlyn. Sommige funksies het \'n konneksie nodig.</string>
-    <string name="offline_banner_forced">Vanlyn-modus is aan. Skakel dit af in Instellings om weer te koppel.</string>
-    <string name="offline_showing_saved">Wys data gestoor om %1$s</string>
-    <plurals name="pending_sync">
-        <item quantity="one">%d verandering wag om te sinkroniseer</item>
-        <item quantity="other">%d veranderinge wag om te sinkroniseer</item>
-    </plurals>
-    <plurals name="failed_sync">
-        <item quantity="one">%d verandering kon nie gestuur word nie</item>
-        <item quantity="other">%d veranderinge kon nie gestuur word nie</item>
-    </plurals>
-    <plurals name="synced_changes">
-        <item quantity="one">%d verandering gesinkroniseer</item>
-        <item quantity="other">%d veranderinge gesinkroniseer</item>
-    </plurals>
-    <string name="needs_connection">Het \'n konneksie nodig</string>
-    <string name="saved_offline">Vanlyn gestoor. Dit word gestuur wanneer jy weer aanlyn is.</string>
-    <string name="waiting_to_send">Wag om te stuur</string>
-    <string name="sending">Stuur tans…</string>
-    <string name="waiting_to_sync">Wag om te sinkroniseer</string>
-    <string name="sync_status_title">Sinkroniseerstatus</string>
-    <string name="sync_now">Sinkroniseer nou</string>
-    <string name="retry_failed">Probeer misluktes weer</string>
-    <string name="discard">Gooi weg</string>
-    <string name="sync_all_clear">Alles is op datum.</string>
-    <string name="sync_kind_message">Boodskap</string>
-    <string name="sync_kind_request">Onderrigversoek</string>
-    <string name="sync_kind_notes">Sessienotas</string>
-    <string name="sync_kind_settings">Instellingsverandering</string>
-    <string name="sync_state_failed">Kon nie gestuur word nie</string>
-    <string name="unsent_warning_title">Jy het ongestuurde veranderinge</string>
-    <string name="sign_out_anyway">Teken tog uit</string>
-    <string name="cancel_action">Kanselleer</string>
-    <string name="error_offline">Jy is vanlyn. Probeer weer wanneer jy weer aanlyn is.</string>
-    <string name="error_unreachable">Kan nie die bediener bereik nie. Kyk jou konneksie en probeer weer.</string>
-    <plurals name="unsent_warning_body">
-        <item quantity="one">%d verandering is nog nie gestuur nie. Dit bly op hierdie foon en word gestuur die volgende keer wat jy met \'n konneksie by hierdie rekening aanmeld.</item>
-        <item quantity="other">%d veranderinge is nog nie gestuur nie. Hulle bly op hierdie foon en word gestuur die volgende keer wat jy met \'n konneksie by hierdie rekening aanmeld.</item>
-    </plurals>
-    <plurals name="delete_unsent_warning">
-        <item quantity="one">Jou %d ongestuurde verandering sal weggegooi word.</item>
-        <item quantity="other">Jou %d ongestuurde veranderinge sal weggegooi word.</item>
-    </plurals>
 </resources>
