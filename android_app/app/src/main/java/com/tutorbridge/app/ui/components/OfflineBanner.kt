@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
@@ -44,7 +45,7 @@ internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault
  * Draws nothing when online with nothing refused.
  */
 @Composable
-fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier) {
+fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val offline = !uiState.isOnline
     val failed = uiState.failedSyncCount
     if (!offline && failed == 0) return
@@ -53,6 +54,8 @@ fun OfflineBanner(uiState: TutorBridgeUiState, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.errorContainer)
+            // Tapping it opens the Sync status screen, where the detail and the way out are.
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         if (offline) {

@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -64,7 +65,7 @@ fun TutorRequestsBoardScreen(
         LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             items(listToShow) { req ->
                 if (tab == 0) {
-                    OpenRequestCard(req, onAcceptAndOffer)
+                    OpenRequestCard(req, uiState.isOnline, onAcceptAndOffer)
                 } else {
                     MyApplicationCard(req)
                 }
@@ -93,7 +94,7 @@ private fun SegTab(label: String, selected: Boolean, modifier: Modifier, onClick
 }
 
 @Composable
-private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) -> Unit) {
+private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndOffer: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -123,12 +124,14 @@ private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) ->
             )
             Button(
                 onClick = { onAcceptAndOffer(req.id) },
+                enabled = online,
                 modifier = Modifier.fillMaxWidth().height(46.dp),
                 shape = RoundedCornerShape(23.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {
                 Text("Accept & Offer Session (Department Rate: R220/hr)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
+            NeedsConnectionHint(online)
         }
     }
 }

@@ -200,7 +200,8 @@ fun NewTuitionRequestScreen(
             }
             Button(
                 onClick = if (step < totalSteps) onNext else onSubmit,
-                enabled = canContinue && !uiState.isRefreshing,
+                // Posting a new request works offline (it is queued); saving an edit to an existing one does not.
+                enabled = canContinue && !uiState.isRefreshing && (uiState.isOnline || draft.editingRequestId == null || step < totalSteps),
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)

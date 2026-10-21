@@ -16,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
@@ -85,7 +87,7 @@ fun MyRequestsScreen(
                             )
                             if (req.pendingSync) {
                                 Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                                    Text("Waiting to sync", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(stringResource(R.string.waiting_to_sync), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
                             } else {
                                 StatusBadge(req.status)

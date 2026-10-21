@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.booking
 
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -276,12 +277,14 @@ fun ReviewBookingScreen(
 
         Button(
             onClick = onConfirm,
+            enabled = uiState.isOnline,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
             Text("Confirm Request", fontWeight = FontWeight.Bold)
         }
+        NeedsConnectionHint(uiState.isOnline)
     }
 }
 

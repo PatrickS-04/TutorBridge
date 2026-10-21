@@ -39,10 +39,11 @@ fun List<OutboxEntity>.pendingMessagesFor(threadId: String?): List<MessageUi> {
             id = "local-${p.clientMessageId}",
             body = p.body,
             mine = true,
-            time = "Waiting to send",
+            time = "",
             sentAt = Instant.ofEpochMilli(item.createdAtMillis).toString(),
             clientId = p.clientMessageId,
-            pending = true
+            pending = true,
+            queued = true
         )
     }
 }
@@ -62,7 +63,7 @@ fun List<OutboxEntity>.pendingRequestCards(): List<StudentRequestUi> =
             studentName = "",
             studentInitials = "",
             status = RequestStatus.OPEN,
-            timestamp = "Waiting to sync",
+            timestamp = "",
             preferredVenue = p.areaName,
             pendingSync = true
         )
@@ -107,3 +108,38 @@ fun UserSettingsDto.withPending(pending: UpdateSettingsRequest?): UserSettingsDt
 fun List<OutboxEntity>.pendingCount(): Int = count { it.state == OutboxState.PENDING }
 
 fun List<OutboxEntity>.failedCount(): Int = count { it.state == OutboxState.FAILED }
+
+/** One row of the Sync status screen. The wording is the screen's, so this carries only facts. */
+data class OutboxItemUi(
+    val id: Long,
+    val type: OutboxType?,
+    /** A few words of what it is: the message text, the request's subject... */
+    val preview: String,
+    val failed: Boolean,
+    /** The server's reason, for a failed item; the last connection problem for one still waiting. */
+    val error: String?,
+    val attempts: Int
+)
+
+/** Everything in the outbox, oldest first, as rows for the Sync status screen. */
+fun List<OutboxEntity>.toItemUis(): List<OutboxItemUi> = map { item ->
+    val type = runCatching { OutboxType.valueOf(item.type) }.getOrNull()
+    val preview = when (type) {
+        OutboxType.SEND_MESSAGE -> item.payloadOrNull<MessagePayload>()?.body.orEmpty()
+        OutboxType.CREATE_REQUEST -> item.payloadOrNull<RequestPayload>()?.subjectName.orEmpty()
+        OutboxType.SAVE_NOTES -> item.payloadOrNull<NotesPayload>()?.notes?.items?.firstOrNull()?.text.orEmpty()
+        // Names of settings would be English text in a translated screen; the row's title already says what it is.
+        OutboxType.SAVE_SETTINGS -> ""
+        null -> ""
+    }
+    OutboxItemUi(
+        id = item.id,
+        type = type,
+        preview = preview.take(PREVIEW_LENGTH),
+        failed = item.state == OutboxState.FAILED,
+        error = item.lastError,
+        attempts = item.attempts
+    )
+}
+
+private const val PREVIEW_LENGTH = 80

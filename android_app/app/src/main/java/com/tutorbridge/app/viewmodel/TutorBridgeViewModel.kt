@@ -376,21 +376,24 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         type: OutboxType,
         payload: P,
         dedupeKey: String? = null,
+        /** Say "saved offline" in a snackbar when queued. A chat message does not: its own bubble says so, and one per message would be noise. */
+        announce: Boolean = true,
         send: suspend () -> Result<*>
     ): Delivery {
         val state = _uiState.value
-        if (!state.isOnline || state.pendingSyncCount > 0) return queueForLater(type, payload, dedupeKey)
+        if (!state.isOnline || state.pendingSyncCount > 0) return queueForLater(type, payload, dedupeKey, announce)
 
         val result = send()
         if (result.isSuccess) return Delivery.Sent
         val error = result.exceptionOrNull() ?: return Delivery.Sent
-        return if (error is IOException) queueForLater(type, payload, dedupeKey) else Delivery.Refused(error)
+        return if (error is IOException) queueForLater(type, payload, dedupeKey, announce) else Delivery.Refused(error)
     }
 
-    private suspend fun <P : Any> queueForLater(type: OutboxType, payload: P, dedupeKey: String?): Delivery {
+    private suspend fun <P : Any> queueForLater(type: OutboxType, payload: P, dedupeKey: String?, announce: Boolean): Delivery {
         if (outbox.enqueue(type, payload, dedupeKey) == null) {
             return Delivery.Refused(IllegalStateException("Sign in to save your changes"))
         }
+        if (announce) _uiState.update { it.copy(noticeMessage = text(R.string.saved_offline)) }
         requestSync()
         return Delivery.Queued
     }
@@ -400,12 +403,23 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         if (_uiState.value.isOnline) SyncScheduler.request(getApplication())
     }
 
-    /** For a "Sync now" button: another go at anything the server refused, and a push on the rest. */
+    /** "Sync now": ask for the waiting items to be sent. Items the server refused stay as they are - see [retryFailedSync]. */
     fun syncNow() {
+        if (_uiState.value.isOnline) requestSync()
+        else _uiState.update { it.copy(dataErrorMessage = text(R.string.error_offline)) }
+    }
+
+    /** Another go at everything the server refused: they go back in the queue and a sync is requested. */
+    fun retryFailedSync() {
         viewModelScope.launch {
             outbox.retryFailed()
             requestSync()
         }
+    }
+
+    /** The user gives up on one queued item; it is removed and never sent. */
+    fun discardOutboxItem(id: Long) {
+        viewModelScope.launch { outbox.discard(id) }
     }
 
     /** Needs a signed-in user: the outbox is per user. */
@@ -738,6 +752,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    private fun text(id: Int): String = getApplication<Application>().getString(id)
+
     private fun reportError(error: Throwable) {
         _uiState.update { it.copy(dataErrorMessage = friendlyMessage(error)) }
     }
@@ -758,8 +774,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** A dropped connection says "Unable to resolve host ..." to a developer; say what it means to a user. */
     private fun friendlyMessage(error: Throwable): String = when {
-        error is IOException && !_uiState.value.isOnline -> "You're offline. Try again when you're back online."
-        error is IOException -> "Can't reach the server. Check your connection and try again."
+        error is IOException && !_uiState.value.isOnline -> text(R.string.error_offline)
+        error is IOException -> text(R.string.error_unreachable)
         else -> error.message ?: "Could not reach the server"
     }
 
@@ -1434,7 +1450,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             id = "local-$clientMessageId",
             body = text,
             mine = true,
-            time = "Sending…",
+            time = "",
             sentAt = Instant.now().toString(),
             clientId = clientMessageId,
             pending = true
@@ -1443,7 +1459,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             val payload = MessagePayload(threadId, text, clientMessageId)
-            when (val delivery = sendOrQueue(OutboxType.SEND_MESSAGE, payload) {
+            when (val delivery = sendOrQueue(OutboxType.SEND_MESSAGE, payload, announce = false) {
                 repository.sendMessage(threadId, state.userId, text, clientMessageId)
             }) {
                 Delivery.Sent -> {
@@ -1454,7 +1470,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     // Stays on screen, now as "Waiting to send"; the sync swaps it for the real message.
                     _uiState.update { current ->
                         current.copy(chatMessages = current.chatMessages.map {
-                            if (it.id == local.id) it.copy(time = "Waiting to send") else it
+                            if (it.id == local.id) it.copy(queued = true) else it
                         })
                     }
                 }

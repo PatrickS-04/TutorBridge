@@ -138,7 +138,9 @@ data class MessageUi(
     /** Made by the app when the message was written; the same id comes back on the server's copy, which is how the two are matched up. */
     val clientId: String = "",
     /** Still on its way: shown straight away, replaced by the stored copy once the server answers. */
-    val pending: Boolean = false
+    val pending: Boolean = false,
+    /** Pending and sitting in the offline queue, not being sent right now - the screen says "waiting" rather than "sending". */
+    val queued: Boolean = false
 )
 
 /** A booking a student requested, waiting for the tutor to confirm or decline. */

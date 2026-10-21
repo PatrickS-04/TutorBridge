@@ -36,4 +36,32 @@
         <item quantity="one">Isinguquko esingu-%d sivumelanisiwe</item>
         <item quantity="other">Izinguquko ezingu-%d zivumelanisiwe</item>
     </plurals>
+    <string name="needs_connection">Idinga uxhumano</string>
+    <string name="saved_offline">Kulondolozwe ngaphandle kwe-inthanethi. Kuzothunyelwa uma usuxhumekile futhi.</string>
+    <string name="waiting_to_send">Kulindele ukuthunyelwa</string>
+    <string name="sending">Iyathunyelwa…</string>
+    <string name="waiting_to_sync">Kulindele ukuvumelanisa</string>
+    <string name="sync_status_title">Isimo sokuvumelanisa</string>
+    <string name="sync_now">Vumelanisa manje</string>
+    <string name="retry_failed">Zama futhi ezehlulekile</string>
+    <string name="discard">Lahla</string>
+    <string name="sync_all_clear">Konke kuvuselelekile.</string>
+    <string name="sync_kind_message">Umlayezo</string>
+    <string name="sync_kind_request">Isicelo sokufundisa</string>
+    <string name="sync_kind_notes">Amanothi esikhathi</string>
+    <string name="sync_kind_settings">Ushintsho lwamasethingi</string>
+    <string name="sync_state_failed">Ayikwazanga ukuthunyelwa</string>
+    <string name="unsent_warning_title">Unezinguquko ezingathunyelwanga</string>
+    <string name="sign_out_anyway">Phuma noma kunjalo</string>
+    <string name="cancel_action">Khansela</string>
+    <string name="error_offline">Awuxhumekile. Zama futhi uma usuxhumekile.</string>
+    <string name="error_unreachable">Asikwazi ukufinyelela iseva. Hlola uxhumano lwakho bese uzama futhi.</string>
+    <plurals name="unsent_warning_body">
+        <item quantity="one">Isinguquko esingu-%d asikathunyelwa. Sihlala kule foni futhi sizothunyelwa ngesikhathi esilandelayo uma ungena kule akhawunti uxhumekile.</item>
+        <item quantity="other">Izinguquko ezingu-%d azikathunyelwa. Zihlala kule foni futhi zizothunyelwa ngesikhathi esilandelayo uma ungena kule akhawunti uxhumekile.</item>
+    </plurals>
+    <plurals name="delete_unsent_warning">
+        <item quantity="one">Isinguquko sakho esingu-%d esingathunyelwanga sizolahlwa.</item>
+        <item quantity="other">Izinguquko zakho ezingu-%d ezingathunyelwanga zizolahlwa.</item>
+    </plurals>
 </resources>

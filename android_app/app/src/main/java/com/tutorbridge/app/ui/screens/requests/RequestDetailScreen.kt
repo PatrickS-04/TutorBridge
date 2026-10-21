@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +41,8 @@ fun RequestDetailScreen(
     // Which of the two destructive actions is waiting on a yes.
     var confirming by remember { mutableStateOf<RequestEnd?>(null) }
     val canEdit = req.status == RequestStatus.OPEN
+    // Whether a request is still open is the server's to say, so changing one needs a connection.
+    val online = uiState.isOnline
     val canEnd = req.status == RequestStatus.OPEN || req.status == RequestStatus.MATCHED
 
     confirming?.let { end ->
@@ -133,6 +136,7 @@ fun RequestDetailScreen(
                     if (canEdit) {
                         OutlinedButton(
                             onClick = { onEdit(req) },
+                            enabled = online,
                             modifier = Modifier.fillMaxWidth().height(44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text("Edit request", fontWeight = FontWeight.Bold) }
@@ -140,15 +144,18 @@ fun RequestDetailScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.CLOSE },
+                            enabled = online,
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text("Close", fontWeight = FontWeight.Bold) }
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.WITHDRAW },
+                            enabled = online,
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text("Withdraw", fontWeight = FontWeight.Bold, color = CrimsonPrimary) }
                     }
+                    NeedsConnectionHint(online)
                 }
             }
         }
@@ -159,7 +166,7 @@ fun RequestDetailScreen(
 
         items(req.applicants) { applicant ->
             // A request that is no longer open has nobody left to accept.
-            ApplicantCard(applicant, canAccept = canEdit) { onAcceptApplicant(applicant) }
+            ApplicantCard(applicant, canAccept = canEdit && online) { onAcceptApplicant(applicant) }
         }
     }
 }

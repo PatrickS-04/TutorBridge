@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,12 +42,32 @@ fun SettingsScreen(
     onToggleBiometric: (Boolean) -> Unit = {},
     onLinkCalendar: () -> Unit = {},
     onUnlinkCalendar: () -> Unit = {},
-    onChangePassword: ((String) -> Unit) -> Unit = {}
+    onChangePassword: ((String) -> Unit) -> Unit = {},
+    onOpenSyncStatus: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val isTutor = uiState.role == UserRole.TUTOR
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var showLanguageDialog by remember {mutableStateOf(false) }
+
+    var showSignOutWarning by remember { mutableStateOf(false) }
+    // Work done offline and not yet sent lives on this phone, per account; signing out
+    // does not lose it, but it will not be sent until this person signs in again.
+    val unsent = uiState.pendingSyncCount + uiState.failedSyncCount
+    if (showSignOutWarning) {
+        AlertDialog(
+            onDismissRequest = { showSignOutWarning = false },
+            title = { Text(stringResource(R.string.unsent_warning_title)) },
+            text = { Text(pluralStringResource(R.plurals.unsent_warning_body, unsent, unsent)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSignOutWarning = false
+                    onSignOut()
+                }) { Text(stringResource(R.string.sign_out_anyway), color = CrimsonPrimary) }
+            },
+            dismissButton = { TextButton(onClick = { showSignOutWarning = false }) { Text(stringResource(R.string.cancel_action)) } }
+        )
+    }
 
     if (showLanguageDialog) {
         AlertDialog(
@@ -191,8 +212,8 @@ fun SettingsScreen(
                         trailing = {
                             when {
                                 uiState.isCalendarLinking -> CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar) { Text(stringResource(R.string.calendar_disconnect)) }
-                                else -> TextButton(onClick = onLinkCalendar) { Text(stringResource(R.string.calendar_connect)) }
+                                uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar, enabled = uiState.isOnline) { Text(stringResource(R.string.calendar_disconnect)) }
+                                else -> TextButton(onClick = onLinkCalendar, enabled = uiState.isOnline) { Text(stringResource(R.string.calendar_connect)) }
                             }
                         },
                         onClick = {}
@@ -225,7 +246,7 @@ fun SettingsScreen(
                     SettingsRow(
                         icon = Icons.Default.Lock,
                         label = stringResource(R.string.change_password_label),
-                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }) { Text(stringResource(R.string.email_link_action)) } },
+                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }, enabled = uiState.isOnline) { Text(stringResource(R.string.email_link_action)) } },
                         onClick = {}
                     )
                     passwordMessage?.let {
@@ -270,10 +291,26 @@ fun SettingsScreen(
             }
         }
 
+        // Sync status: what is waiting to be sent, and what the server refused.
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                SettingsRow(
+                    icon = Icons.Default.Sync,
+                    label = stringResource(R.string.sync_status_title),
+                    trailing = { if (unsent > 0) Badge { Text("$unsent", fontSize = 12.sp) } },
+                    onClick = onOpenSyncStatus
+                )
+            }
+        }
+
         // Sign Out Button
         item {
             Button(
-                onClick = onSignOut,
+                onClick = { if (unsent > 0) showSignOutWarning = true else onSignOut() },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(

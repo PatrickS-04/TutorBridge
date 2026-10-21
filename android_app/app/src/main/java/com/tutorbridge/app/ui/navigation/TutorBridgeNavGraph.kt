@@ -49,6 +49,7 @@ import com.tutorbridge.app.ui.screens.settings.DeleteAccountScreen
 import com.tutorbridge.app.ui.screens.settings.EditProfileScreen
 import com.tutorbridge.app.ui.screens.settings.SettingsScreen
 import com.tutorbridge.app.ui.screens.splash.SplashScreen
+import com.tutorbridge.app.ui.screens.sync.SyncStatusScreen
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
 
@@ -141,7 +142,7 @@ fun TutorBridgeNavGraph(
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-        OfflineBanner(uiState)
+        OfflineBanner(uiState, onClick = { viewModel.navigateTo("sync_status") })
         Surface(modifier = Modifier.weight(1f)) {
             when (uiState.currentRoute) {
                 "splash" -> SplashScreen(
@@ -243,6 +244,14 @@ fun TutorBridgeNavGraph(
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") },
                     onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                )
+
+                "sync_status" -> SyncStatusScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") },
+                    onSyncNow = { viewModel.syncNow() },
+                    onRetryFailed = { viewModel.retryFailedSync() },
+                    onDiscard = { viewModel.discardOutboxItem(it) }
                 )
 
                 // ===== Messaging =====
@@ -366,7 +375,8 @@ fun TutorBridgeNavGraph(
                         onToggleBiometric = { viewModel.toggleBiometric(it) },
                         onLinkCalendar = linkCalendar,
                         onUnlinkCalendar = { viewModel.unlinkCalendar() },
-                        onChangePassword = { viewModel.sendPasswordReset(it) }
+                        onChangePassword = { viewModel.sendPasswordReset(it) },
+                        onOpenSyncStatus = { viewModel.navigateTo("sync_status") }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(

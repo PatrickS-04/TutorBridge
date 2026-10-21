@@ -12,6 +12,7 @@ import com.tutorbridge.app.data.local.pendingMessagesFor
 import com.tutorbridge.app.data.local.pendingNotesByBooking
 import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.local.pendingSettings
+import com.tutorbridge.app.data.local.toItemUis
 import com.tutorbridge.app.data.local.withPending
 import com.tutorbridge.app.data.model.AvailabilityDto
 import com.tutorbridge.app.data.model.CreateTuitionRequest
@@ -133,6 +134,39 @@ class OutboxViewsTest {
         assertEquals(false, shown.notifications.booking)
         assertEquals("untouched settings keep the server's value", "EN", shown.language)
         assertEquals(fromServer, fromServer.withPending(null))
+    }
+
+    @Test
+    fun `a queued bubble says waiting, not sending`() {
+        val bubble = listOf(item(OutboxType.SEND_MESSAGE, MessagePayload("t1", "hi", "c-1"))).pendingMessagesFor("t1").single()
+        assertTrue(bubble.pending && bubble.queued)
+        assertEquals("the screen words the state, so the model carries no text", "", bubble.time)
+    }
+
+    @Test
+    fun `the sync status rows describe each item without needing the server`() {
+        val rows = listOf(
+            item(OutboxType.SEND_MESSAGE, MessagePayload("t1", "see you at 3", "c-1")),
+            item(OutboxType.CREATE_REQUEST, RequestPayload(CreateTuitionRequest("s", "a", clientRequestId = "r"), "Mathematics", "Upper Campus")),
+            item(OutboxType.SAVE_NOTES, NotesPayload("b1", TutorNotesDto(listOf(TutorNoteItemDto("Mark homework", false)), ""))),
+            item(OutboxType.SAVE_SETTINGS, SettingsPayload(UpdateSettingsRequest(theme = "DARK")), OutboxState.FAILED)
+        ).toItemUis()
+
+        assertEquals(listOf("see you at 3", "Mathematics", "Mark homework", ""), rows.map { it.preview })
+        assertEquals(listOf(false, false, false, true), rows.map { it.failed })
+        assertEquals(OutboxType.SAVE_SETTINGS, rows.last().type)
+    }
+
+    @Test
+    fun `a long message is shortened for its row and an unknown type is still listed`() {
+        val long = "x".repeat(300)
+        val rows = listOf(
+            item(OutboxType.SEND_MESSAGE, MessagePayload("t1", long, "c")),
+            item(OutboxType.SEND_MESSAGE, MessagePayload("t1", "x", "c")).copy(type = "FROM_THE_FUTURE")
+        ).toItemUis()
+
+        assertEquals(80, rows.first().preview.length)
+        assertNull("a type this version does not know still appears, so it can be discarded", rows.last().type)
     }
 
     @Test

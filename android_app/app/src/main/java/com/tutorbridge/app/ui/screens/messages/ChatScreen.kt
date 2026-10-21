@@ -18,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.MessageUi
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -132,7 +134,11 @@ private fun Bubble(message: MessageUi) {
                 color = if (message.mine) Color.White else MaterialTheme.colorScheme.onSurface
             )
             Text(
-                message.time,
+                when {
+                    message.pending && message.queued -> stringResource(R.string.waiting_to_send)
+                    message.pending -> stringResource(R.string.sending)
+                    else -> message.time
+                },
                 fontSize = 12.sp,
                 color = if (message.mine) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
