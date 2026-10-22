@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.settings
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,10 +63,10 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Profile") },
+                title = { Text(stringResource(R.string.edit_profile_edit_profile)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -75,7 +77,7 @@ fun EditProfileScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                "Edit Profile",
+                stringResource(R.string.edit_profile_edit_profile),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -83,12 +85,12 @@ fun EditProfileScreen(
 
             OutlinedTextField(
                 value = email, onValueChange = { email = it },
-                label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true
+                label = { Text(stringResource(R.string.edit_profile_email)) }, modifier = Modifier.fillMaxWidth(), singleLine = true
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = bio, onValueChange = { bio = it },
-                label = { Text("Bio") }, modifier = Modifier.fillMaxWidth(), minLines = 3
+                label = { Text(stringResource(R.string.edit_profile_bio)) }, modifier = Modifier.fillMaxWidth(), minLines = 3
             )
 
             if (isTutor) {
@@ -96,7 +98,7 @@ fun EditProfileScreen(
                 OutlinedTextField(
                     value = hourlyRate,
                     onValueChange = { hourlyRate = it },
-                    label = { Text("Hourly Rate (R)") },
+                    label = { Text(stringResource(R.string.edit_profile_hourly_rate_r)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -105,7 +107,7 @@ fun EditProfileScreen(
                 OutlinedTextField(
                     value = department,
                     onValueChange = { department = it },
-                    label = { Text("Department / Faculty") },
+                    label = { Text(stringResource(R.string.edit_profile_department_faculty)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -141,7 +143,7 @@ fun EditProfileScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.edit_profile_save_changes), fontWeight = FontWeight.Bold)
                 }
             }
         }

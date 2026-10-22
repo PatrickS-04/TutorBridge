@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.home
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,7 +31,7 @@ fun StudentHomeScreen(
     uiState: TutorBridgeUiState,
     onNavigate: (String) -> Unit
 ) {
-    val firstName = uiState.userName.split(" ").firstOrNull()?.uppercase() ?: "STUDENT"
+    val firstName = uiState.userName.split(" ").firstOrNull()?.uppercase() ?: stringResource(R.string.history_default_name)
 
     LazyColumn(
         modifier = Modifier
@@ -45,18 +47,18 @@ fun StudentHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("HELLO, $firstName", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Let's learn today", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.student_home_hello, firstName), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.student_home_let_s_learn_today), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val unread = uiState.threads.sumOf { it.unread }
                     IconButton(onClick = { onNavigate("messages") }) {
                         BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
-                            Icon(Icons.Default.Chat, contentDescription = "Messages")
+                            Icon(Icons.Default.Chat, contentDescription = stringResource(R.string.common_messages))
                         }
                     }
                     IconButton(onClick = { onNavigate("notifications") }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
                     }
                 }
             }
@@ -82,13 +84,13 @@ fun StudentHomeScreen(
                     ) {
                         Badge(containerColor = CrimsonPrimary) {
                             Text(
-                                nextEvent?.let { "Next Session • ${it.startTime}" } ?: "No sessions booked",
+                                nextEvent?.let { stringResource(R.string.student_home_next_session, it.startTime) } ?: stringResource(R.string.student_home_no_sessions_booked),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
                         }
-                        Text("Schedule & Room →", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.student_home_schedule_room), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -107,7 +109,7 @@ fun StudentHomeScreen(
                         }
                         Column {
                             Text(
-                                nextEvent?.participantName ?: "Book your first session",
+                                nextEvent?.participantName ?: stringResource(R.string.student_home_book_your_first_session),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
@@ -140,8 +142,8 @@ fun StudentHomeScreen(
         // Upcoming on Your Calendar
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Upcoming on Your Calendar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("Full Calendar →", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.student_home_upcoming_on_your_calendar), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.student_home_full_calendar), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -161,7 +163,7 @@ fun StudentHomeScreen(
                         Text("${event.date} • ${event.startTime}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text(event.location.split("—").firstOrNull()?.trim() ?: "Campus", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(event.location.split("—").firstOrNull()?.trim() ?: stringResource(R.string.student_home_campus), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -175,9 +177,9 @@ fun StudentHomeScreen(
 
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(if (personalised) "Top Tutors For You" else "Tutors on Campus", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(if (personalised) stringResource(R.string.student_home_top_tutors_for_you) else stringResource(R.string.student_home_tutors_on_campus), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Text(
-                    "See All",
+                    stringResource(R.string.student_home_see_all),
                     color = CrimsonPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -206,16 +208,16 @@ fun StudentHomeScreen(
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
                         Text("${tutor.subject} (${tutor.courseCode})", fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Text(
                             listOfNotNull(
-                                if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else null,
+                                if (tutor.activeNow) stringResource(R.string.common_active_now) else if (tutor.activeToday) stringResource(R.string.common_active_today) else null,
                                 if (tutor.reviewsCount > 0) "★ ${tutor.rating}" else null,
-                                if (tutor.verified) "✓ Verified" else null
+                                if (tutor.verified) stringResource(R.string.student_home_verified) else null
                             ).joinToString(" • "),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -1,0 +1,15 @@
+<resources>
+    <string name="prep_add_a_to_do">Add a to-do</string>
+    <string name="prep_add_to_do">Add to-do</string>
+    <string name="prep_anything_worth_remembering_about">Anything worth remembering about this student or guardian</string>
+    <string name="prep_nothing_on_the_list_yet">Nothing on the list yet. Add what has to be done before or during the session.</string>
+    <string name="prep_only_you_can_see_these">Only you can see these notes.</string>
+    <string name="prep_save_notes">Save notes</string>
+    <string name="prep_session_notes">Session Notes</string>
+    <string name="prep_side_notes">Side notes</string>
+    <string name="prep_to_do_for_this_session">To do for this session</string>
+    <string name="prep_venue">Venue</string>
+    <string name="prep_progress">%1$d/%2$d done</string>
+    <string name="prep_remove_item">Remove \"%1$s\"</string>
+    <string name="prep_this_session">This session</string>
+</resources>

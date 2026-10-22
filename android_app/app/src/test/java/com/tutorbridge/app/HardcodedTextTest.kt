@@ -25,7 +25,7 @@ import java.io.File
 class HardcodedTextTest {
 
     /** The most hard-coded screen text allowed. Lower it as screens are translated; never raise it. */
-    private val baseline = 255
+    private val baseline = 0
 
     /** Unit tests run from the module folder, `android_app/app`. */
     private val ui = File("src/main/java/com/tutorbridge/app/ui")

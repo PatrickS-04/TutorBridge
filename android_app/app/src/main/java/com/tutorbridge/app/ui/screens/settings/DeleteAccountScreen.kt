@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.settings
 
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.R
 import androidx.compose.ui.res.pluralStringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
@@ -34,7 +35,7 @@ fun DeleteAccountScreen(
     onConfirmCheckChange: (Boolean) -> Unit = {},
     onConfirmTextChange: (String) -> Unit = {}
 ) {
-    val canDelete = uiState.deleteConfirmChecked && uiState.deleteConfirmText.trim().equals("DELETE", ignoreCase = false)
+    val canDelete = uiState.deleteConfirmChecked && uiState.deleteConfirmText.trim().equals(stringResource(R.string.delete_account_confirm_word), ignoreCase = false)
 
     LazyColumn(
         modifier = Modifier
@@ -46,10 +47,10 @@ fun DeleteAccountScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = onCancel) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    "Delete Student Account",
+                    stringResource(R.string.delete_account_delete_student_account),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = CrimsonPrimary
@@ -66,10 +67,10 @@ fun DeleteAccountScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(Icons.Default.WarningAmber, contentDescription = null, tint = CrimsonPrimary, modifier = Modifier.size(18.dp))
-                        Text("Permanent Action Warning", fontWeight = FontWeight.Bold, color = CrimsonPrimary)
+                        Text(stringResource(R.string.delete_account_permanent_action_warning), fontWeight = FontWeight.Bold, color = CrimsonPrimary)
                     }
                     Text(
-                        "Deleting your student account is irreversible. All your pending tuition requests, upcoming campus consultation room bookings and study materials will be deleted immediately.",
+                        stringResource(R.string.delete_account_deleting_your_student_account_is),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -84,10 +85,10 @@ fun DeleteAccountScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("DATA TO BE PURGED", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    PurgeBullet("Student profile (${uiState.userName} — ${uiState.userEmail})")
-                    PurgeBullet("All active and past tuition requests (${uiState.myRequests.size} recorded)")
-                    PurgeBullet("Upcoming confirmed campus room bookings and calendar schedules")
+                    Text(stringResource(R.string.delete_account_data_to_be_purged), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    PurgeBullet(stringResource(R.string.delete_account_bullet_profile, uiState.userName, uiState.userEmail))
+                    PurgeBullet(stringResource(R.string.delete_account_bullet_requests, uiState.myRequests.size))
+                    PurgeBullet(stringResource(R.string.delete_account_upcoming_confirmed_campus_room_b))
                 }
             }
         }
@@ -99,11 +100,11 @@ fun DeleteAccountScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("REASON FOR LEAVING", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.delete_account_reason_for_leaving), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedTextField(
                         value = uiState.deleteAccountReason,
                         onValueChange = onReasonChange,
-                        placeholder = { Text("Graduating or found an external tutor etc. (Optional)")},
+                        placeholder = { Text(stringResource(R.string.delete_account_graduating_or_found_an_external))},
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -116,17 +117,17 @@ fun DeleteAccountScreen(
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Checkbox(checked = uiState.deleteConfirmChecked, onCheckedChange = onConfirmCheckChange)
                     Text(
-                        "I understand that this action cannot be undone and all my campus tutoring records will be deleted.",
+                        stringResource(R.string.delete_account_i_understand_that_this_action),
                         fontSize = 13.sp,
                         modifier = Modifier.padding(top = 12.dp)
                     )
                 }
-                Text("Type DELETE to confirm:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.delete_account_type_delete_to_confirm), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 OutlinedTextField(
                     value = uiState.deleteConfirmText,
                     onValueChange = onConfirmTextChange,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("DELETE") },
+                    placeholder = { Text(stringResource(R.string.common_delete)) },
                     shape = RoundedCornerShape(12.dp)
                 )
             }
@@ -153,7 +154,7 @@ fun DeleteAccountScreen(
                 } else {
                     Icon(Icons.Default.DeleteForever, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Permanently Delete Account", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete_account_permanently_delete_account), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -174,7 +175,7 @@ fun DeleteAccountScreen(
 
         item {
             TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                Text("Cancel & Keep Account", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.delete_account_cancel_keep_account), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.navigation
 
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.R
 import android.hardware.biometrics.BiometricManager
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -53,13 +55,13 @@ import com.tutorbridge.app.ui.screens.sync.SyncStatusScreen
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
 
-sealed class NavItem(val route: String, val title: String, val icon: ImageVector) {
-    object Home : NavItem("home", "Home", Icons.Default.Home)
-    object Find : NavItem("find", "Find", Icons.Default.Search)
-    object Claims : NavItem("claims", "Claims", Icons.Default.Receipt)
-    object Calendar : NavItem("calendar", "Calendar", Icons.Default.CalendarMonth)
-    object Requests : NavItem("requests", "Requests", Icons.Default.Assignment)
-    object Settings : NavItem("settings", "Settings", Icons.Default.Settings)
+sealed class NavItem(val route: String, val titleRes: Int, val icon: ImageVector) {
+    object Home : NavItem("home", R.string.nav_home, Icons.Default.Home)
+    object Find : NavItem("find", R.string.nav_find, Icons.Default.Search)
+    object Claims : NavItem("claims", R.string.nav_claims, Icons.Default.Receipt)
+    object Calendar : NavItem("calendar", R.string.nav_calendar, Icons.Default.CalendarMonth)
+    object Requests : NavItem("requests", R.string.nav_requests, Icons.Default.Assignment)
+    object Settings : NavItem("settings", R.string.nav_settings, Icons.Default.Settings)
 }
 
 private val studentRoutesWithBottomBar = listOf(
@@ -116,8 +118,8 @@ fun TutorBridgeNavGraph(
                             NavItem.Settings -> uiState.currentRoute == "settings"
                         }
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(item.titleRes)) },
+                            label = { Text(stringResource(item.titleRes)) },
                             selected = isSelected,
                             onClick = {
                                 val target = when (item) {

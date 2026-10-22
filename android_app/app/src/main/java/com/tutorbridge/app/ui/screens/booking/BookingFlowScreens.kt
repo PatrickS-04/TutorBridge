@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.booking
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -84,14 +86,14 @@ fun BookingFlowScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_select_availability), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Text(
             selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
-                ?.plus(" ${selectedDate.year}") ?: "Pick a date",
+                ?.plus(" ${selectedDate.year}") ?: stringResource(R.string.booking_pick_a_date),
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp
         )
@@ -116,14 +118,14 @@ fun BookingFlowScreen(
             }
         }
 
-        Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(R.string.booking_available_slot_1_hour), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
         if (slots.isEmpty()) {
             Text(
                 if (tutor.windows.isEmpty())
-                    "${tutor.name.split(" ").first()} has not published any hours yet - pick another tutor."
+                    stringResource(R.string.booking_no_hours_published, tutor.name.split(" ").first())
                 else
-                    "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
+                    stringResource(R.string.booking_no_hours_day, tutor.name.split(" ").first()),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -156,7 +158,7 @@ fun BookingFlowScreen(
             }
         }
 
-        Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(R.string.booking_session_location), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
         venues.forEach { venue ->
             val isSelected = uiState.selectedLocation == venue
@@ -179,8 +181,8 @@ fun BookingFlowScreen(
             value = customVenue,
             // Capped where the server caps it, so a long paste fails here and not on submit.
             onValueChange = { if (it.length <= 120) onSelectLocation(it) },
-            label = { Text("Somewhere else") },
-            placeholder = { Text("e.g. The Daily Grind coffee shop, Main Road") },
+            label = { Text(stringResource(R.string.booking_somewhere_else)) },
+            placeholder = { Text(stringResource(R.string.booking_e_g_the_daily_grind)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
@@ -198,7 +200,7 @@ fun BookingFlowScreen(
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
-            Text("Continue to Review", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_continue_to_review), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -222,9 +224,9 @@ fun ReviewBookingScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Review Booking", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_review_booking), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Card(
@@ -254,10 +256,10 @@ fun ReviewBookingScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ReviewRow("Date", uiState.selectedBookingDate)
-                ReviewRow("Time", "${uiState.selectedSlot} (1 hour)")
-                ReviewRow("Location", uiState.selectedLocation)
-                ReviewRow("Calendar Sync", "✓ Auto-adds to Calendar tab")
+                ReviewRow(stringResource(R.string.booking_date), uiState.selectedBookingDate)
+                ReviewRow(stringResource(R.string.booking_time), stringResource(R.string.booking_time_one_hour, uiState.selectedSlot))
+                ReviewRow(stringResource(R.string.booking_location), uiState.selectedLocation)
+                ReviewRow(stringResource(R.string.booking_calendar_sync), stringResource(R.string.booking_auto_adds_to_calendar_tab))
             }
         }
 
@@ -270,7 +272,7 @@ fun ReviewBookingScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(Icons.Default.Place, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
-            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 12.sp, color = NavySecondary)
+            Text(stringResource(R.string.booking_you_will_meet, tutor.name.split(" ").last()), fontSize = 12.sp, color = NavySecondary)
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -282,7 +284,7 @@ fun ReviewBookingScreen(
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
-            Text("Confirm Request", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_confirm_request), fontWeight = FontWeight.Bold)
         }
         NeedsConnectionHint(uiState.isOnline)
     }
@@ -318,10 +320,10 @@ fun BookingRequestSentScreen(
             Icon(Icons.Default.HourglassEmpty, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(36.dp))
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Booking Request Sent!", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text(stringResource(R.string.booking_booking_request_sent), fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Your request was submitted and synched with your calendar. Most tutors reply in less than 2 hours.",
+            stringResource(R.string.booking_your_request_was_submitted_and),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -331,10 +333,10 @@ fun BookingRequestSentScreen(
             onClick = onCheckStatus,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(24.dp)
-        ) { Text("Check for a reply", fontWeight = FontWeight.Bold) }
+        ) { Text(stringResource(R.string.booking_check_for_a_reply), fontWeight = FontWeight.Bold) }
         Spacer(modifier = Modifier.height(14.dp))
         TextButton(onClick = onViewCalendar) {
-            Text("View in Calendar Tab", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_view_in_calendar_tab), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -361,13 +363,13 @@ fun BookingConfirmationScreen(
             modifier = Modifier.size(80.dp).clip(CircleShape).background(EmeraldTint),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.CheckCircle, contentDescription = "Success", tint = EmeraldSuccess, modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.booking_success), tint = EmeraldSuccess, modifier = Modifier.size(48.dp))
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Session Confirmed!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.booking_session_confirmed), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Your tutor accepted! Get ready for your session at the location below.",
+            stringResource(R.string.booking_your_tutor_accepted_get_ready),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -380,9 +382,9 @@ fun BookingConfirmationScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ReviewRow2("Tutor", tutor?.name ?: "")
-                ReviewRow2("Date & Time", "${uiState.selectedBookingDate}, ${uiState.selectedSlot}")
-                ReviewRow2("Location", uiState.selectedLocation)
+                ReviewRow2(stringResource(R.string.booking_tutor), tutor?.name ?: "")
+                ReviewRow2(stringResource(R.string.booking_date_time), "${uiState.selectedBookingDate}, ${uiState.selectedSlot}")
+                ReviewRow2(stringResource(R.string.booking_location), uiState.selectedLocation)
             }
         }
 
@@ -394,11 +396,11 @@ fun BookingConfirmationScreen(
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
-            Text("View on Calendar", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_view_on_calendar), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
         TextButton(onClick = onBackToDashboard) {
-            Text("Back to Dashboard", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.common_back_to_dashboard), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -434,7 +436,7 @@ fun BookingDeclinedScreen(
             Text("🙁", fontSize = 32.sp)
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Booking Declined", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text(stringResource(R.string.booking_booking_declined), fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(20.dp))
 
         Card(
@@ -443,7 +445,7 @@ fun BookingDeclinedScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Tutor's note:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.booking_tutor_s_note), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     "\"$declineNote\"",
@@ -462,7 +464,7 @@ fun BookingDeclinedScreen(
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
-            Text("Pick Another Slot", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_pick_another_slot), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedButton(
@@ -470,7 +472,7 @@ fun BookingDeclinedScreen(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
-            Text("Find Another Tutor", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_find_another_tutor), fontWeight = FontWeight.Bold)
         }
     }
 }

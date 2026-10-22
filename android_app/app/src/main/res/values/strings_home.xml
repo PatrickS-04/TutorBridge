@@ -1,0 +1,35 @@
+<resources>
+    <string name="student_home_full_calendar">Full Calendar →</string>
+    <string name="student_home_let_s_learn_today">Let\'s learn today</string>
+    <string name="student_home_schedule_room">Schedule &amp; Room →</string>
+    <string name="student_home_see_all">See All</string>
+    <string name="student_home_upcoming_on_your_calendar">Upcoming on Your Calendar</string>
+    <string name="tutor_home_accept_sync">Accept &amp; Sync</string>
+    <string name="tutor_home_active">Active</string>
+    <string name="tutor_home_choose_the_days_students_can">Choose the days students can book you →</string>
+    <string name="tutor_home_claim_amount">Claim Amount</string>
+    <string name="tutor_home_claimable">CLAIMABLE</string>
+    <string name="tutor_home_decline">Decline</string>
+    <string name="tutor_home_export_submit_claim_to_faculty">Export &amp; Submit Claim to Faculty →</string>
+    <string name="tutor_home_faculty_tutor_portal">FACULTY TUTOR PORTAL</string>
+    <string name="tutor_home_logged_hours">Logged Hours</string>
+    <string name="tutor_home_no_bookings_are_waiting_for">No bookings are waiting for a decision.</string>
+    <string name="tutor_home_open">Open</string>
+    <string name="tutor_home_upcoming_sessions">Upcoming Sessions</string>
+    <string name="tutor_home_weekly_availability">Weekly Availability</string>
+    <string name="tutor_home_pay_period">%1$s Pay Period</string>
+    <string name="tutor_home_this_month">This month</string>
+    <string name="student_home_hello">HELLO, %1$s</string>
+    <string name="tutor_home_appointed">Dept. Appointed Tutor</string>
+    <string name="tutor_home_staff_appointed">Staff #%1$s • Dept. Appointed Tutor</string>
+    <string name="tutor_home_hours_value">%1$s hrs</string>
+    <string name="tutor_home_money_value">R%1$d</string>
+    <string name="tutor_home_new_bookings">New Student Bookings (%1$d)</string>
+    <string name="student_home_book_your_first_session">Book your first session</string>
+    <string name="student_home_campus">Campus</string>
+    <string name="student_home_no_sessions_booked">No sessions booked</string>
+    <string name="student_home_top_tutors_for_you">Top Tutors For You</string>
+    <string name="student_home_tutors_on_campus">Tutors on Campus</string>
+    <string name="student_home_verified">✓ Verified</string>
+    <string name="student_home_next_session">Next Session • %1$s</string>
+</resources>

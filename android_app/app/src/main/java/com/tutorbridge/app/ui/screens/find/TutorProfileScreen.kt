@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.find
 
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,9 +42,9 @@ fun TutorProfileScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Tutor Profile", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.tutor_profile_tutor_profile), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Card(
@@ -84,8 +85,8 @@ fun TutorProfileScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     listOfNotNull(
-                        if (tutor.reviewsCount > 0) "★ ${tutor.rating} Rating" else null,
-                        if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else "Not available today"
+                        if (tutor.reviewsCount > 0) stringResource(R.string.tutor_profile_rating, tutor.rating) else null,
+                        if (tutor.activeNow) stringResource(R.string.common_active_now) else if (tutor.activeToday) stringResource(R.string.common_active_today) else stringResource(R.string.common_not_available_today)
                     ).joinToString("  •  "),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -99,7 +100,7 @@ fun TutorProfileScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("About ${tutor.name.split(" ").last()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.tutor_profile_about, tutor.name.split(" ").last()), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(tutor.bio, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -111,10 +112,10 @@ fun TutorProfileScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProfileInfoRow(Icons.Default.School, "Department", tutor.department)
-                ProfileInfoRow(Icons.Default.Language, "Languages", tutor.languages.joinToString(", "))
-                ProfileInfoRow(Icons.Default.History, "Total Consultations", "${tutor.totalConsultations}+ sessions")
-                ProfileInfoRow(Icons.Default.Place, "Consultation Venue", tutor.consultationVenue)
+                ProfileInfoRow(Icons.Default.School, stringResource(R.string.tutor_profile_department), tutor.department)
+                ProfileInfoRow(Icons.Default.Language, stringResource(R.string.tutor_profile_languages), tutor.languages.joinToString(", "))
+                ProfileInfoRow(Icons.Default.History, stringResource(R.string.tutor_profile_total_consultations), stringResource(R.string.tutor_profile_sessions_count, tutor.totalConsultations))
+                ProfileInfoRow(Icons.Default.Place, stringResource(R.string.tutor_profile_consultation_venue), tutor.consultationVenue)
             }
         }
 
@@ -127,7 +128,7 @@ fun TutorProfileScreen(
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
-            Text("Select & Choose Time Slot", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.tutor_profile_select_choose_time_slot), fontWeight = FontWeight.Bold)
         }
         NeedsConnectionHint(uiState.isOnline)
     }

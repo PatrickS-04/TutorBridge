@@ -34,22 +34,11 @@ class TranslationsTest {
     private val res = File("src/main/res")
 
     /** Configuration, not text anyone reads. */
-    private val notTranslatable = setOf("google_web_client_id")
+    private val notTranslatable = setOf("google_web_client_id", "delete_account_confirm_word")
 
     /** English text with no Afrikaans or isiZulu yet. Shrinks as each feature is translated. */
-    private val knownUntranslated = setOf(
-        // strings.xml
-        "notification_channel_name", "notification_channel_description",
-        // strings_time.xml
-        "time_just_now", "time_yesterday", "time_minutes_ago", "time_hours_ago", "time_days_ago",
-        // strings_offline.xml
-        "force_offline_label", "offline_banner_network", "offline_banner_forced", "offline_showing_saved",
-        "pending_sync", "failed_sync", "synced_changes", "needs_connection", "saved_offline",
-        "waiting_to_send", "sending", "waiting_to_sync", "sync_status_title", "sync_now", "retry_failed",
-        "discard", "sync_all_clear", "sync_kind_message", "sync_kind_request", "sync_kind_notes",
-        "sync_kind_settings", "sync_state_failed", "unsent_warning_title", "sign_out_anyway",
-        "cancel_action", "error_offline", "error_unreachable", "unsent_warning_body", "delete_unsent_warning"
-    )
+    private val knownUntranslated: Set<String> =
+        File("src/test/resources/untranslated_keys.txt").readLines().filter { it.isNotBlank() }.toSet()
 
     private data class Entry(val name: String, val text: String)
 

@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +30,7 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val stepTitles = listOf("Subject", "Level", "Time Window", "Venue", "Notes")
+private val stepTitles = listOf(R.string.new_request_step_subject, R.string.new_request_step_level, R.string.new_request_step_time_window, R.string.new_request_step_venue, R.string.new_request_step_notes)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,10 +60,10 @@ fun NewTuitionRequestScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = if (step > 1) onPrevious else onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
             Text(
-                if (draft.editingRequestId != null) "Edit Tuition Request" else "New Tuition Request",
+                if (draft.editingRequestId != null) stringResource(R.string.new_request_edit_tuition_request) else stringResource(R.string.new_request_new_tuition_request),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -81,21 +83,21 @@ fun NewTuitionRequestScreen(
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Step $step of $totalSteps — ${stepTitles[step - 1]}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.new_request_step_of, step, totalSteps, stringResource(stepTitles[step - 1])), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         when (step) {
             1 -> {
-                Text("What subject or course do you need help with?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.new_request_what_subject_or_course_do), fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 PickerField(
                     label = draft.subject,
-                    placeholder = "Choose a subject",
+                    placeholder = stringResource(R.string.new_request_choose_a_subject),
                     options = uiState.subjectOptions,
                     onSelect = onSelectSubject
                 )
             }
             2 -> {
-                Text("What level is this course?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.new_request_what_level_is_this_course), fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 OutlinedTextField(
                     value = draft.level,
                     onValueChange = onLevelChange,
@@ -104,7 +106,7 @@ fun NewTuitionRequestScreen(
                 )
             }
             3 -> {
-                Text("When are you generally available?", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.new_request_when_are_you_generally_available), fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     DayOfWeek.entries.forEach { day ->
                         val selected = draft.days.contains(day)
@@ -130,7 +132,7 @@ fun NewTuitionRequestScreen(
                     OutlinedTextField(
                         value = draft.startTime,
                         onValueChange = { onHoursChange(it, draft.endTime) },
-                        label = { Text("From (HH:mm)", fontSize = 12.sp) },
+                        label = { Text(stringResource(R.string.common_from_hh_mm), fontSize = 12.sp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true
@@ -138,7 +140,7 @@ fun NewTuitionRequestScreen(
                     OutlinedTextField(
                         value = draft.endTime,
                         onValueChange = { onHoursChange(draft.startTime, it) },
-                        label = { Text("To (HH:mm)", fontSize = 12.sp) },
+                        label = { Text(stringResource(R.string.common_to_hh_mm), fontSize = 12.sp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true
@@ -146,20 +148,20 @@ fun NewTuitionRequestScreen(
                 }
             }
             4 -> {
-                Text("Preferred campus area", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.new_request_preferred_campus_area), fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 PickerField(
                     label = draft.preferredVenue,
-                    placeholder = "Choose a campus area",
+                    placeholder = stringResource(R.string.new_request_choose_a_campus_area),
                     options = uiState.areaOptions,
                     onSelect = onSelectArea
                 )
             }
             5 -> {
-                Text("Notes & Topic Details for Mentors", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stringResource(R.string.new_request_notes_topic_details_for_mentors), fontWeight = FontWeight.Medium, fontSize = 14.sp)
                 OutlinedTextField(
                     value = draft.notes,
                     onValueChange = onNotesChange,
-                    placeholder = { Text("Need help with limits and derivatives") },
+                    placeholder = { Text(stringResource(R.string.new_request_need_help_with_limits_and)) },
                     modifier = Modifier.fillMaxWidth().height(140.dp),
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -177,7 +179,7 @@ fun NewTuitionRequestScreen(
         ) {
             Icon(Icons.Default.Bookmark, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
             Text(
-                "Your request goes to every verified tutor for this subject at your institution.",
+                stringResource(R.string.new_request_your_request_goes_to_every),
                 fontSize = 12.sp,
                 color = NavySecondary
             )
@@ -191,7 +193,7 @@ fun NewTuitionRequestScreen(
                     onClick = onPrevious,
                     modifier = Modifier.weight(1f).height(50.dp),
                     shape = RoundedCornerShape(25.dp)
-                ) { Text("Back", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.common_back), fontWeight = FontWeight.Bold) }
             }
             val canContinue = when (step) {
                 1 -> draft.subjectId.isNotBlank()
@@ -206,8 +208,8 @@ fun NewTuitionRequestScreen(
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
             ) {
-                val submitLabel = if (draft.editingRequestId != null) "Save Changes" else "Submit Request"
-                Text(if (step < totalSteps) "Next Step" else submitLabel, fontWeight = FontWeight.Bold)
+                val submitLabel = if (draft.editingRequestId != null) stringResource(R.string.edit_profile_save_changes) else stringResource(R.string.new_request_submit_request)
+                Text(if (step < totalSteps) stringResource(R.string.new_request_next_step) else submitLabel, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -236,7 +238,7 @@ private fun PickerField(
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (options.isEmpty()) {
-                DropdownMenuItem(text = { Text("Nothing to choose from yet") }, onClick = {}, enabled = false)
+                DropdownMenuItem(text = { Text(stringResource(R.string.new_request_nothing_to_choose_from_yet)) }, onClick = {}, enabled = false)
             }
             options.forEach { option ->
                 DropdownMenuItem(

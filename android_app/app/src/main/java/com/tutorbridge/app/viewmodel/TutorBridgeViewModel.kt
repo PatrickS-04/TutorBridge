@@ -166,7 +166,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun signUp(fullName: String, email: String, password: String) {
         val institutionId = _uiState.value.selectedSignupInstitutionId
         if (institutionId == null) {
-            _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
+            _uiState.update { it.copy(authErrorMessage = text(R.string.vm_select_institution)) }
             return
         }
         // Self sign-up is always a student/guardian; the backend assigns the same role.
@@ -274,7 +274,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                                 isAuthLoading = false,
                                 currentRoute = "auth",
                                 authMode = AuthMode.SIGN_IN,
-                                authErrorMessage = "Password changed - sign in with your new password"
+                                authErrorMessage = text(R.string.vm_password_changed)
                             )
                         }
                     }
@@ -292,7 +292,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun sendPasswordReset(onResult: (String) -> Unit) {
         val email = Firebase.auth.currentUser?.email
         if (email == null) {
-            onResult("No signed-in user found - Please log in again")
+            onResult(text(R.string.vm_no_signed_in_user))
             return
         }
         viewModelScope.launch {
@@ -316,7 +316,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun sendPasswordResetTo(email: String) {
         val address = email.trim()
         if (address.isEmpty()) {
-            _uiState.update { it.copy(authInfoMessage = null, authErrorMessage = "Enter your campus email first, then tap Forgot password") }
+            _uiState.update { it.copy(authInfoMessage = null, authErrorMessage = text(R.string.vm_enter_email_first)) }
             return
         }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, authInfoMessage = null) }
@@ -328,7 +328,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             } catch (exception: FirebaseAuthInvalidUserException) {
                 _uiState.update { it.copy(isAuthLoading = false, authInfoMessage = sent) }
             } catch (exception: FirebaseAuthInvalidCredentialsException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "That doesn't look like a valid email address") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_invalid_email)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not send the reset email") }
             }
@@ -614,7 +614,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and sign back in before changing your email") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_change_email)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not update email") }
             }
@@ -846,7 +846,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         val tutor = state.selectedTutor
         val start = startOfSelectedSlot(state)
         if (tutor == null || start == null) {
-            _uiState.update { it.copy(dataErrorMessage = "Pick a date and a time slot first") }
+            _uiState.update { it.copy(dataErrorMessage = text(R.string.vm_pick_date_slot)) }
             return
         }
 
@@ -1019,7 +1019,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun submitTuitionRequest() {
         val draft = _uiState.value.requestDraft
         if (draft.subjectId.isBlank() || draft.areaId.isBlank()) {
-            _uiState.update { it.copy(dataErrorMessage = "Choose a subject and a campus area first") }
+            _uiState.update { it.copy(dataErrorMessage = text(R.string.vm_choose_subject_area)) }
             return
         }
 
@@ -1120,7 +1120,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         _uiState.update {
                             it.copy(
                                 currentRoute = "my_requests",
-                                dataErrorMessage = "Matched with ${applicant.name} - book a time from their profile under Find"
+                                dataErrorMessage = getApplication<Application>().getString(R.string.vm_matched_book_time, applicant.name)
                             )
                         }
                         return@onSuccess
@@ -1524,7 +1524,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteStudentAccount(onComplete: () -> Unit) {
         val user = Firebase.auth.currentUser
         if (user == null) {
-            _uiState.update { it.copy(authErrorMessage = "No signed-in user found - Please log in again") }
+            _uiState.update { it.copy(authErrorMessage = text(R.string.vm_no_signed_in_user)) }
             return
         }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
@@ -1556,7 +1556,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 _uiState.update { signedOutState() }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and log back in before deleting your account") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_delete_account)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not delete account") }
             }
@@ -1683,7 +1683,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             isCalendarLinking = false,
                             calendarLinked = link.linked,
                             calendarAccountEmail = link.googleAccountEmail,
-                            calendarMessage = "Confirmed sessions will now appear in Google Calendar."
+                            calendarMessage = text(R.string.vm_calendar_connected)
                         )
                     }
                 }
@@ -1706,7 +1706,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         it.copy(
                             calendarLinked = false,
                             calendarAccountEmail = null,
-                            calendarMessage = "Google Calendar disconnected."
+                            calendarMessage = text(R.string.vm_calendar_disconnected)
                         )
                     }
                 }

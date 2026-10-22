@@ -1,0 +1,27 @@
+<resources>
+    <string name="claims_claim_period">CLAIM PERIOD</string>
+    <string name="claims_claim_settled">Claim Settled</string>
+    <string name="claims_completed_sessions_show_up_here">Completed sessions show up here as claimable hours.</string>
+    <string name="claims_copy_ref">Copy Ref</string>
+    <string name="claims_csv_export">CSV Export</string>
+    <string name="claims_draft_claimable">⏱ Draft (Claimable)</string>
+    <string name="claims_institution_payment_export">Institution Payment Export</string>
+    <string name="claims_load_earlier_months">Load earlier months</string>
+    <string name="claims_no_claim_periods_yet">No claim periods yet</string>
+    <string name="claims_paid_to_bank">✓ Paid to Bank</string>
+    <string name="claims_pdf_voucher">PDF Voucher</string>
+    <string name="claims_rate">Rate</string>
+    <string name="claims_submit_to_admin">Submit to Admin</string>
+    <string name="claims_verified_with_student_attendance">Verified with student attendance check-in</string>
+    <string name="claims_faculty_staff">%1$s • Staff #%2$s</string>
+    <string name="claims_rate_per_hour">R%1$d/hr</string>
+    <string name="claims_hours_value">%1$s hrs</string>
+    <string name="claims_claim_ref">Claim Ref: %1$s</string>
+    <string name="claims_itemized_sessions">Itemized Tutoring Sessions\u00A0\u00A0%1$d</string>
+    <string name="claims_topic">Topic: %1$s</string>
+    <string name="claims_hours_at_rate">%1$s hrs @ R%2$d</string>
+    <string name="claims_claim_value">Claim Value</string>
+    <string name="claims_paid">Paid</string>
+    <string name="claims_sessions">Sessions</string>
+    <string name="claims_total_hours">Total Hours</string>
+</resources>

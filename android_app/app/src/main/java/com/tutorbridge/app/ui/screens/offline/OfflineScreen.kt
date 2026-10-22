@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.offline
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -35,9 +37,9 @@ fun OfflineScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Connection Lost", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.offline_connection_lost), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -48,7 +50,7 @@ fun OfflineScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
         ) {
             Text(
-                "⚠ Offline Mode Active • Showing Cached Schedule Data",
+                stringResource(R.string.offline_offline_mode_active_showing_cach),
                 modifier = Modifier.padding(14.dp).fillMaxWidth(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.5.sp,
@@ -69,10 +71,10 @@ fun OfflineScreen(
                 Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(36.dp))
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text("You're Offline", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(stringResource(R.string.offline_you_re_offline), fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Your scheduled lesson room locations, meeting times, and offline syllabus notes remain accessible.",
+                stringResource(R.string.offline_your_scheduled_lesson_room_locat),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 24.dp)
@@ -85,7 +87,7 @@ fun OfflineScreen(
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
-            Text("Retry Connection", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.offline_retry_connection), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedButton(
@@ -93,7 +95,7 @@ fun OfflineScreen(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
-            Text("View Cached Calendar", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.offline_view_cached_calendar), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
     }

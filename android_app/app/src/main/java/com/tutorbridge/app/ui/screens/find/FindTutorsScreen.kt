@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.find
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -51,9 +53,9 @@ fun FindTutorsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Text("Find a Campus Tutor", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.find_find_a_campus_tutor), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(
-                "Explore appointed faculty tutors & undergraduate teaching assistants.",
+                stringResource(R.string.find_explore_appointed_faculty_tutors),
                 fontSize = 12.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -63,8 +65,8 @@ fun FindTutorsScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search course code or subject (e.g. MAM)", fontSize = 12.5.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = { Text(stringResource(R.string.find_search_course_code_or_subject), fontSize = 12.5.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.find_search)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
             )
@@ -75,12 +77,12 @@ fun FindTutorsScreen(
                 FilterChip(
                     selected = activeNowOnly,
                     onClick = { activeNowOnly = !activeNowOnly },
-                    label = { Text("Active on campus now", fontSize = 12.sp) }
+                    label = { Text(stringResource(R.string.find_active_on_campus_now), fontSize = 12.sp) }
                 )
                 FilterChip(
                     selected = topRatedOnly,
                     onClick = { topRatedOnly = !topRatedOnly },
-                    label = { Text("★ Top Rated (4.9+)", fontSize = 12.sp) }
+                    label = { Text(stringResource(R.string.find_top_rated_4_9), fontSize = 12.sp) }
                 )
             }
         }
@@ -107,18 +109,18 @@ fun FindTutorsScreen(
                             // No match scoring behind this yet - shown only when there is one.
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text("${tutor.subject}\n(${tutor.courseCode})", fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.find_subject_with_code, tutor.subject, tutor.courseCode), fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 when {
-                                    tutor.activeNow -> "Active now"
-                                    tutor.activeToday -> "Active today"
-                                    else -> "Not available today"
+                                    tutor.activeNow -> stringResource(R.string.common_active_now)
+                                    tutor.activeToday -> stringResource(R.string.common_active_today)
+                                    else -> stringResource(R.string.common_not_available_today)
                                 },
                                 fontSize = 12.sp,
                                 color = if (tutor.activeNow) EmeraldSuccess else MaterialTheme.colorScheme.onSurfaceVariant,

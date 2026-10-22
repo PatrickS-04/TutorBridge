@@ -43,4 +43,10 @@
         <item quantity="one">Your %d unsent change will be discarded.</item>
         <item quantity="other">Your %d unsent changes will be discarded.</item>
     </plurals>
+    <string name="offline_connection_lost">Connection Lost</string>
+    <string name="offline_offline_mode_active_showing_cach">⚠ Offline Mode Active • Showing Cached Schedule Data</string>
+    <string name="offline_retry_connection">Retry Connection</string>
+    <string name="offline_view_cached_calendar">View Cached Calendar</string>
+    <string name="offline_you_re_offline">You\'re Offline</string>
+    <string name="offline_your_scheduled_lesson_room_locat">Your scheduled lesson room locations, meeting times, and offline syllabus notes remain accessible.</string>
 </resources>

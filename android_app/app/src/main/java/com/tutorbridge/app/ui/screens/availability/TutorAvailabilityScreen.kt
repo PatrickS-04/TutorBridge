@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.availability
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -52,12 +54,12 @@ fun TutorAvailabilityScreen(
         // No bottom bar on this page, so this is the way back out.
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.availability_availability), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
         Text(
-            "Manage recurring weekly hours.",
+            stringResource(R.string.availability_manage_recurring_weekly_hours),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -70,9 +72,9 @@ fun TutorAvailabilityScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Recurring Teaching Days", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.availability_recurring_teaching_days), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text(
-                            "Tap days when you are available for student bookings.",
+                            stringResource(R.string.availability_tap_days_when_you_are),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -103,7 +105,7 @@ fun TutorAvailabilityScreen(
             }
 
             item {
-                Text("Configured Day Windows", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.availability_configured_day_windows), fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
 
             items(uiState.weeklyAvailability) { window ->
@@ -135,7 +137,7 @@ fun TutorAvailabilityScreen(
                                 Text(window.timeRange, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Badge(containerColor = EmeraldTint) {
-                                Text(if (window.active) "Active" else "Inactive", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(if (window.active) stringResource(R.string.tutor_home_active) else stringResource(R.string.availability_inactive), color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                         if (isEditing) {
@@ -147,7 +149,7 @@ fun TutorAvailabilityScreen(
                                 OutlinedTextField(
                                     value = editStart,
                                     onValueChange = { editStart = it },
-                                    label = { Text("From (HH:mm)", fontSize = 12.sp) },
+                                    label = { Text(stringResource(R.string.common_from_hh_mm), fontSize = 12.sp) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     singleLine = true
@@ -155,7 +157,7 @@ fun TutorAvailabilityScreen(
                                 OutlinedTextField(
                                     value = editEnd,
                                     onValueChange = { editEnd = it },
-                                    label = { Text("To (HH:mm)", fontSize = 12.sp) },
+                                    label = { Text(stringResource(R.string.common_to_hh_mm), fontSize = 12.sp) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     singleLine = true
@@ -164,7 +166,7 @@ fun TutorAvailabilityScreen(
                                     onEditHours(window.dayName, editStart, editEnd)
                                     editingDay = null
                                 }) {
-                                    Icon(Icons.Default.Check, contentDescription = "Save hours")
+                                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.availability_save_hours))
                                 }
                             }
                         }

@@ -1,0 +1,9 @@
+<resources>
+    <string name="availability_availability">Availability</string>
+    <string name="availability_configured_day_windows">Configured Day Windows</string>
+    <string name="availability_manage_recurring_weekly_hours">Manage recurring weekly hours.</string>
+    <string name="availability_recurring_teaching_days">Recurring Teaching Days</string>
+    <string name="availability_save_hours">Save hours</string>
+    <string name="availability_tap_days_when_you_are">Tap days when you are available for student bookings.</string>
+    <string name="availability_inactive">Inactive</string>
+</resources>

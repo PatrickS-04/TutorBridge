@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.splash
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -38,14 +39,14 @@ fun SplashScreen(
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_tutorbridge_logo),
-                contentDescription = "TutorBridge",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(120.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "TutorBridge",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -53,7 +54,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Institutional Tutoring & Department Claims\nPortal",
+                text = stringResource(R.string.splash_institutional_tutoring_departmen),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -73,7 +74,7 @@ fun SplashScreen(
                 )
             ) {
                 Text(
-                    text = "Campus Sign In →",
+                    text = stringResource(R.string.splash_campus_sign_in),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

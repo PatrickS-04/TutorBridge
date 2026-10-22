@@ -59,7 +59,7 @@ fun ChatScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
             Text(uiState.selectedThreadName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
@@ -72,14 +72,14 @@ fun ChatScreen(
             if (hasEarlier) {
                 item {
                     TextButton(onClick = onLoadEarlier, modifier = Modifier.fillMaxWidth()) {
-                        Text("Load earlier messages", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.chat_load_earlier_messages), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
             if (uiState.visibleChat.isEmpty()) {
                 item {
                     Text(
-                        "No messages yet - say hello.",
+                        stringResource(R.string.chat_no_messages_yet_say_hello),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 24.dp)
@@ -97,7 +97,7 @@ fun ChatScreen(
             OutlinedTextField(
                 value = uiState.chatDraft,
                 onValueChange = onDraftChange,
-                placeholder = { Text("Message") },
+                placeholder = { Text(stringResource(R.string.chat_message)) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(24.dp),
                 maxLines = 4,
@@ -109,7 +109,7 @@ fun ChatScreen(
                 enabled = uiState.chatDraft.isNotBlank(),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = NavySecondary)
             ) {
-                Icon(Icons.Default.Send, contentDescription = "Send")
+                Icon(Icons.Default.Send, contentDescription = stringResource(R.string.chat_send))
             }
         }
     }

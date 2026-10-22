@@ -1,0 +1,32 @@
+<resources>
+    <string name="calendar_add_event">Add Event</string>
+    <string name="calendar_calendar_events">Calendar &amp; Events</string>
+    <string name="calendar_day">Day</string>
+    <string name="calendar_keep_current_time">Keep current time</string>
+    <string name="calendar_move_session">Move session</string>
+    <string name="calendar_next">Next</string>
+    <string name="calendar_no_sessions_on_this_date">No Sessions on This Date</string>
+    <string name="calendar_prev">Prev</string>
+    <string name="calendar_reschedule">Reschedule</string>
+    <string name="calendar_reschedule_session">Reschedule session</string>
+    <string name="calendar_schedule_a_personal_study_block">Schedule a personal study block or book a tutor from the directory.</string>
+    <string name="calendar_start_time">Start time</string>
+    <plurals name="calendar_scheduled_events">
+        <item quantity="one">%d scheduled event</item>
+        <item quantity="other">%d scheduled events</item>
+    </plurals>
+    <string name="calendar_with_person">With %1$s</string>
+    <string name="calendar_notes_progress">Notes • %1$d/%2$d done</string>
+    <string name="calendar_reschedule_current">%1$s with %2$s, currently %3$s %4$s</string>
+    <plurals name="calendar_agenda">
+        <item quantity="one">Agenda • %1$s, %2$s %3$d\u00A0\u00A0%4$d item</item>
+        <item quantity="other">Agenda • %1$s, %2$s %3$d\u00A0\u00A0%4$d items</item>
+    </plurals>
+    <string name="calendar_add_session_notes">Add session notes</string>
+    <string name="calendar_student_schedule">STUDENT SCHEDULE</string>
+    <string name="calendar_tutor_schedule">TUTOR SCHEDULE</string>
+    <string name="calendar_filter_all">All Events</string>
+    <string name="calendar_filter_lessons">1-on-1 Lessons</string>
+    <string name="calendar_filter_office_hours">Office Hours</string>
+    <string name="calendar_filter_exam_prep">Exam Prep</string>
+</resources>

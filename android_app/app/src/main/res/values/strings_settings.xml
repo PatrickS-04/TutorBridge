@@ -16,4 +16,23 @@
     <string name="sign_out_action">Sign Out</string>
     <string name="delete_account_action">Delete Student Account</string>
     <string name="delete_account_subtitle">Permanently purge student profile, requests, and campus bookings.</string>
+    <string name="delete_account_cancel_keep_account">Cancel &amp; Keep Account</string>
+    <string name="delete_account_data_to_be_purged">DATA TO BE PURGED</string>
+    <string name="delete_account_delete_student_account">Delete Student Account</string>
+    <string name="delete_account_deleting_your_student_account_is">Deleting your student account is irreversible. All your pending tuition requests, upcoming campus consultation room bookings and study materials will be deleted immediately.</string>
+    <string name="delete_account_graduating_or_found_an_external">Graduating or found an external tutor etc. (Optional)</string>
+    <string name="delete_account_i_understand_that_this_action">I understand that this action cannot be undone and all my campus tutoring records will be deleted.</string>
+    <string name="delete_account_permanent_action_warning">Permanent Action Warning</string>
+    <string name="delete_account_permanently_delete_account">Permanently Delete Account</string>
+    <string name="delete_account_reason_for_leaving">REASON FOR LEAVING</string>
+    <string name="delete_account_type_delete_to_confirm">Type DELETE to confirm:</string>
+    <string name="settings_app_language">App Language</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_edit">Edit</string>
+    <string name="delete_account_upcoming_confirmed_campus_room_b">Upcoming confirmed campus room bookings and calendar schedules</string>
+    <string name="delete_account_bullet_profile">Student profile (%1$s — %2$s)</string>
+    <string name="delete_account_bullet_requests">All active and past tuition requests (%1$d recorded)</string>
+    <string name="calendar_sync_failed">Last sync failed: %1$s</string>
+    <string name="calendar_connected_as">Connected as %1$s</string>
+    <string name="delete_account_confirm_word" translatable="false">DELETE</string>
 </resources>
