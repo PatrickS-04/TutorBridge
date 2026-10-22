@@ -1,0 +1,10 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="availability_availability">Ukutholakala</string>
+    <string name="availability_configured_day_windows">Amawindi Ezinsuku Asethiwe</string>
+    <string name="availability_manage_recurring_weekly_hours">Phatha amahora aphindaphindwayo evikini.</string>
+    <string name="availability_recurring_teaching_days">Izinsuku Zokufundisa Eziphindaphindwayo</string>
+    <string name="availability_save_hours">Gcina amahora</string>
+    <string name="availability_tap_days_when_you_are">Thinta izinsuku lapho ukhona ukuze abafundi bakubhukhe.</string>
+    <string name="availability_inactive">Akusebenzi</string>
+</resources>

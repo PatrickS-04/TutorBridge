@@ -20,7 +20,19 @@ test("a value left out reads as nothing rather than as the word undefined", () =
 });
 
 test("a language with no entry for a notification reads it in English", () => {
-  assert.deepEqual(render("application.accepted", Locale.ZU), render("application.accepted", Locale.EN));
+  const saved = translations[Locale.ZU];
+  translations[Locale.ZU] = {};
+  try {
+    assert.deepEqual(render("application.accepted", Locale.ZU), render("application.accepted", Locale.EN));
+  } finally {
+    translations[Locale.ZU] = saved;
+  }
+});
+
+test("Afrikaans and isiZulu cover every notification", () => {
+  for (const locale of [Locale.AF, Locale.ZU]) {
+    assert.deepEqual(Object.keys(translations[locale] ?? {}).sort(), keys.slice().sort(), locale);
+  }
 });
 
 test("a translated entry is used, with the same values filled in", () => {

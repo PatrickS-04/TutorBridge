@@ -1,4 +1,5 @@
 <resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
     <string name="settings_title">Instellings</string>
     <string name="app_language_label">Programtaal</string>
     <string name="settings_subtitle">Voorkeure, kennisgewings en toepassingbeheer.</string>
@@ -16,4 +17,22 @@
     <string name="sign_out_action">Teken Uit</string>
     <string name="delete_account_action">Skrap Studenterekening</string>
     <string name="delete_account_subtitle">Skrap studenteprofiel, versoeke en kampusbesprekings permanent.</string>
+    <string name="delete_account_cancel_keep_account">Kanselleer &amp; behou rekening</string>
+    <string name="delete_account_data_to_be_purged">DATA WAT SKRAP SAL WORD</string>
+    <string name="delete_account_delete_student_account">Skrap studenterekening</string>
+    <string name="delete_account_deleting_your_student_account_is">Die skrapping van jou studenterekening kan nie ongedaan gemaak word nie. Al jou hangende onderrigversoeke, komende kampuskonsultasiekamer-besprekings en studiemateriaal sal onmiddellik geskrap word.</string>
+    <string name="delete_account_graduating_or_found_an_external">Gradueer of \'n eksterne tutor gevind ens. (Opsioneel)</string>
+    <string name="delete_account_i_understand_that_this_action">Ek verstaan dat hierdie handeling nie ongedaan gemaak kan word nie en dat al my kampustutorrekords geskrap sal word.</string>
+    <string name="delete_account_permanent_action_warning">Waarskuwing: permanente handeling</string>
+    <string name="delete_account_permanently_delete_account">Skrap rekening permanent</string>
+    <string name="delete_account_reason_for_leaving">REDE VIR VERTREK</string>
+    <string name="delete_account_type_delete_to_confirm">Tik DELETE om te bevestig:</string>
+    <string name="settings_app_language">Programtaal</string>
+    <string name="settings_cancel">Kanselleer</string>
+    <string name="settings_edit">Wysig</string>
+    <string name="delete_account_upcoming_confirmed_campus_room_b">Komende bevestigde kampuskamer-besprekings en kalenderskedules</string>
+    <string name="delete_account_bullet_profile">Studenteprofiel (%1$s — %2$s)</string>
+    <string name="delete_account_bullet_requests">Alle aktiewe en vorige onderrigversoeke (%1$d aangeteken)</string>
+    <string name="calendar_sync_failed">Laaste sinkronisering het misluk: %1$s</string>
+    <string name="calendar_connected_as">Gekoppel as %1$s</string>
 </resources>

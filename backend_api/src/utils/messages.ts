@@ -95,8 +95,128 @@ export const english: Catalogue = {
   },
 };
 
-/** Per-language catalogues. Filled in as each language is translated and reviewed. */
-export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {};
+/**
+ * Per-language catalogues. These are AI-drafted and have not been reviewed by a native
+ * speaker; a reviewer's corrections go straight into the entries below.
+ */
+export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
+  [Locale.AF]: {
+    "application.accepted": {
+      title: "Jou aansoek is aanvaar",
+      body: "Die student het jou aanbod aanvaar - maak 'n tyd af om die bespreking vas te maak.",
+    },
+    "application.declined": {
+      title: "Jou aansoek is van die hand gewys",
+      body: "Die student het hierdie keer by 'n ander tutor uitgekom.",
+    },
+    "application.requestChanged": {
+      title: "'n Versoek waarvoor jy aansoek gedoen het, het verander",
+      body: "Die student het hul onderrigversoek gewysig - kyk of dit jou nog pas.",
+    },
+    "application.requestClosed": {
+      title: "'n Versoek waarvoor jy aansoek gedoen het, is gesluit",
+      body: "Die student soek nie meer 'n tutor vir hierdie versoek nie.",
+    },
+    "application.new": {
+      title: "Nuwe tutor-aansoek",
+      body: "{tutor} het aangebied om jou onderrigversoek te neem.",
+    },
+    "booking.scheduled": {
+      title: "Sessie geskeduleer",
+      body: "{subject} is bespreek vir {when}.",
+    },
+    "booking.scheduledAtVenue": {
+      title: "Sessie geskeduleer",
+      body: "{subject} is bespreek vir {when} by {venue}.",
+    },
+    "booking.new": {
+      title: "Nuwe studentebespreking",
+      body: "{subject} op {when} - bevestig of weier dit.",
+    },
+    "booking.confirmed": {
+      title: "Sessie bevestig",
+      body: "{subject} is bevestig vir {when}.",
+    },
+    "booking.cancelled": {
+      title: "Sessie gekanselleer",
+      body: "{subject} is gekanselleer.",
+    },
+    "booking.cancelledWithReason": {
+      title: "Sessie gekanselleer",
+      body: "{subject}: {reason}",
+    },
+    "booking.rescheduled": {
+      title: "Sessie herskeduleer",
+      body: "{subject} is verskuif na {when}.",
+    },
+    "booking.rescheduleRequested": {
+      title: "Herskedulering versoek",
+      body: "{subject} is verskuif na {when} - bevestig die nuwe tyd.",
+    },
+    "message.new": {
+      title: "Nuwe boodskap",
+      body: "{text}",
+    },
+  },
+  [Locale.ZU]: {
+    "application.accepted": {
+      title: "Isicelo sakho samukelwe",
+      body: "Umfundi wamukele isipho sakho - vumelanani ngesikhathi ukuze kuqiniswe ukubhukha.",
+    },
+    "application.declined": {
+      title: "Isicelo sakho senqatshiwe",
+      body: "Umfundi ukhethe omunye uthisha kulokhu.",
+    },
+    "application.requestChanged": {
+      title: "Isicelo owufake ngaso siguquliwe",
+      body: "Umfundi uhlele isicelo sakhe sokufundiswa - hlola ukuthi siyakufanela yini.",
+    },
+    "application.requestClosed": {
+      title: "Isicelo owufake ngaso sivaliwe",
+      body: "Umfundi akasafuni uthisha walesi sicelo.",
+    },
+    "application.new": {
+      title: "Isicelo esisha sikathisha",
+      body: "U-{tutor} unikeze ukuthatha isicelo sakho sokufundiswa.",
+    },
+    "booking.scheduled": {
+      title: "Isifundo sihleliwe",
+      body: "I-{subject} ibhukhelwe {when}.",
+    },
+    "booking.scheduledAtVenue": {
+      title: "Isifundo sihleliwe",
+      body: "I-{subject} ibhukhelwe {when} e-{venue}.",
+    },
+    "booking.new": {
+      title: "Ukubhukha okusha komfundi",
+      body: "I-{subject} ngo-{when} - qinisekisa noma unqabe.",
+    },
+    "booking.confirmed": {
+      title: "Isifundo siqinisekisiwe",
+      body: "I-{subject} iqinisekisiwe ngo-{when}.",
+    },
+    "booking.cancelled": {
+      title: "Isifundo sikhanseliwe",
+      body: "I-{subject} ikhanseliwe.",
+    },
+    "booking.cancelledWithReason": {
+      title: "Isifundo sikhanseliwe",
+      body: "{subject}: {reason}",
+    },
+    "booking.rescheduled": {
+      title: "Isifundo sihlelwe kabusha",
+      body: "I-{subject} ifuduselwe ku-{when}.",
+    },
+    "booking.rescheduleRequested": {
+      title: "Kucelwe ukuhlela kabusha",
+      body: "I-{subject} ifuduselwe ku-{when} - qinisekisa isikhathi esisha.",
+    },
+    "message.new": {
+      title: "Umlayezo omusha",
+      body: "{text}",
+    },
+  },
+};
 
 /** The text for one notification, in `locale` where it exists and in English where it does not. */
 export function render(key: NotificationKey, locale: Locale, values: NotificationValues = {}): NotificationText {

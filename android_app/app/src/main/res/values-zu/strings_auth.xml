@@ -1,0 +1,35 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="auth_campus_email">I-imeyili yasekhampasi</string>
+    <string name="auth_confirm_new_password">Qinisekisa iphasiwedi entsha</string>
+    <string name="auth_continue_with_google_account">Qhubeka nge-akhawunti ye-Google</string>
+    <string name="auth_e_g_liam_naidoo">isb. Liam Naidoo</string>
+    <string name="auth_e_g_ndxlia003_myuct_ac">isb. ndxlia003@myuct.ac.za noma tutor.clara@uct.ac</string>
+    <string name="auth_forgot_password">Ukhohlwe iphasiwedi?</string>
+    <string name="auth_full_name">Igama eliphelele</string>
+    <string name="auth_higher_education_tutoring_networ">Inethiwekhi Yokufundisa Emfundweni Ephakeme</string>
+    <string name="auth_institutional_partner">OMNYANGO WESISEKELO</string>
+    <string name="auth_integrated_with_south_african_hi">Ihlanganiswe ne-SSO Yemfundo Ephakeme yaseNingizimu Afrika • Iyahambisana ne-POPIA</string>
+    <string name="auth_loading_institutions">Iyalayisha izikhungo…</string>
+    <string name="auth_new_password_at_least_6">Iphasiwedi entsha (okungenani izinhlamvu eziyi-6)</string>
+    <string name="auth_password">Iphasiwedi</string>
+    <string name="auth_role_sorted_campus_access">Ukungena Ekhampasi Ngokwendima</string>
+    <string name="auth_sa_campuses">Amakhampasi ase-SA</string>
+    <string name="auth_save_password">Gcina iphasiwedi</string>
+    <string name="auth_set_a_new_password">Setha iphasiwedi entsha</string>
+    <string name="auth_students_sign_in_with_your">Abafundi: Ngena nge-akhawunti yakho ye-Google yasekhampasi ukuze ubhukhe othisha &amp; ujoyine izifundo.</string>
+    <string name="auth_the_passwords_do_not_match">Amaphasiwedi awafani</string>
+    <string name="auth_tutors_log_in_with_your">Othisha: Ngena ngemininingwane yakho yobuthishela enikezwe umlawuli ukuze ufinyelele amashidi ezikhathi futhi uthumele izimangalo.</string>
+    <string name="auth_you_signed_in_with_a">Ungene ngephasiwedi yesikhashana evela esikhungweni sakho. Khetha eyaziwa nguwe kuphela ukuze uqhubeke.</string>
+    <string name="biometric_confirm_it_s_you_to">Qinisekisa ukuthi nguwe ukuze uqhubeke</string>
+    <string name="biometric_sign_in_with_a_different">Ngena nge-akhawunti ehlukile</string>
+    <string name="biometric_unlock">Vula</string>
+    <string name="biometric_welcome_back">Siyakwamukela futhi</string>
+    <string name="splash_campus_sign_in">Ukungena Ekhampasi →</string>
+    <string name="splash_institutional_tutoring_departmen">Iphothali Yokufundisa Esikhungweni Nezimangalo Zomnyango</string>
+    <string name="auth_already_have_an_account_sign">Usunayo i-akhawunti? Ngena</string>
+    <string name="auth_create_account">Dala i-akhawunti</string>
+    <string name="auth_login">Ngena</string>
+    <string name="auth_new_to_tutorbridge_create_an">Ungowesaba ku-TutorBridge? Dala i-akhawunti</string>
+    <string name="auth_google_sign_in_failed">Ukungena nge-Google kuhlulekile noma kukhanseliwe</string>
+</resources>

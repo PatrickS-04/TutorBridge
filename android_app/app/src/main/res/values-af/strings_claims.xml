@@ -1,0 +1,28 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="claims_claim_period">EISPERIODE</string>
+    <string name="claims_claim_settled">Eis vereffen</string>
+    <string name="claims_completed_sessions_show_up_here">Voltooide sessies verskyn hier as eisbare ure.</string>
+    <string name="claims_copy_ref">Kopieer verw.</string>
+    <string name="claims_csv_export">CSV-uitvoer</string>
+    <string name="claims_draft_claimable">⏱ Konsep (eisbaar)</string>
+    <string name="claims_institution_payment_export">Institusie-betalinguitvoer</string>
+    <string name="claims_load_earlier_months">Laai vroeër maande</string>
+    <string name="claims_no_claim_periods_yet">Nog geen eisperiodes nie</string>
+    <string name="claims_paid_to_bank">✓ Aan bank betaal</string>
+    <string name="claims_pdf_voucher">PDF-bewys</string>
+    <string name="claims_rate">Tarief</string>
+    <string name="claims_submit_to_admin">Dien in by administrateur</string>
+    <string name="claims_verified_with_student_attendance">Geverifieer met studente-bywoningsinteken</string>
+    <string name="claims_faculty_staff">%1$s • Personeel #%2$s</string>
+    <string name="claims_rate_per_hour">R%1$d/uur</string>
+    <string name="claims_hours_value">%1$s uur</string>
+    <string name="claims_claim_ref">Eisverw.: %1$s</string>
+    <string name="claims_itemized_sessions">Gespesifiseerde tutorsessies  %1$d</string>
+    <string name="claims_topic">Onderwerp: %1$s</string>
+    <string name="claims_hours_at_rate">%1$s uur @ R%2$d</string>
+    <string name="claims_claim_value">Eiswaarde</string>
+    <string name="claims_paid">Betaal</string>
+    <string name="claims_sessions">Sessies</string>
+    <string name="claims_total_hours">Totale ure</string>
+</resources>

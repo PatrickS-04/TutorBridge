@@ -1,0 +1,33 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="calendar_add_event">Voeg geleentheid by</string>
+    <string name="calendar_calendar_events">Kalender &amp; geleenthede</string>
+    <string name="calendar_day">Dag</string>
+    <string name="calendar_keep_current_time">Behou huidige tyd</string>
+    <string name="calendar_move_session">Skuif sessie</string>
+    <string name="calendar_next">Volgende</string>
+    <string name="calendar_no_sessions_on_this_date">Geen sessies op hierdie datum nie</string>
+    <string name="calendar_prev">Vorige</string>
+    <string name="calendar_reschedule">Herskeduleer</string>
+    <string name="calendar_reschedule_session">Herskeduleer sessie</string>
+    <string name="calendar_schedule_a_personal_study_block">Skeduleer \'n persoonlike studieblok of bespreek \'n tutor uit die gids.</string>
+    <string name="calendar_start_time">Begintyd</string>
+    <plurals name="calendar_scheduled_events">
+        <item quantity="one">%d geskeduleerde geleentheid</item>
+        <item quantity="other">%d geskeduleerde geleenthede</item>
+    </plurals>
+    <string name="calendar_with_person">Met %1$s</string>
+    <string name="calendar_notes_progress">Notas • %1$d/%2$d klaar</string>
+    <string name="calendar_reschedule_current">%1$s met %2$s, tans %3$s %4$s</string>
+    <plurals name="calendar_agenda">
+        <item quantity="one">Agenda • %1$s, %2$s %3$d  %4$d item</item>
+        <item quantity="other">Agenda • %1$s, %2$s %3$d  %4$d items</item>
+    </plurals>
+    <string name="calendar_add_session_notes">Voeg sessienotas by</string>
+    <string name="calendar_student_schedule">STUDENTESKEDULE</string>
+    <string name="calendar_tutor_schedule">TUTORSKEDULE</string>
+    <string name="calendar_filter_all">Alle geleenthede</string>
+    <string name="calendar_filter_lessons">Een-tot-een-lesse</string>
+    <string name="calendar_filter_office_hours">Kantoorure</string>
+    <string name="calendar_filter_exam_prep">Eksamenvoorbereiding</string>
+</resources>
