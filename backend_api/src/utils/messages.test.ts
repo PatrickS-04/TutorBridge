@@ -87,3 +87,8 @@ test("a failed lookup falls back to English instead of losing the notification",
     console.error = logged;
   }
 });
+
+test("the languages the server stores are the ones the app can send", () => {
+  // android_app .../data/model/Language.kt: serverCode EN, ZU, AF. Keep the two in step.
+  assert.deepEqual(Object.values(Locale).sort(), ["AF", "EN", "ZU"]);
+});

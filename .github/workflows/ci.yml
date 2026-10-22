@@ -43,7 +43,8 @@ jobs:
           java-version: 17
           cache: gradle
       - run: chmod +x gradlew
-      - run: ./gradlew testDebugUnitTest assembleDebug
+      # lintDebug catches a missing translation or a string whose arguments do not match.
+      - run: ./gradlew testDebugUnitTest lintDebug assembleDebug
       # Reference: GitHub. n.d. Store and share data with workflow artifacts. [Online].
       #   Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
       - uses: actions/upload-artifact@v4
@@ -54,4 +55,6 @@ jobs:
         if: failure()
         with:
           name: unit-test-report
-          path: android_app/app/build/reports/tests/
+          path: |
+            android_app/app/build/reports/tests/
+            android_app/app/build/reports/lint-results-debug.html
