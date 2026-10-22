@@ -214,7 +214,8 @@ class TutorBridgeRepository(
         if (response.isSuccessful && body != null) {
             Result.success(body)
         } else {
-            Result.failure(ApiException(response.code(), parseApiError(response)))
+            val detail = parseApiErrorDetail(response)
+            Result.failure(ApiException(response.code(), detail?.message ?: "Something went wrong (${response.code()})", detail?.code))
         }
     } catch (exception: Exception) {
         Result.failure(exception)
@@ -254,7 +255,7 @@ class TutorBridgeRepository(
 }
 
 /** The server answered, but with an error. Distinct from an IOException, which means it never did. */
-class ApiException(val code: Int, message: String) : IllegalStateException(message)
+class ApiException(val code: Int, message: String, val errorCode: String? = null) : IllegalStateException(message)
 
 // ==================== MAPPERS ====================
 
@@ -526,15 +527,14 @@ fun TutorUi.slotsOn(date: LocalDate): List<String> {
 
 // Reference: Google. 2024. Gson (Version 2.11.0). [Computer program].
 //   Available at: https://github.com/google/gson [Accessed 21 September 2026].
-internal fun <T> parseApiError(response: Response<T>): String {
-    val raw = response.errorBody()?.string()
-    return try {
-        Gson().fromJson(raw, ApiErrorBody::class.java)?.error?.message
-            ?: "Something went wrong (${response.code()})"
-    } catch (exception: Exception) {
-        "Something went wrong (${response.code()})"
-    }
+internal fun <T> parseApiErrorDetail(response: Response<T>): ApiErrorDetail? = try {
+    Gson().fromJson(response.errorBody()?.string(), ApiErrorBody::class.java)?.error
+} catch (exception: Exception) {
+    null
 }
+
+internal fun <T> parseApiError(response: Response<T>): String =
+    parseApiErrorDetail(response)?.message ?: "Something went wrong (${response.code()})"
 
 fun initialsOf(fullName: String?): String =
     fullName.orEmpty().split(" ").filter { it.isNotBlank() }.take(2)

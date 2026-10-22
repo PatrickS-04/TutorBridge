@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.data.repository.ApiException
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.tutorbridge.app.R
@@ -795,6 +796,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun friendlyMessage(error: Throwable): String = when {
         error is IOException && !_uiState.value.isOnline -> text(R.string.error_offline)
         error is IOException -> text(R.string.error_unreachable)
+        error is ApiException && error.code >= 500 -> text(R.string.error_server)
+        error is ApiException && errorMessageRes(error.errorCode) != null -> text(errorMessageRes(error.errorCode)!!)
         else -> error.message ?: "Could not reach the server"
     }
 

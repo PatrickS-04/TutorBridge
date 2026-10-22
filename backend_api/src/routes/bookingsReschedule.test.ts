@@ -16,6 +16,7 @@ import {
   CalendarLink,
   NotificationEvent,
   NotificationToken,
+  UserSettings,
 } from "../models";
 
 /**
@@ -42,6 +43,9 @@ NotificationEvent.create = (async (event: any) => {
   return { ...event, _id: new mongoose.Types.ObjectId() };
 }) as any;
 NotificationToken.find = (() => ({ select: () => ({ lean: async () => [] }) })) as any;
+// The recipient's language is looked up before a notification is written: none chosen, no account locale.
+UserSettings.findOne = (() => ({ select: () => ({ lean: async () => null }) })) as any;
+User.findById = (() => ({ select: () => ({ lean: async () => null }) })) as any;
 CalendarLink.findOne = (() => ({ select: async () => null })) as any;
 
 const tomorrow = (hour: number) => {

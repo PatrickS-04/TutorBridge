@@ -1,3 +1,11 @@
+api_error_already_applied
+api_error_already_decided
+api_error_already_scheduled
+api_error_email_taken
+api_error_google_auth_failed
+api_error_not_required
+api_error_slot_conflict
+api_error_unverified
 auth_already_have_an_account_sign
 auth_campus_email
 auth_confirm_new_password
@@ -168,6 +176,7 @@ edit_tutor_languages_spoken
 edit_tutor_profile_completeness
 edit_tutor_save_profile
 error_offline
+error_server
 error_unreachable
 failed_sync
 find_active_on_campus_now

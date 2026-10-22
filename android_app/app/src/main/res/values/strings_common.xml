@@ -34,4 +34,13 @@
     <string name="vm_reauth_delete_account">For your security, please sign out and log back in before deleting your account</string>
     <string name="vm_calendar_connected">Confirmed sessions will now appear in Google Calendar.</string>
     <string name="vm_calendar_disconnected">Google Calendar disconnected.</string>
+    <string name="api_error_already_applied">You have already applied to this request</string>
+    <string name="api_error_already_decided">This application has already been decided</string>
+    <string name="api_error_already_scheduled">This match already has a session booked</string>
+    <string name="api_error_slot_conflict">That slot is already taken - please pick another</string>
+    <string name="api_error_email_taken">Email already registered</string>
+    <string name="api_error_google_auth_failed">Could not link that Google account - please try again</string>
+    <string name="api_error_unverified">Only verified tutors may apply</string>
+    <string name="api_error_not_required">There is no temporary password to replace</string>
+    <string name="error_server">Something went wrong on our side. Please try again.</string>
 </resources>

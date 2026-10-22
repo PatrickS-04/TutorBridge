@@ -67,10 +67,8 @@ router.put(
       req.auth!.institutionId,
       String(application.tutorId),
       NotificationCategory.APPLICATION,
-      decision === "accept" ? "Your application was accepted" : "Your application was declined",
-      decision === "accept"
-        ? "The student accepted your offer - agree a time to lock in the booking."
-        : "The student went with another tutor this time.",
+      decision === "accept" ? "application.accepted" : "application.declined",
+      {},
       `tutorbridge://applications/${application._id}`
     );
 

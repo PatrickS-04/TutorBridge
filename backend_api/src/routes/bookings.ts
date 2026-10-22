@@ -107,10 +107,8 @@ router.post(
       req.auth!.institutionId,
       String(application.tutorId),
       NotificationCategory.BOOKING,
-      "Session scheduled",
-      //The venue is in the body because this flow confirms outright: the tutor
-      //never taps accept, so this is the first they hear of where they are going.
-      `${booking.subjectName} is booked for ${start.toISOString().slice(0, 16).replace("T", " ")}${booking.location ? ` at ${booking.location}` : ""}.`,
+      booking.location ? "booking.scheduledAtVenue" : "booking.scheduled",
+      { subject: booking.subjectName, when: start.toISOString().slice(0, 16).replace("T", " "), venue: booking.location ?? "" },
       `tutorbridge://bookings/${booking._id}`
     );
 
@@ -188,8 +186,8 @@ router.post(
       req.auth!.institutionId,
       String(tutor._id),
       NotificationCategory.BOOKING,
-      "New student booking",
-      `${subjectName} on ${start.toISOString().slice(0, 10)} - confirm or decline it.`,
+      "booking.new",
+      { subject: subjectName, when: start.toISOString().slice(0, 10) },
       `tutorbridge://bookings/${booking._id}`
     );
 
@@ -246,8 +244,8 @@ router.put(
       req.auth!.institutionId,
       String(booking.studentId),
       NotificationCategory.BOOKING,
-      "Session confirmed",
-      `${booking.subjectName} is confirmed for ${booking.startTime.toISOString().slice(0, 16).replace("T", " ")}.`,
+      "booking.confirmed",
+      { subject: booking.subjectName, when: booking.startTime.toISOString().slice(0, 16).replace("T", " ") },
       `tutorbridge://bookings/${booking._id}`
     );
 
@@ -289,8 +287,8 @@ router.put(
       req.auth!.institutionId,
       String(otherParty),
       NotificationCategory.BOOKING,
-      "Session cancelled",
-      reason ? `${booking.subjectName}: ${reason}` : `${booking.subjectName} was cancelled.`,
+      reason ? "booking.cancelledWithReason" : "booking.cancelled",
+      { subject: booking.subjectName, reason: reason ?? "" },
       `tutorbridge://bookings/${booking._id}`
     );
 
@@ -390,10 +388,8 @@ router.put(
       req.auth!.institutionId,
       String(byTutor ? booking.studentId : booking.tutorId),
       NotificationCategory.BOOKING,
-      byTutor ? "Session rescheduled" : "Reschedule requested",
-      byTutor
-        ? `${booking.subjectName} was moved to ${when}.`
-        : `${booking.subjectName} was moved to ${when} - confirm the new time.`,
+      byTutor ? "booking.rescheduled" : "booking.rescheduleRequested",
+      { subject: booking.subjectName, when },
       `tutorbridge://bookings/${booking._id}`
     );
 
