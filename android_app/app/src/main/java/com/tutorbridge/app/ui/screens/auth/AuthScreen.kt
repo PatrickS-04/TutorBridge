@@ -379,7 +379,7 @@ fun NewPasswordScreen(
         Button(
             onClick = { onSubmit(password) },
             enabled = canSubmit,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {

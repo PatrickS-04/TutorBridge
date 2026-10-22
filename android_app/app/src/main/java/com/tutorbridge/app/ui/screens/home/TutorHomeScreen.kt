@@ -206,13 +206,13 @@ fun TutorHomeScreen(
                         OutlinedButton(
                             onClick = { onDeclineBooking(booking.id) },
                             enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text(stringResource(R.string.tutor_home_decline), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
                         Button(
                             onClick = { onAcceptBooking(booking.id) },
                             enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
                         ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }

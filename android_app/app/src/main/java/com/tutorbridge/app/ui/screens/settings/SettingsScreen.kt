@@ -312,7 +312,7 @@ fun SettingsScreen(
         item {
             Button(
                 onClick = { if (unsent > 0) showSignOutWarning = true else onSignOut() },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
                     // Navy text on the dark navy surface is all but invisible, so dark
@@ -336,7 +336,7 @@ fun SettingsScreen(
                 ) {
                     OutlinedButton(
                         onClick = onDeleteAccountClick,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = CrimsonPrimary)
                     ) {

@@ -145,7 +145,7 @@ fun DeleteAccountScreen(
             Button(
                 onClick = onConfirmDelete,
                 enabled = canDelete && !uiState.isAuthLoading && uiState.isOnline,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {

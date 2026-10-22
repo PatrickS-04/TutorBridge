@@ -83,7 +83,7 @@ fun OfflineScreen(
 
         Button(
             onClick = onRetry,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
@@ -92,7 +92,7 @@ fun OfflineScreen(
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedButton(
             onClick = onViewCachedCalendar,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
             Text(stringResource(R.string.offline_view_cached_calendar), fontWeight = FontWeight.Bold)

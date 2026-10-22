@@ -139,7 +139,7 @@ fun RequestDetailScreen(
                         OutlinedButton(
                             onClick = { onEdit(req) },
                             enabled = online,
-                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text(stringResource(R.string.request_detail_edit_request), fontWeight = FontWeight.Bold) }
                     }
@@ -147,13 +147,13 @@ fun RequestDetailScreen(
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.CLOSE },
                             enabled = online,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text(stringResource(R.string.request_detail_close), fontWeight = FontWeight.Bold) }
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.WITHDRAW },
                             enabled = online,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text(stringResource(R.string.request_detail_withdraw), fontWeight = FontWeight.Bold, color = CrimsonPrimary) }
                     }
@@ -215,7 +215,7 @@ private fun ApplicantCard(applicant: TutorApplicant, canAccept: Boolean, onAccep
             Button(
                 onClick = onAccept,
                 enabled = canAccept,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {

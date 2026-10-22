@@ -124,7 +124,7 @@ fun TutorProfileScreen(
         Button(
             onClick = onBookSession,
             enabled = uiState.isOnline,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {

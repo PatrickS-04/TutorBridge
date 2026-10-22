@@ -216,7 +216,7 @@ fun TutorExportClaimsScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
                             onClick = { exportClaimVoucher(context, institution, period) },
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) {
                             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -243,7 +243,7 @@ fun TutorExportClaimsScreen(
                         if (period.status == ClaimStatus.PAID) {
                             OutlinedButton(
                                 onClick = {},
-                                modifier = Modifier.weight(1f).height(44.dp),
+                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                                 shape = RoundedCornerShape(22.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldSuccess)
                             ) {
@@ -254,7 +254,7 @@ fun TutorExportClaimsScreen(
                         } else {
                             Button(
                                 onClick = {},
-                                modifier = Modifier.weight(1f).height(44.dp),
+                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                                 shape = RoundedCornerShape(22.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
                             ) {

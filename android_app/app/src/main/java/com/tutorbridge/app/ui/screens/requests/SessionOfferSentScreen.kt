@@ -54,7 +54,7 @@ fun SessionOfferSentScreen(
         Spacer(modifier = Modifier.height(28.dp))
         Button(
             onClick = onViewApplications,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {

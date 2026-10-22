@@ -96,7 +96,7 @@ fun SyncStatusScreen(
             Button(
                 onClick = onSyncNow,
                 enabled = uiState.isOnline && uiState.pendingSyncCount > 0,
-                modifier = Modifier.weight(1f).height(44.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
             ) { Text(stringResource(R.string.sync_now), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
@@ -104,7 +104,7 @@ fun SyncStatusScreen(
             OutlinedButton(
                 onClick = onRetryFailed,
                 enabled = uiState.isOnline && uiState.failedSyncCount > 0,
-                modifier = Modifier.weight(1f).height(44.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp)
             ) { Text(stringResource(R.string.retry_failed), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
         }

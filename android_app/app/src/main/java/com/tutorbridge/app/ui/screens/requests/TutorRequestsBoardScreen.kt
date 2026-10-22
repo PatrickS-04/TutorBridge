@@ -127,7 +127,7 @@ private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndO
             Button(
                 onClick = { onAcceptAndOffer(req.id) },
                 enabled = online,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(23.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {

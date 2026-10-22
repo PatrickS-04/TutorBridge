@@ -66,7 +66,7 @@ fun SplashScreen(
                 onClick = onGetStarted,
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
-                    .height(52.dp),
+                    .heightIn(min = 52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = NavySecondary,

@@ -92,7 +92,7 @@ fun EditTutorProfileScreen(
 
         Button(
             onClick = onSave,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {

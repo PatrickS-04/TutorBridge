@@ -196,7 +196,7 @@ fun BookingFlowScreen(
         Button(
             onClick = onNext,
             enabled = uiState.selectedSlot.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
@@ -280,7 +280,7 @@ fun ReviewBookingScreen(
         Button(
             onClick = onConfirm,
             enabled = uiState.isOnline,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
@@ -331,7 +331,7 @@ fun BookingRequestSentScreen(
         Spacer(modifier = Modifier.height(28.dp))
         OutlinedButton(
             onClick = onCheckStatus,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             shape = RoundedCornerShape(24.dp)
         ) { Text(stringResource(R.string.booking_check_for_a_reply), fontWeight = FontWeight.Bold) }
         Spacer(modifier = Modifier.height(14.dp))
@@ -392,7 +392,7 @@ fun BookingConfirmationScreen(
 
         Button(
             onClick = onGoToCalendar,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
@@ -460,7 +460,7 @@ fun BookingDeclinedScreen(
 
         Button(
             onClick = onPickAnotherSlot,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
@@ -469,7 +469,7 @@ fun BookingDeclinedScreen(
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedButton(
             onClick = onFindAnotherTutor,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
             Text(stringResource(R.string.booking_find_another_tutor), fontWeight = FontWeight.Bold)
