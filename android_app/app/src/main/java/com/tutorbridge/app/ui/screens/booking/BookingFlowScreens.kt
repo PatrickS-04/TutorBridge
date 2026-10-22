@@ -39,12 +39,12 @@ import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
 // The next two weeks, starting tomorrow.
-private val dayLabel = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
+private val dayLabel get() = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
 private fun upcomingDates(): List<Pair<String, Pair<String, String>>> =
     (1..14).map { offset ->
         val date = LocalDate.now().plusDays(offset.toLong())
-        date.toString() to Pair(date.format(dayLabel).uppercase(Locale.ENGLISH), date.dayOfMonth.toString())
+        date.toString() to Pair(date.format(dayLabel).uppercase(Locale.getDefault()), date.dayOfMonth.toString())
     }
 
 // ==================== STEP 1: SELECT AVAILABILITY ====================
@@ -90,7 +90,7 @@ fun BookingFlowScreen(
         }
 
         Text(
-            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
                 ?.plus(" ${selectedDate.year}") ?: "Pick a date",
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp

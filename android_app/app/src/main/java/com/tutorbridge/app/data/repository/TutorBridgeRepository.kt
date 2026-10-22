@@ -109,7 +109,7 @@ class TutorBridgeRepository(
                         "PENDING" -> RequestStatus.OFFERED
                         else -> RequestStatus.COMPLETED
                     },
-                    timestamp = relativeTime(application.createdAt)
+                    timestamp = application.createdAt.orEmpty()
                 )
             }
         }
@@ -264,8 +264,16 @@ fun notesOf(checklist: List<SessionGoalUi>, sideNotes: String) = TutorNotesDto(
     text = sideNotes
 )
 
-private val timeOfDay = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
-private val monthLabel = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
+// These are read each time rather than built once: a language switch does not restart the
+// process, so a formatter fixed at start-up would keep the old language's month names.
+private val displayTime get() = DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
+
+/**
+ * The booking flow's slot labels double as the slot's identity (the picked label is parsed
+ * back into a time), so they stay in one fixed format whatever the display language is.
+ */
+internal val slotTime: DateTimeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+private val monthLabel get() = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
 fun UserDto.toTutorUi(): TutorUi {
     val windows = availability.mapNotNull { it.toWindowUi() }
@@ -294,7 +302,7 @@ fun UserDto.toTutorUi(): TutorUi {
         staffOrTutorId = staffNumber.orEmpty(),
         verified = verificationStatus == "VERIFIED",
         department = department.orEmpty(),
-        languages = listOf(languageName(locale)),
+        languages = listOf(Language.fromServerCode(locale).displayName),
         totalConsultations = completedSessions,
         consultationVenue = areaId?.name.orEmpty(),
         windows = windows
@@ -317,7 +325,8 @@ fun TuitionRequestDto.toRequestUi(): StudentRequestUi = StudentRequestUi(
         "CANCELLED" -> RequestStatus.WITHDRAWN
         else -> RequestStatus.OPEN
     },
-    timestamp = relativeTime(createdAt),
+    // Not shown anywhere: kept as the raw timestamp rather than as English words.
+    timestamp = createdAt.orEmpty(),
     preferredVenue = areaId?.name.orEmpty(),
     matchedTutorName = matchedTutorName.orEmpty(),
     applicantCount = applicationCount,
@@ -337,8 +346,8 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         title = "$subjectName with ${other?.fullName ?: "TutorBridge"}",
         subject = subjectName,
         date = start.toLocalDate().toString(),
-        startTime = start.format(timeOfDay),
-        endTime = end?.format(timeOfDay).orEmpty(),
+        startTime = start.format(displayTime),
+        endTime = end?.format(displayTime).orEmpty(),
         type = CalendarEventType.LESSON,
         participantName = other?.fullName.orEmpty(),
         participantRole = if (selfIsTutor) "student" else "tutor",
@@ -362,8 +371,8 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
 
 // ==================== MESSAGING ====================
 
-private val chatDay = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ENGLISH)
-private val chatToday = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
+private val chatDay get() = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
+private val chatToday get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 
 /** "14:05" for something said today, "3 Oct 14:05" otherwise. */
 private fun chatTime(iso: String?): String {
@@ -403,7 +412,7 @@ fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
         studentName = studentId?.fullName ?: "Student",
         initials = initialsOf(studentId?.fullName),
         subjectName = subjectName,
-        whenLabel = "${start.toLocalDate()} • ${start.format(timeOfDay)}",
+        whenLabel = "${start.toLocalDate()} • ${start.format(displayTime)}",
         location = location.orEmpty()
     )
 }
@@ -419,7 +428,7 @@ fun NotificationEventDto.toNotificationUi(): NotificationUi = NotificationUi(
     },
     title = title,
     body = body,
-    time = relativeTime(createdAt),
+    createdAt = createdAt.orEmpty(),
     unread = readAt == null
 )
 
@@ -448,8 +457,8 @@ fun TimesheetPeriodsDto.toInstitutionUi(institutionName: String): InstitutionUi 
                     courseCode = session.subjectName,
                     date = session.date,
                     timeRange = listOfNotNull(
-                        parseInstant(session.startTime)?.format(timeOfDay),
-                        parseInstant(session.endTime)?.format(timeOfDay)
+                        parseInstant(session.startTime)?.format(displayTime),
+                        parseInstant(session.endTime)?.format(displayTime)
                     ).joinToString(" - "),
                     amount = "R${session.amount.toInt()}",
                     studentName = session.studentName,
@@ -471,10 +480,20 @@ fun AvailabilityDto.toWindowUi(): AvailabilityWindowUi? = runCatching {
 fun AvailabilityWindowUi.toDto(): AvailabilityDto =
     AvailabilityDto(day.name, start.toString(), end.toString())
 
+/**
+ * "Mondays" in English, which pluralises its weekdays to say "every Monday". Afrikaans and isiZulu
+ * do not, so there the day's name stands as it is.
+ */
+private fun everyWeekday(day: DayOfWeek): String {
+    val locale = Locale.getDefault()
+    val name = day.getDisplayName(java.time.format.TextStyle.FULL, locale)
+    return if (locale.language == "en") name + "s" else name
+}
+
 /** "Mondays" / "09:00 – 17:00" rows for the availability screen. */
 fun List<AvailabilityWindowUi>.toDayWindows(): List<DayWindowUi> = sortedBy { it.day.value }.map {
     DayWindowUi(
-        day = it.day.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH) + "s",
+        day = everyWeekday(it.day),
         dayName = it.day.name,
         timeRange = "${it.start} – ${it.end}",
         active = true
@@ -485,7 +504,7 @@ fun List<AvailabilityWindowUi>.toDayWindows(): List<DayWindowUi> = sortedBy { it
 fun List<AvailabilityDto>.toTimeWindowLabel(): String {
     val windows = mapNotNull { it.toWindowUi() }
     if (windows.isEmpty()) return ""
-    val days = windows.map { it.day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH) }
+    val days = windows.map { it.day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
         .distinct()
         .joinToString(", ")
     val first = windows.first()
@@ -498,7 +517,7 @@ fun TutorUi.slotsOn(date: LocalDate): List<String> {
     return windows.flatMap { window ->
         generateSequence(window.start) { it.plusHours(1) }
             .takeWhile { !it.plusHours(1).isAfter(window.end) }
-            .map { it.format(timeOfDay) }
+            .map { it.format(slotTime) }
             .toList()
     }
 }
@@ -522,24 +541,6 @@ fun initialsOf(fullName: String?): String =
         .mapNotNull { it.firstOrNull()?.uppercase() }
         .joinToString("")
 
-private fun languageName(locale: String): String = when (locale) {
-    "ZU" -> "isiZulu"
-    "AF" -> "Afrikaans"
-    else -> "English"
-}
-
 private fun parseInstant(iso: String?) = runCatching {
     Instant.parse(iso).atZone(ZoneId.systemDefault())
 }.getOrNull()
-
-private fun relativeTime(iso: String?): String {
-    val moment = parseInstant(iso) ?: return ""
-    val minutes = ChronoUnit.MINUTES.between(moment, java.time.ZonedDateTime.now())
-    return when {
-        minutes < 1 -> "Just now"
-        minutes < 60 -> "${minutes}m ago"
-        minutes < 60 * 24 -> "${minutes / 60}h ago"
-        minutes < 60 * 48 -> "Yesterday"
-        else -> "${minutes / (60 * 24)} days ago"
-    }
-}

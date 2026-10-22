@@ -118,7 +118,7 @@ fun CalendarScreen(
                         Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = NavySecondary)
                         Column {
                             Text(
-                                "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${yearMonth.year}",
+                                "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${yearMonth.year}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
@@ -223,7 +223,7 @@ fun CalendarScreen(
         // Agenda
         item {
             Text(
-                "Agenda • ${uiState.selectedCalendarDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)}, ${uiState.selectedCalendarDate.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${uiState.selectedCalendarDate.dayOfMonth}   ${eventsOnDate.size} items",
+                "Agenda • ${uiState.selectedCalendarDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())}, ${uiState.selectedCalendarDate.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())} ${uiState.selectedCalendarDate.dayOfMonth}   ${eventsOnDate.size} items",
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
@@ -338,8 +338,8 @@ private fun CalendarEventUi.isUpcoming(): Boolean {
 }
 
 private val rescheduleHours = (7..20).map { LocalTime.of(it, 0) }
-private val hourLabel = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
-private val dayLabel = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
+private val hourLabel get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+private val dayLabel get() = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
 /**
  * Pick a new day and start time for [event]. The length of the session is kept;

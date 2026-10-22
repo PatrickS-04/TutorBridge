@@ -1,23 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Reference: Android Developers. 2026. Localize your app. [Online].
            Available at: https://developer.android.com/guide/topics/resources/localization [Accessed 21 September 2026]. -->
     <string name="app_name">TutorBridge</string>
-    <string name="settings_title">Instellings</string>
-    <string name="app_language_label">Programtaal</string>
-    <string name="settings_subtitle">Voorkeure, kennisgewings en toepassingbeheer.</string>
-    <string name="booking_updates_label">Bespreking Opdaterings</string>
-    <string name="session_reminders_label">Sessielaai Herinneringe</string>
-    <string name="calendar_title">Google Kalender</string>
-    <string name="calendar_disconnect">Ontkoppel</string>
-    <string name="calendar_connect">Koppel</string>
-    <string name="calendar_default_status">Bevestigde sessies word outomaties by jou kalender gevoeg.</string>
-    <string name="change_password_label">Verander wagwoord</string>
-    <string name="email_link_action">E-pos my \'n skakel</string>
-    <string name="sms_fallback_label">SMS-terugval vir OTP</string>
-    <string name="biometric_label">Biometriese Teken-in</string>
-    <string name="dark_theme_label">Donker Tema</string>
-    <string name="sign_out_action">Teken Uit</string>
-    <string name="delete_account_action">Skrap Studenterekening</string>
-    <string name="delete_account_subtitle">Skrap studenteprofiel, versoeke en kampusbesprekings permanent.</string>
 </resources>

@@ -26,6 +26,7 @@ import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.R
+import com.tutorbridge.app.data.model.Language
 
 @Composable
 fun SettingsScreen(
@@ -75,14 +76,14 @@ fun SettingsScreen(
             title = { Text("App Language") },
             text = {
                 Column {
-                    listOf("English", "isiZulu", "Afrikaans").forEach { option ->
+                    Language.entries.map { it.displayName }.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onSelectLanguage(option)
                                     showLanguageDialog = false
-                                    (context as? android.app.Activity)?.recreate()
+                                    // AppCompat recreates the screen itself when the language changes.
+                                    onSelectLanguage(option)
                                 }
                                 .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically

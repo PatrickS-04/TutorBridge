@@ -1,0 +1,19 @@
+<resources>
+    <string name="settings_title">Izilungiselelo</string>
+    <string name="settings_subtitle">Okukhethwayo, izaziso, nezilawuli zohlelo lokusebenza.</string>
+    <string name="app_language_label">Ulimi Lomanyolo</string>
+    <string name="booking_updates_label">Izibuyekezo Zokubhukha</string>
+    <string name="session_reminders_label">Izikhumbuzi Zezifundo</string>
+    <string name="calendar_title">I-Google Calendar</string>
+    <string name="calendar_disconnect">Nqamula</string>
+    <string name="calendar_connect">Xhuma</string>
+    <string name="calendar_default_status">Izifundo eziqinisekisiwe zengezwa ekhalendeni lakho ngokuzenzakalelayo.</string>
+    <string name="change_password_label">Shintsha iphasiwedi</string>
+    <string name="email_link_action">Thumela isixhumanisi nge-imeyili</string>
+    <string name="sms_fallback_label">I-SMS Fallback ye-OTP</string>
+    <string name="biometric_label">Ukungena Nge-Biometric</string>
+    <string name="dark_theme_label">Itimu Emnyama</string>
+    <string name="sign_out_action">Phuma</string>
+    <string name="delete_account_action">Susa I-akhawunti Yomfundi</string>
+    <string name="delete_account_subtitle">Susa unomphela iphrofayili yomfundi, izicelo, nokubhukha kwasendaweni.</string>
+</resources>

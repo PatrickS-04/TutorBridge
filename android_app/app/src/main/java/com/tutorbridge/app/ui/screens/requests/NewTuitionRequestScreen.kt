@@ -117,7 +117,7 @@ fun NewTuitionRequestScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                day.getDisplayName(TextStyle.NARROW, Locale.ENGLISH),
+                                day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                 color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp

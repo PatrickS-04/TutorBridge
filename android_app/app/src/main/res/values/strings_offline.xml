@@ -1,0 +1,46 @@
+<resources>
+    <string name="force_offline_label">Force offline mode</string>
+    <string name="offline_banner_network">You\'re offline. Some features need a connection.</string>
+    <string name="offline_banner_forced">Offline mode is on. Turn it off in Settings to reconnect.</string>
+    <string name="offline_showing_saved">Showing data saved at %1$s</string>
+    <plurals name="pending_sync">
+        <item quantity="one">%d change waiting to sync</item>
+        <item quantity="other">%d changes waiting to sync</item>
+    </plurals>
+    <plurals name="failed_sync">
+        <item quantity="one">%d change couldn\'t be sent</item>
+        <item quantity="other">%d changes couldn\'t be sent</item>
+    </plurals>
+    <plurals name="synced_changes">
+        <item quantity="one">%d change synced</item>
+        <item quantity="other">%d changes synced</item>
+    </plurals>
+    <string name="needs_connection">Needs a connection</string>
+    <string name="saved_offline">Saved offline. It will be sent when you\'re back online.</string>
+    <string name="waiting_to_send">Waiting to send</string>
+    <string name="sending">Sending…</string>
+    <string name="waiting_to_sync">Waiting to sync</string>
+    <string name="sync_status_title">Sync status</string>
+    <string name="sync_now">Sync now</string>
+    <string name="retry_failed">Retry failed</string>
+    <string name="discard">Discard</string>
+    <string name="sync_all_clear">Everything is up to date.</string>
+    <string name="sync_kind_message">Message</string>
+    <string name="sync_kind_request">Tuition request</string>
+    <string name="sync_kind_notes">Session notes</string>
+    <string name="sync_kind_settings">Settings change</string>
+    <string name="sync_state_failed">Couldn\'t be sent</string>
+    <string name="unsent_warning_title">You have unsent changes</string>
+    <string name="sign_out_anyway">Sign out anyway</string>
+    <string name="cancel_action">Cancel</string>
+    <string name="error_offline">You\'re offline. Try again when you\'re back online.</string>
+    <string name="error_unreachable">Can\'t reach the server. Check your connection and try again.</string>
+    <plurals name="unsent_warning_body">
+        <item quantity="one">%d change hasn\'t been sent yet. It stays on this phone and is sent the next time you sign in to this account with a connection.</item>
+        <item quantity="other">%d changes haven\'t been sent yet. They stay on this phone and are sent the next time you sign in to this account with a connection.</item>
+    </plurals>
+    <plurals name="delete_unsent_warning">
+        <item quantity="one">Your %d unsent change will be discarded.</item>
+        <item quantity="other">Your %d unsent changes will be discarded.</item>
+    </plurals>
+</resources>

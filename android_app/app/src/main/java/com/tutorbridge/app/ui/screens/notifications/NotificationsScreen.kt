@@ -17,8 +17,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.ui.components.relativeTimeText
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
+import com.tutorbridge.app.ui.components.relativeTimeText
 import com.tutorbridge.app.ui.theme.NavyTint
+import com.tutorbridge.app.ui.components.relativeTimeText
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -83,7 +86,7 @@ fun NotificationsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(notif.body, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(notif.time, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(relativeTimeText(notif.createdAt), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.tutorbridge.app.R
 import com.tutorbridge.app.TutorBridgeApp
 import com.tutorbridge.app.data.local.LocalCache
@@ -18,6 +20,7 @@ import com.tutorbridge.app.data.local.pendingNotesByBooking
 import com.tutorbridge.app.data.local.pendingSettings
 import com.tutorbridge.app.data.local.withPending
 import com.tutorbridge.app.data.repository.notesOf
+import com.tutorbridge.app.data.repository.slotTime
 import com.tutorbridge.app.sync.SyncScheduler
 import com.tutorbridge.app.network.NetworkMonitor
 import java.io.IOException
@@ -120,6 +123,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             }
             _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback,
                 sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates) }
+        }
+        // The picker should open on the language the app is really in, not on English.
+        effectiveLanguage().let { language ->
+            _uiState.update { it.copy(selectedLanguage = language.displayName) }
+            Firebase.auth.setLanguageCode(language.tag)
         }
         loadInstitutions()
 
@@ -561,13 +569,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         userStaffId = user.staffNumber.orEmpty(),
                         tutorHourlyRate = user.hourlyRate ?: 0.0,
                         tutorProfileCompleteness = user.profileCompleteness,
-                        tutorLanguagesSpoken = user.locale.let {
-                            when (it) {
-                                "ZU" -> "isiZulu"
-                                "AF" -> "Afrikaans"
-                                else -> "English"
-                            }
-                        },
+                        tutorLanguagesSpoken = Language.fromServerCode(user.locale).displayName,
                         tutorConsultationRoom = user.areaId?.name.orEmpty(),
                         weeklyAvailability = windows.toDayWindows(),
                         activeDays = windows.map { it.day.name }.toSet()
@@ -624,13 +626,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             // What the server (or the cache) says, with changes made offline and not yet sent on top -
             // otherwise a reload would flip a switch back that the user just turned.
             repository.settings().map { it.withPending(_uiState.value.outboxItems.pendingSettings()) }.onSuccess { settings ->
+                // The account's language and this phone's may differ (a new phone, a choice made offline).
+                val plan = reconcileLanguage(Language.fromServerCode(settings.language), languageChosenOnThisPhone())
+                plan.applyOnThisPhone?.let { applyLanguage(it) }
+                plan.saveToAccount?.let { saveSettings(UpdateSettingsRequest(language = it.serverCode)) }
+
                 _uiState.update {
                     it.copy(
-                        selectedLanguage = when (settings.language) {
-                            "ZU" -> "isiZulu"
-                            "AF" -> "Afrikaans"
-                            else -> "English"
-                        },
+                        selectedLanguage = (plan.applyOnThisPhone ?: effectiveLanguage()).displayName,
                         isDarkTheme = settings.theme == "DARK",
                         smsFallbackEnabled = settings.smsFallback,
                         bookingUpdatesEnabled = settings.notifications.booking,
@@ -1601,32 +1604,34 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         if (insideApp) refreshAll()
     }
 
-    fun setLanguage(language: String) {
-        _uiState.update { it.copy(selectedLanguage = language) }
-
-        val localeTag = when (language) {
-            "isiZulu" -> "zu"
-            "Afrikaans" -> "af"
-            else -> "en"
-        }
-
-        // Reference: Android Developers. 2026. Per-app language preferences. [Online].
-        //   Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
-        androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-            androidx.core.os.LocaleListCompat.forLanguageTags(localeTag)
-        )
-
-        saveSettings(
-            UpdateSettingsRequest(
-                language = when (language) {
-                    "isiZulu" -> "ZU"
-                    "Afrikaans" -> "AF"
-                    else -> "EN"
-                }
-            )
-        )
+    /** The picker's choice: change the app now, and tell the account so other phones agree. */
+    fun setLanguage(name: String) {
+        val language = Language.fromDisplayName(name)
+        _uiState.update { it.copy(selectedLanguage = language.displayName) }
+        applyLanguage(language)
+        saveSettings(UpdateSettingsRequest(language = language.serverCode))
     }
 
+    // Reference: Android Developers. 2026. Per-app language preferences. [Online].
+    //   Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
+    /**
+     * Changes the language of the app. AppCompat recreates the open screen by itself, and keeps
+     * the choice across restarts (see AppLocalesMetadataHolderService in the manifest).
+     */
+    private fun applyLanguage(language: Language) {
+        Log.i(TAG, "App language -> ${language.tag}")
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
+        // So Firebase's own emails, such as the password reset, arrive in the same language.
+        Firebase.auth.setLanguageCode(language.tag)
+    }
+
+    /** What was picked in this app on this phone, or null if nothing has been. */
+    private fun languageChosenOnThisPhone(): Language? =
+        AppCompatDelegate.getApplicationLocales().takeIf { !it.isEmpty }?.get(0)?.let { Language.fromTag(it.toLanguageTag()) }
+
+    /** The language the app is actually showing: a choice made here, or else the phone's own if the app has it. */
+    private fun effectiveLanguage(): Language =
+        languageChosenOnThisPhone() ?: Language.fromTag(Locale.getDefault().language) ?: Language.ENGLISH
     fun toggleBookingUpdates(enabled: Boolean) {
         AppPreferences(getApplication()).enableBookingUpdatesSaved(enabled)
         _uiState.update { it.copy(bookingUpdatesEnabled = enabled) }
@@ -1742,7 +1747,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     /** "2026-10-16" + "10:30 AM" -> a zoned start time, or null if either is missing. */
     private fun startOfSelectedSlot(state: TutorBridgeUiState) = runCatching {
         LocalDate.parse(state.selectedBookingDate)
-            .atTime(LocalTime.parse(state.selectedSlot, DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)))
+            .atTime(LocalTime.parse(state.selectedSlot, slotTime))
             .atZone(ZoneId.systemDefault())
     }.getOrNull()
 

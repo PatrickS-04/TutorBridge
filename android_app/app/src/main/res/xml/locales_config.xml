@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reference: Android Developers. 2026. Per-app language preferences. [Online].
+       Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026]. -->
+<!-- The languages the app is offered in. On Android 13 and later these are the choices the
+     system's own "App languages" setting shows for TutorBridge. Keep in step with data/model/Language.kt. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="af" />
+    <locale android:name="zu" />
+</locale-config>

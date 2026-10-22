@@ -24,8 +24,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val timeToday = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-private val timeOtherDay = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
+private val timeToday get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+private val timeOtherDay get() = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
 
 /** "14:05" if it was saved today, "3 Oct 14:05" if not - so old data is never mistaken for fresh. */
 internal fun savedAtLabel(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault(), today: LocalDate = LocalDate.now(zone)): String {
