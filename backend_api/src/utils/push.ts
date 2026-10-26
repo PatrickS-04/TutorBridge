@@ -1,5 +1,21 @@
 import type { MulticastMessage, SendResponse } from "firebase-admin/messaging";
 
+import type { INotificationPreferences } from "../models/embedded";
+
+const PREFERENCE_FOR_CATEGORY: Record<string, keyof INotificationPreferences> = {
+  NEW_LISTING: "newListing",
+  APPLICATION: "application",
+  BOOKING: "booking",
+  MESSAGE: "message",
+  VERIFICATION: "verification"
+}
+
+export function pushAllowed(category: string, prefs?: Partial<INotificationPreferences> | null): boolean {
+  const key = PREFERENCE_FOR_CATEGORY[category];
+  if (!key || !prefs) return true;
+  return prefs[key] !== false;
+}
+
 export interface PushPayload {
   title: string;
   body: string;
