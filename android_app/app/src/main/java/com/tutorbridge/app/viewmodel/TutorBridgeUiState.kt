@@ -1,6 +1,12 @@
 package com.tutorbridge.app.viewmodel
 
+import com.tutorbridge.app.data.local.OutboxEntity
+import com.tutorbridge.app.data.local.failedCount
+import com.tutorbridge.app.data.local.pendingCount
+import com.tutorbridge.app.data.local.pendingMessagesFor
+import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.network.effectivelyOnline
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -34,7 +40,14 @@ data class TutorBridgeUiState(
     /** The tutor's own rate, offered when they apply to a request. */
     val tutorHourlyRate: Double = 0.0,
     val isDarkTheme: Boolean = false,
+    /** The Settings switch "Force offline mode" - the user's choice, not what the network is doing. */
     val isOffline: Boolean = false,
+    /** Whether the phone has a working internet connection, from NetworkMonitor. */
+    val networkAvailable: Boolean = true,
+    /** When the offline cache was last refreshed from the API (epoch millis); null if nothing is saved yet. */
+    val cacheSavedAtMillis: Long? = null,
+    /** Everything in the outbox for the signed-in user: what was done offline and has not reached the server, or was refused. */
+    val outboxItems: List<OutboxEntity> = emptyList(),
     val selectedLanguage: String = "English",
     val bookingUpdatesEnabled: Boolean = true,
     val sessionRemindersEnabled: Boolean = true,
@@ -139,6 +152,26 @@ data class TutorBridgeUiState(
     val targetGrade: String = "A-",
     val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
 ) {
+    /** Things done offline that are still waiting to be sent. */
+    val pendingSyncCount: Int
+        get() = outboxItems.pendingCount()
+
+    /** Things the server refused; they stay until the user retries or discards them. */
+    val failedSyncCount: Int
+        get() = outboxItems.failedCount()
+
+    /** The open conversation as the user should see it: what the server has, plus what they wrote that is still on its way. */
+    val visibleChat: List<MessageUi>
+        get() = mergeMessages(existing = outboxItems.pendingMessagesFor(selectedThreadId), incoming = chatMessages)
+
+    /** The student's own requests, with ones posted offline on top as "Waiting to sync". */
+    val visibleMyRequests: List<StudentRequestUi>
+        get() = outboxItems.pendingRequestCards() + myRequests
+
+    /** What the app should act on: connected, and not forced offline. */
+    val isOnline: Boolean
+        get() = effectivelyOnline(networkAvailable, isOffline)
+
     /** The session the prep screen is showing, derived so it cannot go stale. */
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }

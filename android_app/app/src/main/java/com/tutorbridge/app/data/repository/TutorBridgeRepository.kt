@@ -1,9 +1,13 @@
 package com.tutorbridge.app.data.repository
 
+import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.tutorbridge.app.Apiinterface.TutorBridgeApi
+import com.tutorbridge.app.data.local.LocalCache
 import com.tutorbridge.app.data.model.*
 import retrofit2.Response
+import java.io.IOException
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -22,14 +26,18 @@ import java.util.Locale
  * Everything returns kotlin.Result so a failed call carries the server's
  * message up to the ViewModel instead of silently turning into an empty list.
  */
-class TutorBridgeRepository(private val api: TutorBridgeApi) {
+class TutorBridgeRepository(
+    private val api: TutorBridgeApi,
+    /** Where reads are remembered for offline use; null turns the cache off. */
+    private val cache: LocalCache? = null
+) {
 
     // ==================== PROFILE, SETTINGS, REFERENCE DATA ====================
 
-    suspend fun me(): Result<UserDto> = call { api.me() }
+    suspend fun me(): Result<UserDto> = cachedCall("me") { api.me() }
     suspend fun updateProfile(body: UpdateProfileRequest): Result<UserDto> = call { api.updateMe(body) }
 
-    suspend fun settings(): Result<UserSettingsDto> = call { api.settings() }
+    suspend fun settings(): Result<UserSettingsDto> = cachedCall("settings") { api.settings() }
 
     suspend fun saveSettings(body: UpdateSettingsRequest): Result<UserSettingsDto> =
         call { api.updateSettings(body) }
@@ -39,27 +47,27 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     suspend fun scheduleAccountDeletion(): Result<Map<String, Any>> = call { api.scheduleAccountDeletion() }
 
-    suspend fun institution(): Result<InstitutionDto> = call { api.institution() }
+    suspend fun institution(): Result<InstitutionDto> = cachedCall("institution") { api.institution() }
 
-    suspend fun referenceData(): Result<ReferenceDataDto> = call { api.referenceData() }
+    suspend fun referenceData(): Result<ReferenceDataDto> = cachedCall("reference") { api.referenceData() }
 
     // ==================== TUTORS ====================
 
     suspend fun tutors(): Result<List<TutorUi>> =
         // The server already sends best fit first; sorting again keeps that true
         // whatever order the page arrives in (the sort is stable, so ties stay by name).
-        call { api.tutors() }.map { page -> page.data.map { it.toTutorUi() }.sortedByDescending { it.matchPercent } }
+        cachedCall("tutors") { api.tutors() }.map { page -> page.data.map { it.toTutorUi() }.sortedByDescending { it.matchPercent } }
 
     // ==================== TUITION REQUESTS ====================
 
     suspend fun myRequests(): Result<List<StudentRequestUi>> =
-        call { api.tuitionRequests(mine = true) }.map { page -> page.data.map { it.toRequestUi() } }
+        cachedCall("my_requests") { api.tuitionRequests(mine = true) }.map { page -> page.data.map { it.toRequestUi() } }
 
     suspend fun openRequests(): Result<List<StudentRequestUi>> =
-        call { api.tuitionRequests() }.map { page -> page.data.map { it.toRequestUi() } }
+        cachedCall("open_requests") { api.tuitionRequests() }.map { page -> page.data.map { it.toRequestUi() } }
 
     suspend fun applicants(requestId: String): Result<List<TutorApplicant>> =
-        call { api.requestApplications(requestId) }.map { page ->
+        cachedCall("applicants:$requestId") { api.requestApplications(requestId) }.map { page ->
             page.data.map { application ->
                 TutorApplicant(
                     id = application._id,
@@ -92,7 +100,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     /** The tutor's own applications, shown on their requests board. */
     suspend fun myApplications(): Result<List<StudentRequestUi>> =
-        call { api.myApplications() }.map { page ->
+        cachedCall("my_applications") { api.myApplications() }.map { page ->
             page.data.mapNotNull { application ->
                 application.tuitionRequestId?.toRequestUi()?.copy(
                     id = application._id,
@@ -108,7 +116,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     // ==================== BOOKINGS ====================
 
-    suspend fun bookings(): Result<List<BookingDto>> = call { api.bookings() }.map { it.data }
+    suspend fun bookings(): Result<List<BookingDto>> = cachedCall("bookings") { api.bookings() }.map { it.data }
 
     suspend fun bookTutorDirectly(body: DirectBookingRequest): Result<BookingAckDto> =
         call { api.bookTutorDirectly(body) }
@@ -129,24 +137,23 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
         bookingId: String,
         checklist: List<SessionGoalUi>,
         sideNotes: String
-    ): Result<TutorNotesDto> = call {
-        api.saveSessionNotes(
-            bookingId,
-            TutorNotesDto(
-                items = checklist.map { TutorNoteItemDto(text = it.text, done = it.completed) },
-                text = sideNotes
-            )
-        )
-    }
+    ): Result<TutorNotesDto> = saveSessionNotes(bookingId, notesOf(checklist, sideNotes))
+
+    /** The same save from the document itself - what the offline queue stores and replays. */
+    suspend fun saveSessionNotes(bookingId: String, notes: TutorNotesDto): Result<TutorNotesDto> =
+        call { api.saveSessionNotes(bookingId, notes) }
 
     // ==================== MESSAGING ====================
 
     suspend fun threads(selfId: String): Result<List<ThreadUi>> =
-        call { api.threads() }.map { page -> page.data.map { it.toThreadUi(selfId) } }
+        cachedCall("threads") { api.threads() }.map { page -> page.data.map { it.toThreadUi(selfId) } }
 
     /** One page of a conversation, oldest first, with how many pages there are in all. */
     suspend fun messages(threadId: String, selfId: String, page: Int): Result<Pair<List<MessageUi>, Int>> =
-        call { api.messages(threadId, page) }.map { result ->
+        // Only the newest page is kept: older pages are history the user asked
+        // for, and offline they just see the latest conversation, not a patchwork.
+        (if (page == 1) cachedCall("messages:$threadId") { api.messages(threadId, page) } else call { api.messages(threadId, page) })
+            .map { result ->
             result.data.map { it.toMessageUi(selfId) }.sortedBy { it.sentAt } to result.totalPages
         }
 
@@ -157,7 +164,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
     // ==================== NOTIFICATIONS ====================
 
     suspend fun notifications(): Result<List<NotificationUi>> =
-        call { api.notifications() }.map { page -> page.data.map { it.toNotificationUi() } }
+        cachedCall("notifications") { api.notifications() }.map { page -> page.data.map { it.toNotificationUi() } }
 
     suspend fun markNotificationRead(id: String): Result<Unit> = call { api.markNotificationRead(id) }.map { }
 
@@ -193,7 +200,7 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
 
     /** The last [months] months; the server returns every month, so quiet ones are dropped in the mapper. */
     suspend fun claims(institutionName: String, months: Int): Result<List<InstitutionUi>> =
-        call { api.claimPeriods(months) }.map { claims -> listOf(claims.toInstitutionUi(institutionName)) }
+        cachedCall("claims") { api.claimPeriods(months) }.map { claims -> listOf(claims.toInstitutionUi(institutionName)) }
 
     /** The server-built CSV for one month, [month] as `YYYY-MM`. */
     suspend fun claimCsv(month: String): Result<String> =
@@ -207,14 +214,55 @@ class TutorBridgeRepository(private val api: TutorBridgeApi) {
         if (response.isSuccessful && body != null) {
             Result.success(body)
         } else {
-            Result.failure(IllegalStateException(parseApiError(response)))
+            Result.failure(ApiException(response.code(), parseApiError(response)))
         }
     } catch (exception: Exception) {
         Result.failure(exception)
     }
+
+    /**
+     * [call] for a read the offline cache backs. A good answer is saved as the
+     * latest copy. If the request fails because the connection is down - an
+     * IOException: no route, timeout, offline mode forced - the last saved copy
+     * is returned instead, so the screen has something to show.
+     *
+     * Only a dead connection falls back. When the server answered with an error
+     * (401, 403, 404, 500...) that error is the truth and is passed on, because
+     * showing old data in place of "you no longer have access" would be wrong.
+     */
+    private suspend inline fun <reified T> cachedCall(
+        resource: String,
+        crossinline block: suspend () -> Response<T>
+    ): Result<T> {
+        val result = call { block() }
+        val store = cache ?: return result
+
+        result.getOrNull()?.let { fresh ->
+            store.put(resource, fresh)
+            return result
+        }
+        if (result.exceptionOrNull() !is IOException) return result
+
+        val saved = store.get<T>(resource, object : TypeToken<T>() {}.type) ?: return result
+        Log.i(TAG, "Offline: served $resource from the cache saved at ${saved.updatedAtMillis}")
+        return Result.success(saved.value)
+    }
+
+    private companion object {
+        const val TAG = "Cache"
+    }
 }
 
+/** The server answered, but with an error. Distinct from an IOException, which means it never did. */
+class ApiException(val code: Int, message: String) : IllegalStateException(message)
+
 // ==================== MAPPERS ====================
+
+/** The checklist and side notes as the one document the server stores. */
+fun notesOf(checklist: List<SessionGoalUi>, sideNotes: String) = TutorNotesDto(
+    items = checklist.map { TutorNoteItemDto(text = it.text, done = it.completed) },
+    text = sideNotes
+)
 
 private val timeOfDay = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
 private val monthLabel = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
@@ -341,7 +389,10 @@ fun MessageDto.toMessageUi(selfId: String): MessageUi = MessageUi(
     body = body,
     mine = senderId == selfId,
     time = chatTime(sentAt),
-    sentAt = sentAt
+    sentAt = sentAt,
+    // Gson leaves a field the JSON lacks as null whatever default Kotlin declares, and a
+    // message saved by an older app version, or sent by an older server, has no clientMessageId.
+    clientId = (clientMessageId as String?).orEmpty()
 )
 
 /** A REQUESTED booking waiting for the tutor to confirm or decline. */

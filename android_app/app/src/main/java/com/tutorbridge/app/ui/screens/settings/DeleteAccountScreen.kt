@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.settings
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.pluralStringResource
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -140,7 +143,7 @@ fun DeleteAccountScreen(
         item {
             Button(
                 onClick = onConfirmDelete,
-                enabled = canDelete && !uiState.isAuthLoading,
+                enabled = canDelete && !uiState.isAuthLoading && uiState.isOnline,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
@@ -152,6 +155,20 @@ fun DeleteAccountScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Permanently Delete Account", fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+
+        item {
+            NeedsConnectionHint(uiState.isOnline)
+            if (uiState.pendingSyncCount + uiState.failedSyncCount > 0) {
+                val unsent = uiState.pendingSyncCount + uiState.failedSyncCount
+                Text(
+                    pluralStringResource(R.plurals.delete_unsent_warning, unsent, unsent),
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 

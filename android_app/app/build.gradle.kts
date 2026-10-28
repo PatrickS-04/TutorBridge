@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Reference: Android Developers. 2026. Save data in a local database using Room. [Online].
+    //   Available at: https://developer.android.com/training/data-storage/room [Accessed 20 October 2026].
+    alias(libs.plugins.ksp)
     //Firebase
     id("com.google.gms.google-services")
 }
@@ -65,6 +68,17 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // android.util.Log is not on the JVM unit-test classpath; without this the
+        // first Log call in code under test throws "not mocked" instead of returning.
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+// Room writes each schema version here, so a migration can be checked against
+// the one before it. The folder is committed.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
@@ -107,6 +121,13 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.android)
+
+    // Offline mode: Room caches what the API sent, WorkManager replays what the
+    // user did while offline once the connection is back.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -39,6 +39,13 @@ class RouteAccessTest {
     }
 
     @Test
+    fun `sync status is open to both roles`() {
+        for (role in listOf(UserRole.STUDENT, UserRole.TUTOR)) {
+            assertEquals("sync_status", routeForRole("sync_status", role))
+        }
+    }
+
+    @Test
     fun `a message notification opens the conversation list`() {
         assertEquals("messages", routeForDeepLink("tutorbridge://threads/66f1a2b3c4d5e6f708192a3b", UserRole.STUDENT))
         assertEquals("messages", routeForDeepLink("tutorbridge://threads/66f1a2b3c4d5e6f708192a3b", UserRole.TUTOR))

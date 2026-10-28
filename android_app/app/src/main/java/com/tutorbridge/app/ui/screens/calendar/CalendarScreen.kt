@@ -313,6 +313,8 @@ fun CalendarScreen(
                             Spacer(modifier = Modifier.height(6.dp))
                             OutlinedButton(
                                 onClick = { rescheduling = event },
+                                // The server checks the new time against the tutor's diary, so this needs a connection.
+                                enabled = uiState.isOnline,
                                 shape = RoundedCornerShape(20.dp),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
                             ) {

@@ -20,30 +20,59 @@ router.post(
   "/",
   requireRole(UserRole.GUARDIAN_LEARNER),
   asyncHandler(async (req: AuthRequest, res) => {
-    const { subjectId, areaId, gradeLevel, mode, description, preferredRateBand, availability } = req.body;
+    const { subjectId, areaId, gradeLevel, mode, description, preferredRateBand, availability, clientRequestId } =
+      req.body;
     if (!subjectId || !areaId || !mode) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "subjectId, areaId, and mode are required"));
     }
+    if (clientRequestId !== undefined && (typeof clientRequestId !== "string" || clientRequestId.length > 100)) {
+      return res
+        .status(400)
+        .json(apiError("VALIDATION_ERROR", "clientRequestId must be a string of at most 100 characters", "clientRequestId"));
+    }
 
-    const tuitionRequest = await TuitionRequest.create({
-      institutionId: req.auth!.institutionId,
-      studentId: req.auth!.userId,
-      subjectId,
-      areaId,
-      gradeLevel,
-      mode,
-      description,
-      preferredRateBand,
-      availability,
-      status: TuitionRequestStatus.OPEN,
+    //A repeat of a post the server already made - the app retrying after a lost
+    //reply, or replaying its offline queue - gets that request back, not a second.
+    const alreadyPosted = () =>
+      clientRequestId
+        ? TuitionRequest.findOne({ studentId: req.auth!.userId, clientRequestId })
+        : Promise.resolve(null);
+    const summary = (doc: any) => ({
+      id: doc._id,
+      status: doc.status,
+      matchScore: doc.matchScore ?? null,
+      createdAt: doc.createdAt,
     });
 
-    res.status(201).json({
-      id: tuitionRequest._id,
-      status: tuitionRequest.status,
-      matchScore: tuitionRequest.matchScore ?? null,
-      createdAt: (tuitionRequest as any).createdAt,
-    });
+    const existing = await alreadyPosted();
+    if (existing) return res.status(200).json(summary(existing));
+
+    let tuitionRequest;
+    try {
+      tuitionRequest = await TuitionRequest.create({
+        institutionId: req.auth!.institutionId,
+        studentId: req.auth!.userId,
+        subjectId,
+        areaId,
+        gradeLevel,
+        mode,
+        description,
+        preferredRateBand,
+        availability,
+        clientRequestId,
+        status: TuitionRequestStatus.OPEN,
+      });
+    } catch (err: any) {
+      //Two copies of the same post arriving together: the unique index lets one
+      //through, and the other is answered with the winner.
+      if (err?.code === 11000) {
+        const winner = await alreadyPosted();
+        if (winner) return res.status(200).json(summary(winner));
+      }
+      throw err;
+    }
+
+    res.status(201).json(summary(tuitionRequest));
   })
 );
 

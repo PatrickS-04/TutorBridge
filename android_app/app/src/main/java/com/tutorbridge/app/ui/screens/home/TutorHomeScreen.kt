@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.home
 
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -202,16 +203,19 @@ fun TutorHomeScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
                             onClick = { onDeclineBooking(booking.id) },
+                            enabled = uiState.isOnline,
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(22.dp)
                         ) { Text("Decline", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
                         Button(
                             onClick = { onAcceptBooking(booking.id) },
+                            enabled = uiState.isOnline,
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(22.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
                         ) { Text("Accept & Sync", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
                     }
+                    NeedsConnectionHint(uiState.isOnline)
                 }
             }
         }

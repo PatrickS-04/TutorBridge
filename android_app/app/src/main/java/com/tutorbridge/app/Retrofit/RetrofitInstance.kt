@@ -3,6 +3,7 @@ package com.tutorbridge.app.Retrofit
 import com.tutorbridge.app.Apiinterface.AuthApi
 import com.tutorbridge.app.Apiinterface.TutorBridgeApi
 import com.tutorbridge.app.BuildConfig
+import com.tutorbridge.app.network.OfflineGateInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -31,6 +32,8 @@ object RetrofitInstance {
     // public endpoints (GET /reference/institutions) work through it too.
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            // First, so a forced-offline request is refused before anything else runs for it.
+            .addInterceptor(OfflineGateInterceptor())
             .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthInterceptor())
             .connectTimeout(15, TimeUnit.SECONDS)

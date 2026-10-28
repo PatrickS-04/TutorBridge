@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.navigation
 
 import android.hardware.biometrics.BiometricManager
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,6 +17,7 @@ import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.OfflineBanner
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
 import com.tutorbridge.app.ui.screens.auth.NewPasswordScreen
@@ -47,6 +49,7 @@ import com.tutorbridge.app.ui.screens.settings.DeleteAccountScreen
 import com.tutorbridge.app.ui.screens.settings.EditProfileScreen
 import com.tutorbridge.app.ui.screens.settings.SettingsScreen
 import com.tutorbridge.app.ui.screens.splash.SplashScreen
+import com.tutorbridge.app.ui.screens.sync.SyncStatusScreen
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
 
@@ -138,7 +141,9 @@ fun TutorBridgeNavGraph(
             }
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
+        Column(modifier = Modifier.padding(innerPadding)) {
+        OfflineBanner(uiState, onClick = { viewModel.navigateTo("sync_status") })
+        Surface(modifier = Modifier.weight(1f)) {
             when (uiState.currentRoute) {
                 "splash" -> SplashScreen(
                     onGetStarted = { viewModel.navigateTo("auth") }
@@ -239,6 +244,14 @@ fun TutorBridgeNavGraph(
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") },
                     onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                )
+
+                "sync_status" -> SyncStatusScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") },
+                    onSyncNow = { viewModel.syncNow() },
+                    onRetryFailed = { viewModel.retryFailedSync() },
+                    onDiscard = { viewModel.discardOutboxItem(it) }
                 )
 
                 // ===== Messaging =====
@@ -362,7 +375,8 @@ fun TutorBridgeNavGraph(
                         onToggleBiometric = { viewModel.toggleBiometric(it) },
                         onLinkCalendar = linkCalendar,
                         onUnlinkCalendar = { viewModel.unlinkCalendar() },
-                        onChangePassword = { viewModel.sendPasswordReset(it) }
+                        onChangePassword = { viewModel.sendPasswordReset(it) },
+                        onOpenSyncStatus = { viewModel.navigateTo("sync_status") }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(
@@ -386,6 +400,7 @@ fun TutorBridgeNavGraph(
                     onNavigate = { viewModel.navigateTo(it) }
                 )
             }
+        }
         }
     }
 }

@@ -16,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
@@ -64,9 +66,10 @@ fun MyRequestsScreen(
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            items(uiState.myRequests) { req ->
+            items(uiState.visibleMyRequests) { req ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onSelectRequest(req) },
+                    // Posted offline and not sent yet: there is nothing on the server to open.
+                    modifier = Modifier.fillMaxWidth().clickable(enabled = !req.pendingSync) { onSelectRequest(req) },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -82,7 +85,13 @@ fun MyRequestsScreen(
                                 fontSize = 14.5.sp,
                                 modifier = Modifier.weight(1f)
                             )
-                            StatusBadge(req.status)
+                            if (req.pendingSync) {
+                                Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                                    Text(stringResource(R.string.waiting_to_sync), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            } else {
+                                StatusBadge(req.status)
+                            }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(

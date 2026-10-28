@@ -18,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.MessageUi
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -41,8 +43,8 @@ fun ChatScreen(
     val hasEarlier = uiState.chatPage < uiState.chatTotalPages
 
     // Follow the conversation down when a message arrives or is sent.
-    LaunchedEffect(uiState.chatMessages.lastOrNull()?.id) {
-        if (uiState.chatMessages.isNotEmpty()) listState.animateScrollToItem(uiState.chatMessages.size - 1 + if (hasEarlier) 1 else 0)
+    LaunchedEffect(uiState.visibleChat.lastOrNull()?.id) {
+        if (uiState.visibleChat.isNotEmpty()) listState.animateScrollToItem(uiState.visibleChat.size - 1 + if (hasEarlier) 1 else 0)
     }
 
     Column(
@@ -74,7 +76,7 @@ fun ChatScreen(
                     }
                 }
             }
-            if (uiState.chatMessages.isEmpty()) {
+            if (uiState.visibleChat.isEmpty()) {
                 item {
                     Text(
                         "No messages yet - say hello.",
@@ -84,7 +86,7 @@ fun ChatScreen(
                     )
                 }
             }
-            items(uiState.chatMessages, key = { it.id }) { message -> Bubble(message) }
+            items(uiState.visibleChat, key = { it.id }) { message -> Bubble(message) }
         }
 
         Row(
@@ -132,7 +134,11 @@ private fun Bubble(message: MessageUi) {
                 color = if (message.mine) Color.White else MaterialTheme.colorScheme.onSurface
             )
             Text(
-                message.time,
+                when {
+                    message.pending && message.queued -> stringResource(R.string.waiting_to_send)
+                    message.pending -> stringResource(R.string.sending)
+                    else -> message.time
+                },
                 fontSize = 12.sp,
                 color = if (message.mine) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
