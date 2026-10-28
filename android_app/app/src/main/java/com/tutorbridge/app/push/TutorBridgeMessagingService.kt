@@ -51,7 +51,8 @@ class TutorBridgeMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, NotificationChannels.UPDATES)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // placeholder, see the note at the end
+            .setSmallIcon(R.drawable.ic_stat_notification)
+            .setColor(ContextCompat.getColor(this, R.color.notification_accent))
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

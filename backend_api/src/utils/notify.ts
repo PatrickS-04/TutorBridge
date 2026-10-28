@@ -2,7 +2,7 @@ import admin from "firebase-admin";
 import {
   NotificationEvent, NotificationToken, NotificationCategory, INotificationEvent, UserSettings, User, Locale,
 } from "../models";
-import { buildMulticast, findStaleTokens } from "./push";
+import { buildMulticast, findStaleTokens, pushAllowed } from "./push";
 import { NotificationKey, NotificationValues, render } from "./messages";
 
 export function notify(
@@ -44,6 +44,9 @@ async function deliver(
 // Reference: Firebase. 2026. Send a message using Firebase Admin SDK. [Online].
 //   Available at: https://firebase.google.com/docs/cloud-messaging/send/admin-sdk [Accessed 21 September 2026].
 async function sendPush(event: INotificationEvent) {
+  const settings = await UserSettings.findOne({ userId: event.userId }).select("notifications").lean();
+  if (!pushAllowed(event.category, settings?.notifications)) return;
+
   const rows = await NotificationToken.find({ userId: event.userId }).select("token").lean();
   if (rows.length === 0) return;
 
