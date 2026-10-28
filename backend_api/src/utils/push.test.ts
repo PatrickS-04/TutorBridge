@@ -2,7 +2,15 @@
 //   Available at: https://nodejs.org/docs/latest-v22.x/api/test.html [Accessed 21 September 2026].
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildMulticast, findStaleTokens } from "./push";
+import { buildMulticast, findStaleTokens, pushAllowed } from "./push";
+
+test("pushAllowed follows the user's Settings toggles", () => {
+  const prefs = { newListing: true, application: true, booking: false, message: true, verification: true };
+  assert.equal(pushAllowed("BOOKING", prefs), false);
+  assert.equal(pushAllowed("MESSAGE", prefs), true);
+  assert.equal(pushAllowed("BOOKING", null), true);
+  assert.equal(pushAllowed("SOMETHING_NEW", prefs), true);
+});
 
 const ok = { success: true };
 const failed = (code: string, message = "") => ({ success: false, error: { code, message } as any });
