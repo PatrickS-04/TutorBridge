@@ -1,0 +1,33 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="calendar_add_event">Engeza umcimbi</string>
+    <string name="calendar_calendar_events">Ikhalenda &amp; Imicimbi</string>
+    <string name="calendar_day">Usuku</string>
+    <string name="calendar_keep_current_time">Gcina isikhathi samanje</string>
+    <string name="calendar_move_session">Hambisa isifundo</string>
+    <string name="calendar_next">Okulandelayo</string>
+    <string name="calendar_no_sessions_on_this_date">Azikho Izifundo Kulolu Suku</string>
+    <string name="calendar_prev">Okwangaphambili</string>
+    <string name="calendar_reschedule">Hlela kabusha</string>
+    <string name="calendar_reschedule_session">Hlela kabusha isifundo</string>
+    <string name="calendar_schedule_a_personal_study_block">Hlela isikhathi sakho sokufunda noma ubhukhe uthisha ohlwini.</string>
+    <string name="calendar_start_time">Isikhathi sokuqala</string>
+    <plurals name="calendar_scheduled_events">
+        <item quantity="one">Umcimbi o-%d ohlelwe</item>
+        <item quantity="other">Imicimbi e-%d ehlelwe</item>
+    </plurals>
+    <string name="calendar_with_person">Ne-%1$s</string>
+    <string name="calendar_notes_progress">Amanothi • %1$d/%2$d aqediwe</string>
+    <string name="calendar_reschedule_current">%1$s no-%2$s, okwamanje %3$s %4$s</string>
+    <plurals name="calendar_agenda">
+        <item quantity="one">Uhlelo • %1$s, %2$s %3$d  into e-%4$d</item>
+        <item quantity="other">Uhlelo • %1$s, %2$s %3$d  izinto ezi-%4$d</item>
+    </plurals>
+    <string name="calendar_add_session_notes">Engeza amanothi esifundo</string>
+    <string name="calendar_student_schedule">ISHEDYULI LOMFUNDI</string>
+    <string name="calendar_tutor_schedule">ISHEDYULI LOTHISHA</string>
+    <string name="calendar_filter_all">Yonke Imicimbi</string>
+    <string name="calendar_filter_lessons">Izifundo Zomuntu Ngamunye</string>
+    <string name="calendar_filter_office_hours">Amahora Ehhovisi</string>
+    <string name="calendar_filter_exam_prep">Ukulungiselela Ukuhlolwa</string>
+</resources>

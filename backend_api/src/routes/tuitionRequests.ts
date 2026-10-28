@@ -176,8 +176,8 @@ router.put(
         req.auth!.institutionId,
         String(application.tutorId),
         NotificationCategory.APPLICATION,
-        "A request you applied to changed",
-        "The student edited their tuition request - check it still suits you.",
+        "application.requestChanged",
+        {},
         `tutorbridge://requests/${tuitionRequest._id}`
       );
     }
@@ -218,8 +218,8 @@ async function endRequest(req: AuthRequest, res: Response, finalStatus: TuitionR
       req.auth!.institutionId,
       String(application.tutorId),
       NotificationCategory.APPLICATION,
-      "A request you applied to is closed",
-      "The student is no longer looking for a tutor for this request.",
+      "application.requestClosed",
+      {},
       `tutorbridge://applications/${application._id}`
     );
   }
@@ -282,8 +282,8 @@ router.post(
       req.auth!.institutionId,
       String(tuitionRequest.studentId),
       NotificationCategory.APPLICATION,
-      "New tutor application",
-      `${tutor.fullName} offered to take your tuition request.`,
+      "application.new",
+      { tutor: tutor.fullName },
       `tutorbridge://requests/${tuitionRequest._id}`
     );
 

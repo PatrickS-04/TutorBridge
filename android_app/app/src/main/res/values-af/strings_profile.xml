@@ -1,0 +1,15 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="edit_profile_bio">Biografie</string>
+    <string name="edit_profile_department_faculty">Departement / fakulteit</string>
+    <string name="edit_profile_edit_profile">Wysig profiel</string>
+    <string name="edit_profile_email">E-pos</string>
+    <string name="edit_profile_hourly_rate_r">Uurtarief (R)</string>
+    <string name="edit_profile_save_changes">Stoor veranderinge</string>
+    <string name="edit_tutor_add_languages_spoken_to_reach">• Voeg gesproke tale by om 100% te bereik</string>
+    <string name="edit_tutor_designated_campus_consultation_r">Aangewese kampuskonsultasiekamer</string>
+    <string name="edit_tutor_edit_tutor_profile">Wysig tutorprofiel</string>
+    <string name="edit_tutor_languages_spoken">Gesproke tale</string>
+    <string name="edit_tutor_profile_completeness">Profielvolledigheid</string>
+    <string name="edit_tutor_save_profile">Stoor profiel</string>
+</resources>

@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.messages
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -40,9 +42,9 @@ fun MessagesScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Messages", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.common_messages), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         if (uiState.threads.isEmpty()) {
@@ -50,10 +52,10 @@ fun MessagesScreen(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("No conversations yet", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.messages_no_conversations_yet), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "A chat opens when you accept a tutor's offer or book a tutor, so you can sort out times and venues.",
+                    stringResource(R.string.messages_a_chat_opens_when_you),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -80,7 +82,7 @@ fun MessagesScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(thread.otherName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             Text(
-                                thread.preview.ifBlank { "Say hello" },
+                                thread.preview.ifBlank { stringResource(R.string.messages_say_hello) },
                                 fontSize = 12.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

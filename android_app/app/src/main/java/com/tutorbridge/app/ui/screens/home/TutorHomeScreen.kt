@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.home
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,18 +56,18 @@ fun TutorHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("FACULTY TUTOR PORTAL", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.tutor_home_faculty_tutor_portal), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                     Text(uiState.userName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val unread = uiState.threads.sumOf { it.unread }
                     IconButton(onClick = { onNavigate("messages") }) {
                         BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
-                            Icon(Icons.Default.Chat, contentDescription = "Messages")
+                            Icon(Icons.Default.Chat, contentDescription = stringResource(R.string.common_messages))
                         }
                     }
                     IconButton(onClick = { onNavigate("notifications") }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
                     }
                 }
             }
@@ -76,12 +78,12 @@ fun TutorHomeScreen(
                 Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(EmeraldSuccess))
                 val staffId = uiState.userStaffId.ifBlank { institution?.staffId.orEmpty() }
                 Text(
-                    if (staffId.isBlank()) "Dept. Appointed Tutor" else "Staff #$staffId • Dept. Appointed Tutor",
+                    if (staffId.isBlank()) stringResource(R.string.tutor_home_appointed) else stringResource(R.string.tutor_home_staff_appointed, staffId),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Active", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.tutor_home_active), color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
 
@@ -101,26 +103,26 @@ fun TutorHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("TIMESHEETS & CLAIMS", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Text("${activePeriod?.label ?: "This month"} Pay Period", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(stringResource(R.string.common_timesheets_claims), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.tutor_home_pay_period, activePeriod?.label ?: stringResource(R.string.tutor_home_this_month)), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
                         Badge(containerColor = CrimsonPrimary) {
-                            Text("CLAIMABLE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_claimable), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            Text("Logged Hours", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                            Text("${activePeriod?.totalHours ?: 0.0} hrs", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_logged_hours), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_hours_value, (activePeriod?.totalHours ?: 0.0).toString()), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                         Column {
-                            Text("Claim Amount", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                            Text("R${(activePeriod?.claimValue ?: 0.0).toInt()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_claim_amount), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_money_value, (activePeriod?.claimValue ?: 0.0).toInt()), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("Export & Submit Claim to Faculty →", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text(stringResource(R.string.tutor_home_export_submit_claim_to_faculty), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                 }
             }
         }
@@ -141,11 +143,11 @@ fun TutorHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Weekly Availability", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("Choose the days students can book you →", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.tutor_home_weekly_availability), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.tutor_home_choose_the_days_students_can), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text("Open", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.tutor_home_open), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -158,7 +160,7 @@ fun TutorHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "New Student Bookings (${uiState.pendingBookings.size})",
+                    stringResource(R.string.tutor_home_new_bookings, uiState.pendingBookings.size),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -168,7 +170,7 @@ fun TutorHomeScreen(
         if (uiState.pendingBookings.isEmpty()) {
             item {
                 Text(
-                    "No bookings are waiting for a decision.",
+                    stringResource(R.string.tutor_home_no_bookings_are_waiting_for),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -204,16 +206,16 @@ fun TutorHomeScreen(
                         OutlinedButton(
                             onClick = { onDeclineBooking(booking.id) },
                             enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
-                        ) { Text("Decline", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                        ) { Text(stringResource(R.string.tutor_home_decline), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
                         Button(
                             onClick = { onAcceptBooking(booking.id) },
                             enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
-                        ) { Text("Accept & Sync", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
+                        ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
                     }
                     NeedsConnectionHint(uiState.isOnline)
                 }
@@ -222,7 +224,7 @@ fun TutorHomeScreen(
 
         // Upcoming sessions, straight off the calendar
         item {
-            Text("Upcoming Sessions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.tutor_home_upcoming_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
         items(uiState.calendarEvents.take(3)) { event ->

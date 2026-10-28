@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.auth
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -73,20 +74,20 @@ fun AuthScreen(
 
         Image(
             painter = painterResource(R.drawable.ic_tutorbridge_logo),
-            contentDescription = "TutorBridge",
+            contentDescription = stringResource(R.string.app_name),
             modifier = Modifier.size(96.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TutorBridge", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
-                Text("Higher Education Tutoring Network", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
+                Text(stringResource(R.string.auth_higher_education_tutoring_networ), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-            Text("SA Campuses", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.auth_sa_campuses), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -96,7 +97,7 @@ fun AuthScreen(
         // the server resolves on sign-in.
         if (isSignUp) {
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("INSTITUTIONAL PARTNER", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.auth_institutional_partner), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 ExposedDropdownMenuBox(
                     expanded = institutionDropdownExpanded,
                     onExpandedChange = { institutionDropdownExpanded = it }
@@ -114,7 +115,7 @@ fun AuthScreen(
                         onDismissRequest = { institutionDropdownExpanded = false }
                     ) {
                         if (uiState.institutionOptions.isEmpty()) {
-                            DropdownMenuItem(text = { Text("Loading institutions…") }, onClick = {}, enabled = false)
+                            DropdownMenuItem(text = { Text(stringResource(R.string.auth_loading_institutions)) }, onClick = {}, enabled = false)
                         }
                         uiState.institutionOptions.forEach { institution ->
                             DropdownMenuItem(
@@ -141,17 +142,17 @@ fun AuthScreen(
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.Shield, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(15.dp))
-                    Text("Role-Sorted Campus Access", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = NavySecondary)
+                    Text(stringResource(R.string.auth_role_sorted_campus_access), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = NavySecondary)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Students: Sign in with your campus Google account to book tutors & join sessions.",
+                    stringResource(R.string.auth_students_sign_in_with_your),
                     fontSize = 12.sp,
                     color = NavySecondary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Tutors: Log in with your admin-provisioned faculty credentials to access timesheets and export claims.",
+                    stringResource(R.string.auth_tutors_log_in_with_your),
                     fontSize = 12.sp,
                     color = NavySecondary
                 )
@@ -162,11 +163,11 @@ fun AuthScreen(
 
         if (isSignUp) {
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Full Name", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.auth_full_name), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
-                    placeholder = { Text("e.g. Liam Naidoo", fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.auth_e_g_liam_naidoo), fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true
@@ -176,11 +177,11 @@ fun AuthScreen(
         }
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Campus Email", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.auth_campus_email), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("e.g. ndxlia003@myuct.ac.za or tutor.clara@uct.ac", fontSize = 12.sp) },
+                placeholder = { Text(stringResource(R.string.auth_e_g_ndxlia003_myuct_ac), fontSize = 12.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 singleLine = true
@@ -190,7 +191,7 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Password", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.auth_password), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -212,7 +213,7 @@ fun AuthScreen(
         if (!isSignUp) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { onForgotPassword(email) }, enabled = !uiState.isAuthLoading) {
-                    Text("Forgot password?", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.auth_forgot_password), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         } else {
@@ -237,7 +238,7 @@ fun AuthScreen(
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
             } else {
                 Text(
-                    if (isSignUp) "Create Account" else "Login",
+                    if (isSignUp) stringResource(R.string.auth_create_account) else stringResource(R.string.auth_login),
                     fontWeight = FontWeight.Bold, fontSize = 13.5.sp
                 )
             }
@@ -247,7 +248,7 @@ fun AuthScreen(
 
         TextButton(onClick = onToggleAuthMode) {
             Text(
-                if (isSignUp) "Already have an Account? Sign In" else "New to TutorBridge? Create an Account",
+                if (isSignUp) stringResource(R.string.auth_already_have_an_account_sign) else stringResource(R.string.auth_new_to_tutorbridge_create_an),
                 fontSize = 12.sp
             )
         }
@@ -269,7 +270,7 @@ fun AuthScreen(
                         onRoleSelect(role)
                         onGoogleSignIn(idToken)
                     } catch (exception: Exception) {
-                        onGoogleSignInError(exception.message ?: "Google Sign-In failed or was cancelled")
+                        onGoogleSignInError(exception.message ?: context.getString(R.string.auth_google_sign_in_failed))
                     }
                 }
             },
@@ -279,13 +280,13 @@ fun AuthScreen(
         ) {
             Image(painter = painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(10.dp))
-            Text("Continue with Google Account", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(stringResource(R.string.auth_continue_with_google_account), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            "Integrated with South African Higher Education SSO • POPIA Compliant",
+            stringResource(R.string.auth_integrated_with_south_african_hi),
             fontSize = 12.sp,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -320,14 +321,14 @@ fun NewPasswordScreen(
         Spacer(modifier = Modifier.height(24.dp))
         Image(
             painter = painterResource(R.drawable.ic_tutorbridge_logo),
-            contentDescription = "TutorBridge",
+            contentDescription = stringResource(R.string.app_name),
             modifier = Modifier.size(72.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Set a new password", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
+        Text(stringResource(R.string.auth_set_a_new_password), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "You signed in with a temporary password from your institution. Choose one only you know to carry on.",
+            stringResource(R.string.auth_you_signed_in_with_a),
             fontSize = 12.sp,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -336,7 +337,7 @@ fun NewPasswordScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("New password (at least 6 characters)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.auth_new_password_at_least_6), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -354,7 +355,7 @@ fun NewPasswordScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Confirm new password", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.auth_confirm_new_password), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = confirm,
                 onValueChange = { confirm = it },
@@ -363,7 +364,7 @@ fun NewPasswordScreen(
                 singleLine = true,
                 isError = confirm.isNotEmpty() && confirm != password,
                 supportingText = if (confirm.isNotEmpty() && confirm != password) {
-                    { Text("The passwords do not match") }
+                    { Text(stringResource(R.string.auth_the_passwords_do_not_match)) }
                 } else null,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
@@ -378,14 +379,14 @@ fun NewPasswordScreen(
         Button(
             onClick = { onSubmit(password) },
             enabled = canSubmit,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
         ) {
             if (uiState.isAuthLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
             } else {
-                Text("Save Password", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                Text(stringResource(R.string.auth_save_password), fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
             }
         }
 
@@ -397,7 +398,7 @@ fun NewPasswordScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(onClick = onSignOut, enabled = !uiState.isAuthLoading) {
-            Text("Sign out", fontSize = 12.sp)
+            Text(stringResource(R.string.common_sign_out), fontSize = 12.sp)
         }
     }
 }

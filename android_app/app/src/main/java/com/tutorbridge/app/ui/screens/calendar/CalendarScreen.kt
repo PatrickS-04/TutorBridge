@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.calendar
 
+import androidx.compose.ui.res.pluralStringResource
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -78,12 +81,12 @@ fun CalendarScreen(
             ) {
                 Column {
                     Text(
-                        if (isTutor) "TUTOR SCHEDULE" else "STUDENT SCHEDULE",
+                        if (isTutor) stringResource(R.string.calendar_tutor_schedule) else stringResource(R.string.calendar_student_schedule),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text("Calendar & Events", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.calendar_calendar_events), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 // Sessions are created by the student who needs them - a tutor
                 // only ever accepts or declines one, so they get no Add button.
@@ -96,7 +99,7 @@ fun CalendarScreen(
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Event", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.calendar_add_event), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -118,19 +121,19 @@ fun CalendarScreen(
                         Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = NavySecondary)
                         Column {
                             Text(
-                                "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${yearMonth.year}",
+                                "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${yearMonth.year}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
-                            Text("${uiState.calendarEvents.count { YearMonth.from(LocalDate.parse(it.date)) == yearMonth }} scheduled events", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(uiState.calendarEvents.count { YearMonth.from(LocalDate.parse(it.date)) == yearMonth }.let { n -> pluralStringResource(R.plurals.calendar_scheduled_events, n, n) }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Row {
                         IconButton(onClick = { onSelectDate(uiState.selectedCalendarDate.minusMonths(1)) }) {
-                            Icon(Icons.Default.ChevronLeft, contentDescription = "Prev")
+                            Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.calendar_prev))
                         }
                         IconButton(onClick = { onSelectDate(uiState.selectedCalendarDate.plusMonths(1)) }) {
-                            Icon(Icons.Default.ChevronRight, contentDescription = "Next")
+                            Icon(Icons.Default.ChevronRight, contentDescription = stringResource(R.string.calendar_next))
                         }
                     }
                 }
@@ -146,7 +149,7 @@ fun CalendarScreen(
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN").forEach { d ->
+                        DayOfWeek.entries.map { it.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(Locale.getDefault()) }.forEach { d ->
                             Text(
                                 d,
                                 modifier = Modifier.weight(1f),
@@ -209,12 +212,12 @@ fun CalendarScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf("All Events", "1-on-1 Lessons", "Office Hours", "Exam Prep").forEach { filter ->
+                listOf("All Events" to R.string.calendar_filter_all, "1-on-1 Lessons" to R.string.calendar_filter_lessons, "Office Hours" to R.string.calendar_filter_office_hours, "Exam Prep" to R.string.calendar_filter_exam_prep).forEach { (filter, labelRes) ->
                     FilterChip(
                         selected = uiState.calendarFilterType.equals(filter, ignoreCase = true) ||
                             (filter == "All Events" && uiState.calendarFilterType == "all"),
                         onClick = { onFilterChange(filter) },
-                        label = { Text(filter, fontSize = 12.sp) }
+                        label = { Text(stringResource(labelRes), fontSize = 12.sp) }
                     )
                 }
             }
@@ -223,7 +226,7 @@ fun CalendarScreen(
         // Agenda
         item {
             Text(
-                "Agenda • ${uiState.selectedCalendarDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)}, ${uiState.selectedCalendarDate.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${uiState.selectedCalendarDate.dayOfMonth}   ${eventsOnDate.size} items",
+                pluralStringResource(R.plurals.calendar_agenda, eventsOnDate.size, uiState.selectedCalendarDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()), uiState.selectedCalendarDate.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), uiState.selectedCalendarDate.dayOfMonth, eventsOnDate.size),
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
@@ -242,10 +245,10 @@ fun CalendarScreen(
                         Icon(Icons.Default.EventBusy, contentDescription = null, tint = CrimsonPrimary)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text("No Sessions on This Date", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(stringResource(R.string.calendar_no_sessions_on_this_date), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Schedule a personal study block or book a tutor from the directory.",
+                        stringResource(R.string.calendar_schedule_a_personal_study_block),
                         fontSize = 12.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -281,7 +284,7 @@ fun CalendarScreen(
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("With ${event.participantName}", fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
 
                         if (isTutor) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -297,9 +300,9 @@ fun CalendarScreen(
                                 )
                                 Text(
                                     if (event.checklist.isEmpty()) {
-                                        "Add session notes"
+                                        stringResource(R.string.calendar_add_session_notes)
                                     } else {
-                                        "Notes • ${event.checklist.count { it.completed }}/${event.checklist.size} done"
+                                        stringResource(R.string.calendar_notes_progress, event.checklist.count { it.completed }, event.checklist.size)
                                     },
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -320,7 +323,7 @@ fun CalendarScreen(
                             ) {
                                 Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Reschedule", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.calendar_reschedule), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -338,8 +341,8 @@ private fun CalendarEventUi.isUpcoming(): Boolean {
 }
 
 private val rescheduleHours = (7..20).map { LocalTime.of(it, 0) }
-private val hourLabel = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
-private val dayLabel = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
+private val hourLabel get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+private val dayLabel get() = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
 /**
  * Pick a new day and start time for [event]. The length of the session is kept;
@@ -357,15 +360,15 @@ private fun RescheduleDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Reschedule session") },
+        title = { Text(stringResource(R.string.calendar_reschedule_session)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "${event.subject} with ${event.participantName}, currently ${event.date} ${event.startTime}",
+                    stringResource(R.string.calendar_reschedule_current, event.subject, event.participantName, event.date, event.startTime),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text("Day", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.calendar_day), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -378,7 +381,7 @@ private fun RescheduleDialog(
                         )
                     }
                 }
-                Text("Start time", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.calendar_start_time), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -395,10 +398,10 @@ private fun RescheduleDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(date, time) }) {
-                Text("Move session", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_move_session), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Keep current time") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calendar_keep_current_time)) } }
     )
 }
 

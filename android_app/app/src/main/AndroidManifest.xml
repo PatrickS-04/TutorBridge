@@ -11,6 +11,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TutorBridge"
@@ -39,6 +40,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Reference: Android Developers. 2026. Per-app language preferences. [Online].
+               Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026]. -->
+        <!-- Android 13 and later remember the app's language themselves. Before that, AppCompat
+             keeps the choice here, so without this the language reverts to the phone's on every restart. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
         <!-- Reference: Android Developers. 2025. Setting up file sharing. [Online].
                Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026]. -->
         <provider

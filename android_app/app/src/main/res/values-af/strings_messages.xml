@@ -1,0 +1,10 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="chat_load_earlier_messages">Laai vroeër boodskappe</string>
+    <string name="chat_message">Boodskap</string>
+    <string name="chat_no_messages_yet_say_hello">Nog geen boodskappe nie - sê hallo.</string>
+    <string name="chat_send">Stuur</string>
+    <string name="messages_a_chat_opens_when_you">\'n Gesprek maak oop wanneer jy \'n tutor se aanbod aanvaar of \'n tutor bespreek, sodat julle tye en plekke kan reël.</string>
+    <string name="messages_no_conversations_yet">Nog geen gesprekke nie</string>
+    <string name="messages_say_hello">Sê hallo</string>
+</resources>

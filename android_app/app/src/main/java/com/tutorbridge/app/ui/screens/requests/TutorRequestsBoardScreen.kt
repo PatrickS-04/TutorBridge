@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,9 +43,9 @@ fun TutorRequestsBoardScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Student Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.request_board_student_requests), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "Browse tuition requests posted by campus students.",
+            stringResource(R.string.request_board_browse_tuition_requests_posted_b),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -56,8 +58,8 @@ fun TutorRequestsBoardScreen(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(4.dp)
         ) {
-            SegTab("Open Requests (${uiState.openRequests.size})", tab == 0, Modifier.weight(1f)) { tab = 0 }
-            SegTab("My Applications (${uiState.myApplications.size})", tab == 1, Modifier.weight(1f)) { tab = 1 }
+            SegTab(stringResource(R.string.tutor_board_open_requests, uiState.openRequests.size), tab == 0, Modifier.weight(1f)) { tab = 0 }
+            SegTab(stringResource(R.string.tutor_board_my_applications, uiState.myApplications.size), tab == 1, Modifier.weight(1f)) { tab = 1 }
         }
 
         val listToShow = if (tab == 0) uiState.openRequests else uiState.myApplications
@@ -125,11 +127,11 @@ private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndO
             Button(
                 onClick = { onAcceptAndOffer(req.id) },
                 enabled = online,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(23.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {
-                Text("Accept & Offer Session (Department Rate: R220/hr)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.request_board_accept_offer_session_department), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             NeedsConnectionHint(online)
         }
@@ -150,10 +152,10 @@ private fun MyApplicationCard(req: StudentRequestUi) {
         ) {
             Column {
                 Text(req.subject, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("Student: ${req.studentName}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.request_board_student, req.studentName), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Badge(containerColor = EmeraldTint) {
-                Text("Offered", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.request_board_offered), color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

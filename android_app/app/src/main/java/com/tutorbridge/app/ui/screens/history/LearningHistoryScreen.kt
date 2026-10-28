@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.history
 
+import androidx.compose.ui.res.pluralStringResource
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,10 +38,13 @@ fun LearningHistoryScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    "${uiState.userName.split(" ").firstOrNull() ?: "Student"}'s Learning History",
+                    stringResource(
+                        R.string.history_title,
+                        uiState.userName.split(" ").firstOrNull() ?: stringResource(R.string.history_default_name)
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -57,8 +63,8 @@ fun LearningHistoryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Student Health Index", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("${uiState.studentHealthIndexPercent}% High", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.history_student_health_index), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.history_percent_high, uiState.studentHealthIndexPercent), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     LinearProgressIndicator(
@@ -69,8 +75,8 @@ fun LearningHistoryScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = {}, label = { Text("${uiState.lessonsTaught} Lessons Taught") })
-                        AssistChip(onClick = {}, label = { Text("${uiState.targetGrade} Target Grade") })
+                        AssistChip(onClick = {}, label = { Text(pluralStringResource(R.plurals.history_lessons_taught, uiState.lessonsTaught, uiState.lessonsTaught)) })
+                        AssistChip(onClick = {}, label = { Text(stringResource(R.string.history_target_grade, uiState.targetGrade)) })
                     }
                 }
             }
@@ -81,8 +87,8 @@ fun LearningHistoryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Past Completed Sessions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("Active student since Sept 2026 • ${uiState.studentHealthIndexPercent}% Mastery", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.history_past_completed_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.history_active_since, uiState.studentHealthIndexPercent), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 

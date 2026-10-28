@@ -1,0 +1,28 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="claims_claim_period">ISIKHATHI SOMANGALELO</string>
+    <string name="claims_claim_settled">Isimangalo Sixazululiwe</string>
+    <string name="claims_completed_sessions_show_up_here">Izifundo eziqediwe zivela lapha njengamahora angamangalelwa.</string>
+    <string name="claims_copy_ref">Kopisha inkomba</string>
+    <string name="claims_csv_export">Ukuthekelisa nge-CSV</string>
+    <string name="claims_draft_claimable">⏱ Idrafti (Ingamangalelwa)</string>
+    <string name="claims_institution_payment_export">Ukuthekelisa Inkokhelo Yesikhungo</string>
+    <string name="claims_load_earlier_months">Layisha izinyanga zangaphambilini</string>
+    <string name="claims_no_claim_periods_yet">Azikho izikhathi zezimangalo okwamanje</string>
+    <string name="claims_paid_to_bank">✓ Kukhokhelwe Ebhange</string>
+    <string name="claims_pdf_voucher">Ivawusha ye-PDF</string>
+    <string name="claims_rate">Isilinganiso</string>
+    <string name="claims_submit_to_admin">Thumela kumlawuli</string>
+    <string name="claims_verified_with_student_attendance">Kuqinisekiswe ngokubhalisa kokuba khona komfundi</string>
+    <string name="claims_faculty_staff">%1$s • Isisebenzi #%2$s</string>
+    <string name="claims_rate_per_hour">R%1$d/ihora</string>
+    <string name="claims_hours_value">amahora angu-%1$s</string>
+    <string name="claims_claim_ref">Inkomba Yesimangalo: %1$s</string>
+    <string name="claims_itemized_sessions">Izifundo Zokufundisa Ezibhalwe Ngokwezinto  %1$d</string>
+    <string name="claims_topic">Isihloko: %1$s</string>
+    <string name="claims_hours_at_rate">amahora angu-%1$s @ R%2$d</string>
+    <string name="claims_claim_value">Inani Lesimangalo</string>
+    <string name="claims_paid">Kukhokhiwe</string>
+    <string name="claims_sessions">Izifundo</string>
+    <string name="claims_total_hours">Wonke Amahora</string>
+</resources>

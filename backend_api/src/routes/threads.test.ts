@@ -8,7 +8,7 @@ import admin from "firebase-admin";
 import mongoose from "mongoose";
 import { routeMounts } from ".";
 import { errorHandler } from "../middleware/errors";
-import { User, UserRole, Thread, Message, NotificationEvent, NotificationToken } from "../models";
+import { User, UserRole, Thread, Message, NotificationEvent, NotificationToken, UserSettings } from "../models";
 
 /**
  * The chat the app's Messages screens sit on: sending stores the message and
@@ -32,6 +32,9 @@ NotificationEvent.create = (async (event: any) => {
   return { ...event, _id: new mongoose.Types.ObjectId() };
 }) as any;
 NotificationToken.find = (() => ({ select: () => ({ lean: async () => [] }) })) as any;
+// The recipient's language is looked up before a notification is written: none chosen, no account locale.
+UserSettings.findOne = (() => ({ select: () => ({ lean: async () => null }) })) as any;
+User.findById = (() => ({ select: () => ({ lean: async () => null }) })) as any;
 
 /** A thread between me and the other person that remembers having been saved. */
 function stubThread(unread: Record<string, number> = {}) {

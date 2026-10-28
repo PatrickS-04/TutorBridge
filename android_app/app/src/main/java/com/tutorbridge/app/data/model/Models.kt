@@ -158,7 +158,8 @@ data class NotificationUi(
     val emoji: String,
     val title: String,
     val body: String,
-    val time: String,
+    /** When it was sent (ISO-8601); the screen says how long ago, in the language the app is showing. */
+    val createdAt: String,
     val unread: Boolean
 )
 

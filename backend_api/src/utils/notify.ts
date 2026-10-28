@@ -1,23 +1,43 @@
 import admin from "firebase-admin";
 import {
-  NotificationEvent, NotificationToken, NotificationCategory, INotificationEvent, UserSettings
+  NotificationEvent, NotificationToken, NotificationCategory, INotificationEvent, UserSettings, User, Locale,
 } from "../models";
 import { buildMulticast, findStaleTokens, pushAllowed } from "./push";
+import { NotificationKey, NotificationValues, render } from "./messages";
 
 export function notify(
   institutionId: string, userId: string, category: NotificationCategory,
-  title: string, body: string, deepLink?: string
+  key: NotificationKey, values: NotificationValues, deepLink?: string
 ) {
-  deliver(institutionId, userId, category, title, body, deepLink).catch((error) =>
+  deliver(institutionId, userId, category, key, values, deepLink).catch((error) =>
     console.error("notify failed:", error)
   );
 }
 
+/**
+ * The language the recipient reads the app in: what they chose in Settings, else the
+ * locale on their account, else English. A lookup that fails must not lose the
+ * notification, so it falls back rather than throws.
+ */
+export async function localeOf(userId: string): Promise<Locale> {
+  try {
+    const settings = await UserSettings.findOne({ userId }).select("language").lean();
+    if (settings?.language) return settings.language;
+    const user = await User.findById(userId).select("locale").lean();
+    return user?.locale ?? Locale.EN;
+  } catch (error) {
+    console.error("locale lookup failed:", error);
+    return Locale.EN;
+  }
+}
+
 async function deliver(
   institutionId: string, userId: string, category: NotificationCategory,
-  title: string, body: string, deepLink?: string
+  key: NotificationKey, values: NotificationValues, deepLink?: string
 ) {
-  const event = await NotificationEvent.create({ institutionId, userId, category, title, body, deepLink });
+  const locale = await localeOf(userId);
+  const { title, body } = render(key, locale, values);
+  const event = await NotificationEvent.create({ institutionId, userId, category, title, body, deepLink, locale });
   await sendPush(event).catch((error) => console.error("push failed:", error));
 }
 

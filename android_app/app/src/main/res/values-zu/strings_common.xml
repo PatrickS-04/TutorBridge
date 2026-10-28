@@ -1,0 +1,47 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="common_back">Emuva</string>
+    <string name="common_back_to_dashboard">Buyela ekhasini eliyinhloko</string>
+    <string name="common_delete">SUSA</string>
+    <string name="common_from_hh_mm">Kusuka (HH:mm)</string>
+    <string name="common_messages">Imilayezo</string>
+    <string name="common_notifications">Izaziso</string>
+    <string name="common_sign_out">Phuma</string>
+    <string name="common_timesheets_claims">Amashidi Ezikhathi &amp; Izimangalo</string>
+    <string name="common_to_hh_mm">Kuya (HH:mm)</string>
+    <string name="common_percent_match">%1$d%% ukufana</string>
+    <string name="common_active_now">Ukhona manje</string>
+    <string name="common_active_today">Ukhona namuhla</string>
+    <string name="common_closed">Kuvaliwe</string>
+    <string name="common_matched">Kufanisiwe</string>
+    <string name="common_not_available_today">Akatholakali namuhla</string>
+    <string name="common_withdrawn">Kuhoxisiwe</string>
+    <string name="common_no_maps_app">Alikho uhlelo lwamamephu</string>
+    <string name="nav_home">Ekhaya</string>
+    <string name="nav_find">Funa</string>
+    <string name="nav_claims">Izimangalo</string>
+    <string name="nav_calendar">Ikhalenda</string>
+    <string name="nav_requests">Izicelo</string>
+    <string name="nav_settings">Izilungiselelo</string>
+    <string name="vm_select_institution">Qala ngokukhetha isikhungo sakho</string>
+    <string name="vm_password_changed">Iphasiwedi ishintshiwe - ngena ngephasiwedi yakho entsha</string>
+    <string name="vm_enter_email_first">Qala ngokufaka i-imeyili yakho yasekhampasi, bese uthinta Ukhohlwe iphasiwedi</string>
+    <string name="vm_invalid_email">Lokhu akubukeki njengekheli le-imeyili elivumelekile</string>
+    <string name="vm_reauth_change_email">Ukuze uvikeleke, sicela uphume bese ungena futhi ngaphambi kokushintsha i-imeyili yakho</string>
+    <string name="vm_pick_date_slot">Qala ngokukhetha usuku nesikhathi</string>
+    <string name="vm_choose_subject_area">Qala ngokukhetha isifundo nendawo yekhampasi</string>
+    <string name="vm_matched_book_time">Kufanisiwe no-%1$s - bhukha isikhathi ephrofayilini yabo ngaphansi kwe-Funa</string>
+    <string name="vm_no_signed_in_user">Akukho msebenzisi ongeneyo otholakele - sicela ungene futhi</string>
+    <string name="vm_reauth_delete_account">Ukuze uvikeleke, sicela uphume bese ungena futhi ngaphambi kokususa i-akhawunti yakho</string>
+    <string name="vm_calendar_connected">Izifundo eziqinisekisiwe manje zizovela ku-Google Calendar.</string>
+    <string name="vm_calendar_disconnected">I-Google Calendar inqamukile.</string>
+    <string name="api_error_already_applied">Usuvele wafaka isicelo salesi sicelo</string>
+    <string name="api_error_already_decided">Lesi sicelo sesivele sinqunyiwe</string>
+    <string name="api_error_already_scheduled">Lokhu kufanisa sekuvele kunesifundo esibhukhiwe</string>
+    <string name="api_error_slot_conflict">Lesi sikhathi sesivele sithathiwe - sicela ukhethe esinye</string>
+    <string name="api_error_email_taken">I-imeyili isivele ibhalisiwe</string>
+    <string name="api_error_google_auth_failed">Ayikwazanga ukuxhuma leyo akhawunti ye-Google - sicela uzame futhi</string>
+    <string name="api_error_unverified">Othisha abaqinisekisiwe kuphela abangafaka izicelo</string>
+    <string name="api_error_not_required">Alikho iphasiwedi yesikhashana okufanele ishintshwe</string>
+    <string name="error_server">Kukhona okungahambanga kahle ohlangothini lwethu. Sicela uzame futhi.</string>
+</resources>

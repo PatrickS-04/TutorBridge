@@ -98,8 +98,8 @@ router.post(
         req.auth!.institutionId,
         recipient,
         NotificationCategory.MESSAGE,
-        "New message",
-        body.slice(0, 120),
+        "message.new",
+        { text: body.slice(0, 120) },
         `tutorbridge://threads/${thread._id}`
       );
     }

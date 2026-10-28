@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.auth
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,16 +28,16 @@ fun BiometricScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Welcome Back", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.biometric_welcome_back), style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Confirm it's you to continue", style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.biometric_confirm_it_s_you_to), style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = onUnlockClick, modifier = Modifier.fillMaxWidth(0.8f)) {
-            Text("Unlock")
+            Text(stringResource(R.string.biometric_unlock))
         }
         Spacer(modifier = Modifier.height(12.dp))
         TextButton(onClick = onSignInDifferently) {
-            Text("Sign in with a different account")
+            Text(stringResource(R.string.biometric_sign_in_with_a_different))
         }
     }
 }

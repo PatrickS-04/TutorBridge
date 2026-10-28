@@ -1,0 +1,34 @@
+<resources>
+    <string name="booking_available_slot_1_hour">Available Slot (1 hour)</string>
+    <string name="booking_booking_declined">Booking Declined</string>
+    <string name="booking_booking_request_sent">Booking Request Sent!</string>
+    <string name="booking_check_for_a_reply">Check for a reply</string>
+    <string name="booking_confirm_request">Confirm Request</string>
+    <string name="booking_continue_to_review">Continue to Review</string>
+    <string name="booking_e_g_the_daily_grind">e.g. The Daily Grind coffee shop, Main Road</string>
+    <string name="booking_find_another_tutor">Find Another Tutor</string>
+    <string name="booking_pick_another_slot">Pick Another Slot</string>
+    <string name="booking_review_booking">Review Booking</string>
+    <string name="booking_select_availability">Select Availability</string>
+    <string name="booking_session_confirmed">Session Confirmed!</string>
+    <string name="booking_session_location">Session Location</string>
+    <string name="booking_somewhere_else">Somewhere else</string>
+    <string name="booking_success">Success</string>
+    <string name="booking_tutor_s_note">Tutor\'s note:</string>
+    <string name="booking_view_in_calendar_tab">View in Calendar Tab</string>
+    <string name="booking_view_on_calendar">View on Calendar</string>
+    <string name="booking_your_request_was_submitted_and">Your request was submitted and synched with your calendar. Most tutors reply in less than 2 hours.</string>
+    <string name="booking_your_tutor_accepted_get_ready">Your tutor accepted! Get ready for your session at the location below.</string>
+    <string name="booking_you_will_meet">You will meet %1$s at the location above once they confirm.</string>
+    <string name="booking_auto_adds_to_calendar_tab">✓ Auto-adds to Calendar tab</string>
+    <string name="booking_calendar_sync">Calendar Sync</string>
+    <string name="booking_date">Date</string>
+    <string name="booking_date_time">Date &amp; Time</string>
+    <string name="booking_location">Location</string>
+    <string name="booking_pick_a_date">Pick a date</string>
+    <string name="booking_time">Time</string>
+    <string name="booking_tutor">Tutor</string>
+    <string name="booking_no_hours_published">%1$s has not published any hours yet - pick another tutor.</string>
+    <string name="booking_no_hours_day">%1$s has no hours set for this day - try another date.</string>
+    <string name="booking_time_one_hour">%1$s (1 hour)</string>
+</resources>

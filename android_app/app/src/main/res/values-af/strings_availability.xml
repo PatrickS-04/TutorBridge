@@ -1,0 +1,10 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="availability_availability">Beskikbaarheid</string>
+    <string name="availability_configured_day_windows">Opgestelde dagvensters</string>
+    <string name="availability_manage_recurring_weekly_hours">Bestuur herhalende weeklikse ure.</string>
+    <string name="availability_recurring_teaching_days">Herhalende onderrigdae</string>
+    <string name="availability_save_hours">Stoor ure</string>
+    <string name="availability_tap_days_when_you_are">Tik op dae wanneer jy vir studentebesprekings beskikbaar is.</string>
+    <string name="availability_inactive">Onaktief</string>
+</resources>

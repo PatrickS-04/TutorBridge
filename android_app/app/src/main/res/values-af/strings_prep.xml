@@ -1,0 +1,16 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="prep_add_a_to_do">Voeg \'n taak by</string>
+    <string name="prep_add_to_do">Voeg taak by</string>
+    <string name="prep_anything_worth_remembering_about">Enigiets wat die moeite werd is om te onthou oor hierdie student of voog</string>
+    <string name="prep_nothing_on_the_list_yet">Nog niks op die lys nie. Voeg by wat voor of tydens die sessie gedoen moet word.</string>
+    <string name="prep_only_you_can_see_these">Slegs jy kan hierdie notas sien.</string>
+    <string name="prep_save_notes">Stoor notas</string>
+    <string name="prep_session_notes">Sessienotas</string>
+    <string name="prep_side_notes">Sy-notas</string>
+    <string name="prep_to_do_for_this_session">Te doen vir hierdie sessie</string>
+    <string name="prep_venue">Plek</string>
+    <string name="prep_progress">%1$d/%2$d klaar</string>
+    <string name="prep_remove_item">Verwyder \"%1$s\"</string>
+    <string name="prep_this_session">Hierdie sessie</string>
+</resources>

@@ -20,6 +20,10 @@ import java.time.LocalDate
  */
 class MappingTest {
 
+    // Day and month names follow the app's language; pin it so the expected text does not depend on the machine running the test.
+    @org.junit.Before
+    fun useEnglish() = java.util.Locale.setDefault(java.util.Locale.ENGLISH)
+
     private val monday = LocalDate.of(2026, 9, 21) // a Monday
 
     private val tutorDto = UserDto(

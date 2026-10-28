@@ -26,6 +26,7 @@ import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.R
+import com.tutorbridge.app.data.model.Language
 
 @Composable
 fun SettingsScreen(
@@ -72,17 +73,17 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("App Language") },
+            title = { Text(stringResource(R.string.settings_app_language)) },
             text = {
                 Column {
-                    listOf("English", "isiZulu", "Afrikaans").forEach { option ->
+                    Language.entries.map { it.displayName }.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onSelectLanguage(option)
                                     showLanguageDialog = false
-                                    (context as? android.app.Activity)?.recreate()
+                                    // AppCompat recreates the screen itself when the language changes.
+                                    onSelectLanguage(option)
                                 }
                                 .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -95,7 +96,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         )
     }
@@ -159,7 +160,7 @@ fun SettingsScreen(
                         )
                     }
                     IconButton(onClick = onEditProfileClick) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.settings_edit), modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -222,8 +223,8 @@ fun SettingsScreen(
                         //A failed write outranks the happy "Connected as" line:
                         //it is the one thing the row could say that the user
                         //cannot find out any other way.
-                        ?: uiState.calendarSyncError?.let { "Last sync failed: $it" }
-                        ?: uiState.calendarAccountEmail?.let { "Connected as $it" }
+                        ?: uiState.calendarSyncError?.let { stringResource(R.string.calendar_sync_failed, it) }
+                        ?: uiState.calendarAccountEmail?.let { stringResource(R.string.calendar_connected_as, it) }
                         ?: stringResource(R.string.calendar_default_status)
                     Text(
                         text = status,
@@ -311,7 +312,7 @@ fun SettingsScreen(
         item {
             Button(
                 onClick = { if (unsent > 0) showSignOutWarning = true else onSignOut() },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
                     // Navy text on the dark navy surface is all but invisible, so dark
@@ -320,7 +321,7 @@ fun SettingsScreen(
                     contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else NavySecondary
                 )
             ) {
-                Icon(Icons.Default.Logout, contentDescription = "Sign Out")
+                Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.common_sign_out))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.sign_out_action), fontWeight = FontWeight.Bold)
             }
@@ -335,11 +336,11 @@ fun SettingsScreen(
                 ) {
                     OutlinedButton(
                         onClick = onDeleteAccountClick,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = CrimsonPrimary)
                     ) {
-                        Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
+                        Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.common_delete))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.delete_account_action), fontWeight = FontWeight.Bold)
                     }

@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.prep
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,10 +65,10 @@ fun SessionPrepScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    text = "Session Notes",
+                    text = stringResource(R.string.prep_session_notes),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -99,7 +101,7 @@ fun SessionPrepScreen(
                         }
                         Column {
                             Text(
-                                session?.participantName ?: "This session",
+                                session?.participantName ?: stringResource(R.string.prep_this_session),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
@@ -130,7 +132,7 @@ fun SessionPrepScreen(
                         ) {
                             Icon(
                                 Icons.Default.Place,
-                                contentDescription = "Venue",
+                                contentDescription = stringResource(R.string.prep_venue),
                                 tint = CrimsonPrimary,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -148,10 +150,10 @@ fun SessionPrepScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("To do for this session", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.prep_to_do_for_this_session), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 if (checklist.isNotEmpty()) {
                     Text(
-                        "$completed/${checklist.size} done",
+                        stringResource(R.string.prep_progress, completed, checklist.size),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -168,7 +170,7 @@ fun SessionPrepScreen(
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
                     if (checklist.isEmpty()) {
                         Text(
-                            "Nothing on the list yet. Add what has to be done before or during the session.",
+                            stringResource(R.string.prep_nothing_on_the_list_yet),
                             fontSize = 12.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
@@ -191,7 +193,7 @@ fun SessionPrepScreen(
                             IconButton(onClick = { onRemoveGoal(goal.id) }) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "Remove \"${goal.text}\"",
+                                    contentDescription = stringResource(R.string.prep_remove_item, goal.text),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -204,7 +206,7 @@ fun SessionPrepScreen(
                         value = uiState.newChecklistItem,
                         onValueChange = onNewItemChange,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Add a to-do", fontSize = 13.sp) },
+                        placeholder = { Text(stringResource(R.string.prep_add_a_to_do), fontSize = 13.sp) },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyMedium,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -214,7 +216,7 @@ fun SessionPrepScreen(
                                 onClick = onAddItem,
                                 enabled = uiState.newChecklistItem.isNotBlank()
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add to-do", tint = CrimsonPrimary)
+                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.prep_add_to_do), tint = CrimsonPrimary)
                             }
                         }
                     )
@@ -224,7 +226,7 @@ fun SessionPrepScreen(
 
         // ===== Free-text side notes =====
         item {
-            Text("Side notes", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.prep_side_notes), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
         item {
@@ -233,10 +235,10 @@ fun SessionPrepScreen(
                 onValueChange = onSideNotesChange,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 130.dp),
                 placeholder = {
-                    Text("Anything worth remembering about this student or guardian", fontSize = 13.sp)
+                    Text(stringResource(R.string.prep_anything_worth_remembering_about), fontSize = 13.sp)
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
-                supportingText = { Text("Only you can see these notes.", fontSize = 12.sp) }
+                supportingText = { Text(stringResource(R.string.prep_only_you_can_see_these), fontSize = 12.sp) }
             )
         }
 
@@ -251,7 +253,7 @@ fun SessionPrepScreen(
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Save notes", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.prep_save_notes), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }

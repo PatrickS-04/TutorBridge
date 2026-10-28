@@ -1,0 +1,18 @@
+<resources>
+    <string name="find_active_on_campus_now">Active on campus now</string>
+    <string name="find_explore_appointed_faculty_tutors">Explore appointed faculty tutors &amp; undergraduate teaching assistants.</string>
+    <string name="find_find_a_campus_tutor">Find a Campus Tutor</string>
+    <string name="find_search">Search</string>
+    <string name="find_search_course_code_or_subject">Search course code or subject (e.g. MAM)</string>
+    <string name="find_top_rated_4_9">★ Top Rated (4.9+)</string>
+    <string name="tutor_profile_select_choose_time_slot">Select &amp; Choose Time Slot</string>
+    <string name="tutor_profile_tutor_profile">Tutor Profile</string>
+    <string name="tutor_profile_about">About %1$s</string>
+    <string name="find_subject_with_code">%1$s\n(%2$s)</string>
+    <string name="tutor_profile_consultation_venue">Consultation Venue</string>
+    <string name="tutor_profile_department">Department</string>
+    <string name="tutor_profile_languages">Languages</string>
+    <string name="tutor_profile_total_consultations">Total Consultations</string>
+    <string name="tutor_profile_rating">★ %1$s Rating</string>
+    <string name="tutor_profile_sessions_count">%1$d+ sessions</string>
+</resources>

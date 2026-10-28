@@ -5,6 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tutorbridge.app.Retrofit.RetrofitInstance
 import com.tutorbridge.app.data.model.*
+import com.tutorbridge.app.data.repository.ApiException
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.tutorbridge.app.R
 import com.tutorbridge.app.TutorBridgeApp
 import com.tutorbridge.app.data.local.LocalCache
@@ -18,6 +21,7 @@ import com.tutorbridge.app.data.local.pendingNotesByBooking
 import com.tutorbridge.app.data.local.pendingSettings
 import com.tutorbridge.app.data.local.withPending
 import com.tutorbridge.app.data.repository.notesOf
+import com.tutorbridge.app.data.repository.slotTime
 import com.tutorbridge.app.sync.SyncScheduler
 import com.tutorbridge.app.network.NetworkMonitor
 import java.io.IOException
@@ -121,6 +125,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback,
                 sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates) }
         }
+        // The picker should open on the language the app is really in, not on English.
+        effectiveLanguage().let { language ->
+            _uiState.update { it.copy(selectedLanguage = language.displayName) }
+            Firebase.auth.setLanguageCode(language.tag)
+        }
         loadInstitutions()
 
         // The phone's connection, for the offline banner and for refreshing when it comes back.
@@ -158,7 +167,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun signUp(fullName: String, email: String, password: String) {
         val institutionId = _uiState.value.selectedSignupInstitutionId
         if (institutionId == null) {
-            _uiState.update { it.copy(authErrorMessage = "Select your institution first") }
+            _uiState.update { it.copy(authErrorMessage = text(R.string.vm_select_institution)) }
             return
         }
         // Self sign-up is always a student/guardian; the backend assigns the same role.
@@ -266,7 +275,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                                 isAuthLoading = false,
                                 currentRoute = "auth",
                                 authMode = AuthMode.SIGN_IN,
-                                authErrorMessage = "Password changed - sign in with your new password"
+                                authErrorMessage = text(R.string.vm_password_changed)
                             )
                         }
                     }
@@ -284,7 +293,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun sendPasswordReset(onResult: (String) -> Unit) {
         val email = Firebase.auth.currentUser?.email
         if (email == null) {
-            onResult("No signed-in user found - Please log in again")
+            onResult(text(R.string.vm_no_signed_in_user))
             return
         }
         viewModelScope.launch {
@@ -308,7 +317,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun sendPasswordResetTo(email: String) {
         val address = email.trim()
         if (address.isEmpty()) {
-            _uiState.update { it.copy(authInfoMessage = null, authErrorMessage = "Enter your campus email first, then tap Forgot password") }
+            _uiState.update { it.copy(authInfoMessage = null, authErrorMessage = text(R.string.vm_enter_email_first)) }
             return
         }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, authInfoMessage = null) }
@@ -320,7 +329,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             } catch (exception: FirebaseAuthInvalidUserException) {
                 _uiState.update { it.copy(isAuthLoading = false, authInfoMessage = sent) }
             } catch (exception: FirebaseAuthInvalidCredentialsException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "That doesn't look like a valid email address") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_invalid_email)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not send the reset email") }
             }
@@ -561,13 +570,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         userStaffId = user.staffNumber.orEmpty(),
                         tutorHourlyRate = user.hourlyRate ?: 0.0,
                         tutorProfileCompleteness = user.profileCompleteness,
-                        tutorLanguagesSpoken = user.locale.let {
-                            when (it) {
-                                "ZU" -> "isiZulu"
-                                "AF" -> "Afrikaans"
-                                else -> "English"
-                            }
-                        },
+                        tutorLanguagesSpoken = Language.fromServerCode(user.locale).displayName,
                         tutorConsultationRoom = user.areaId?.name.orEmpty(),
                         weeklyAvailability = windows.toDayWindows(),
                         activeDays = windows.map { it.day.name }.toSet()
@@ -612,7 +615,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and sign back in before changing your email") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_change_email)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not update email") }
             }
@@ -624,13 +627,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             // What the server (or the cache) says, with changes made offline and not yet sent on top -
             // otherwise a reload would flip a switch back that the user just turned.
             repository.settings().map { it.withPending(_uiState.value.outboxItems.pendingSettings()) }.onSuccess { settings ->
+                // The account's language and this phone's may differ (a new phone, a choice made offline).
+                val plan = reconcileLanguage(Language.fromServerCode(settings.language), languageChosenOnThisPhone())
+                plan.applyOnThisPhone?.let { applyLanguage(it) }
+                plan.saveToAccount?.let { saveSettings(UpdateSettingsRequest(language = it.serverCode)) }
+
                 _uiState.update {
                     it.copy(
-                        selectedLanguage = when (settings.language) {
-                            "ZU" -> "isiZulu"
-                            "AF" -> "Afrikaans"
-                            else -> "English"
-                        },
+                        selectedLanguage = (plan.applyOnThisPhone ?: effectiveLanguage()).displayName,
                         isDarkTheme = settings.theme == "DARK",
                         smsFallbackEnabled = settings.smsFallback,
                         bookingUpdatesEnabled = settings.notifications.booking,
@@ -792,6 +796,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun friendlyMessage(error: Throwable): String = when {
         error is IOException && !_uiState.value.isOnline -> text(R.string.error_offline)
         error is IOException -> text(R.string.error_unreachable)
+        error is ApiException && error.code >= 500 -> text(R.string.error_server)
+        error is ApiException && errorMessageRes(error.errorCode) != null -> text(errorMessageRes(error.errorCode)!!)
         else -> error.message ?: "Could not reach the server"
     }
 
@@ -843,7 +849,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         val tutor = state.selectedTutor
         val start = startOfSelectedSlot(state)
         if (tutor == null || start == null) {
-            _uiState.update { it.copy(dataErrorMessage = "Pick a date and a time slot first") }
+            _uiState.update { it.copy(dataErrorMessage = text(R.string.vm_pick_date_slot)) }
             return
         }
 
@@ -1016,7 +1022,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun submitTuitionRequest() {
         val draft = _uiState.value.requestDraft
         if (draft.subjectId.isBlank() || draft.areaId.isBlank()) {
-            _uiState.update { it.copy(dataErrorMessage = "Choose a subject and a campus area first") }
+            _uiState.update { it.copy(dataErrorMessage = text(R.string.vm_choose_subject_area)) }
             return
         }
 
@@ -1117,7 +1123,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         _uiState.update {
                             it.copy(
                                 currentRoute = "my_requests",
-                                dataErrorMessage = "Matched with ${applicant.name} - book a time from their profile under Find"
+                                dataErrorMessage = getApplication<Application>().getString(R.string.vm_matched_book_time, applicant.name)
                             )
                         }
                         return@onSuccess
@@ -1521,7 +1527,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteStudentAccount(onComplete: () -> Unit) {
         val user = Firebase.auth.currentUser
         if (user == null) {
-            _uiState.update { it.copy(authErrorMessage = "No signed-in user found - Please log in again") }
+            _uiState.update { it.copy(authErrorMessage = text(R.string.vm_no_signed_in_user)) }
             return
         }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
@@ -1553,7 +1559,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 _uiState.update { signedOutState() }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = "For your security, please sign out and log back in before deleting your account") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_delete_account)) }
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not delete account") }
             }
@@ -1601,32 +1607,34 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         if (insideApp) refreshAll()
     }
 
-    fun setLanguage(language: String) {
-        _uiState.update { it.copy(selectedLanguage = language) }
-
-        val localeTag = when (language) {
-            "isiZulu" -> "zu"
-            "Afrikaans" -> "af"
-            else -> "en"
-        }
-
-        // Reference: Android Developers. 2026. Per-app language preferences. [Online].
-        //   Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
-        androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-            androidx.core.os.LocaleListCompat.forLanguageTags(localeTag)
-        )
-
-        saveSettings(
-            UpdateSettingsRequest(
-                language = when (language) {
-                    "isiZulu" -> "ZU"
-                    "Afrikaans" -> "AF"
-                    else -> "EN"
-                }
-            )
-        )
+    /** The picker's choice: change the app now, and tell the account so other phones agree. */
+    fun setLanguage(name: String) {
+        val language = Language.fromDisplayName(name)
+        _uiState.update { it.copy(selectedLanguage = language.displayName) }
+        applyLanguage(language)
+        saveSettings(UpdateSettingsRequest(language = language.serverCode))
     }
 
+    // Reference: Android Developers. 2026. Per-app language preferences. [Online].
+    //   Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
+    /**
+     * Changes the language of the app. AppCompat recreates the open screen by itself, and keeps
+     * the choice across restarts (see AppLocalesMetadataHolderService in the manifest).
+     */
+    private fun applyLanguage(language: Language) {
+        Log.i(TAG, "App language -> ${language.tag}")
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
+        // So Firebase's own emails, such as the password reset, arrive in the same language.
+        Firebase.auth.setLanguageCode(language.tag)
+    }
+
+    /** What was picked in this app on this phone, or null if nothing has been. */
+    private fun languageChosenOnThisPhone(): Language? =
+        AppCompatDelegate.getApplicationLocales().takeIf { !it.isEmpty }?.get(0)?.let { Language.fromTag(it.toLanguageTag()) }
+
+    /** The language the app is actually showing: a choice made here, or else the phone's own if the app has it. */
+    private fun effectiveLanguage(): Language =
+        languageChosenOnThisPhone() ?: Language.fromTag(Locale.getDefault().language) ?: Language.ENGLISH
     fun toggleBookingUpdates(enabled: Boolean) {
         AppPreferences(getApplication()).enableBookingUpdatesSaved(enabled)
         _uiState.update { it.copy(bookingUpdatesEnabled = enabled) }
@@ -1678,7 +1686,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             isCalendarLinking = false,
                             calendarLinked = link.linked,
                             calendarAccountEmail = link.googleAccountEmail,
-                            calendarMessage = "Confirmed sessions will now appear in Google Calendar."
+                            calendarMessage = text(R.string.vm_calendar_connected)
                         )
                     }
                 }
@@ -1701,7 +1709,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         it.copy(
                             calendarLinked = false,
                             calendarAccountEmail = null,
-                            calendarMessage = "Google Calendar disconnected."
+                            calendarMessage = text(R.string.vm_calendar_disconnected)
                         )
                     }
                 }
@@ -1742,7 +1750,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     /** "2026-10-16" + "10:30 AM" -> a zoned start time, or null if either is missing. */
     private fun startOfSelectedSlot(state: TutorBridgeUiState) = runCatching {
         LocalDate.parse(state.selectedBookingDate)
-            .atTime(LocalTime.parse(state.selectedSlot, DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)))
+            .atTime(LocalTime.parse(state.selectedSlot, slotTime))
             .atZone(ZoneId.systemDefault())
     }.getOrNull()
 

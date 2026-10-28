@@ -1,0 +1,38 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="settings_title">Izilungiselelo</string>
+    <string name="app_language_label">Ulimi Lomanyolo</string>
+    <string name="settings_subtitle">Okukhethwayo, izaziso, nezilawuli zohlelo lokusebenza.</string>
+    <string name="booking_updates_label">Izibuyekezo Zokubhukha</string>
+    <string name="session_reminders_label">Izikhumbuzi Zezifundo</string>
+    <string name="calendar_title">I-Google Calendar</string>
+    <string name="calendar_disconnect">Nqamula</string>
+    <string name="calendar_connect">Xhuma</string>
+    <string name="calendar_default_status">Izifundo eziqinisekisiwe zengezwa ekhalendeni lakho ngokuzenzakalelayo.</string>
+    <string name="change_password_label">Shintsha iphasiwedi</string>
+    <string name="email_link_action">Thumela isixhumanisi nge-imeyili</string>
+    <string name="sms_fallback_label">I-SMS Fallback ye-OTP</string>
+    <string name="biometric_label">Ukungena Nge-Biometric</string>
+    <string name="dark_theme_label">Itimu Emnyama</string>
+    <string name="sign_out_action">Phuma</string>
+    <string name="delete_account_action">Susa I-akhawunti Yomfundi</string>
+    <string name="delete_account_subtitle">Susa unomphela iphrofayili yomfundi, izicelo, nokubhukha kwasendaweni.</string>
+    <string name="delete_account_cancel_keep_account">Khansela &amp; Gcina I-akhawunti</string>
+    <string name="delete_account_data_to_be_purged">IDATHA ZIZOSUSWA</string>
+    <string name="delete_account_delete_student_account">Susa I-akhawunti Yomfundi</string>
+    <string name="delete_account_deleting_your_student_account_is">Ukususa i-akhawunti yakho yomfundi akukwazi ukuhlehliswa. Zonke izicelo zakho zokufundiswa ezilindile, ukubhukha okuzayo kwamakamelo okubonisana ekhampasi nezinto zokufunda zizosuswa ngokushesha.</string>
+    <string name="delete_account_graduating_or_found_an_external">Ukuphothula noma ukuthola uthisha wangaphandle njll. (Akubophezelekile)</string>
+    <string name="delete_account_i_understand_that_this_action">Ngiyaqonda ukuthi lokhu akukwazi ukuhlehliswa nokuthi wonke amarekhodi ami okufundiswa ekhampasi azosuswa.</string>
+    <string name="delete_account_permanent_action_warning">Isixwayiso Senzo Esingapheli</string>
+    <string name="delete_account_permanently_delete_account">Susa I-akhawunti Unomphela</string>
+    <string name="delete_account_reason_for_leaving">IMPUMELELO YOKUHAMBA</string>
+    <string name="delete_account_type_delete_to_confirm">Thayipha i-DELETE ukuze uqinisekise:</string>
+    <string name="settings_app_language">Ulimi Lomanyolo</string>
+    <string name="settings_cancel">Khansela</string>
+    <string name="settings_edit">Hlela</string>
+    <string name="delete_account_upcoming_confirmed_campus_room_b">Ukubhukha okuqinisekisiwe okuzayo kwamakamelo asekhampasi namashedyuli ekhalenda</string>
+    <string name="delete_account_bullet_profile">Iphrofayili yomfundi (%1$s — %2$s)</string>
+    <string name="delete_account_bullet_requests">Zonke izicelo zokufundiswa ezisebenzayo nezedlule (%1$d zibhaliwe)</string>
+    <string name="calendar_sync_failed">Ukuvumelanisa kokugcina kuhlulekile: %1$s</string>
+    <string name="calendar_connected_as">Uxhumeke njenge-%1$s</string>
+</resources>

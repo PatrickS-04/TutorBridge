@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -48,13 +50,13 @@ fun RequestDetailScreen(
     confirming?.let { end ->
         AlertDialog(
             onDismissRequest = { confirming = null },
-            title = { Text(if (end == RequestEnd.WITHDRAW) "Withdraw this request?" else "Close this request?") },
+            title = { Text(if (end == RequestEnd.WITHDRAW) stringResource(R.string.request_detail_withdraw_this_request) else stringResource(R.string.request_detail_close_this_request)) },
             text = {
                 Text(
                     if (end == RequestEnd.WITHDRAW) {
-                        "Tutors who offered will be told it is no longer available. You can't undo this."
+                        stringResource(R.string.request_detail_tutors_who_offered_will_be)
                     } else {
-                        "Mark it as sorted. Tutors who offered will be told. You can't undo this."
+                        stringResource(R.string.request_detail_mark_it_as_sorted_tutors)
                     }
                 )
             },
@@ -62,9 +64,9 @@ fun RequestDetailScreen(
                 TextButton(onClick = {
                     confirming = null
                     if (end == RequestEnd.WITHDRAW) onWithdraw(req) else onClose(req)
-                }) { Text(if (end == RequestEnd.WITHDRAW) "Withdraw" else "Close", color = CrimsonPrimary) }
+                }) { Text(if (end == RequestEnd.WITHDRAW) stringResource(R.string.request_detail_withdraw) else stringResource(R.string.request_detail_close), color = CrimsonPrimary) }
             },
-            dismissButton = { TextButton(onClick = { confirming = null }) { Text("Keep it") } }
+            dismissButton = { TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.request_detail_keep_it)) } }
         )
     }
 
@@ -78,9 +80,9 @@ fun RequestDetailScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
-                Text("Request Detail", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.request_detail_request_detail), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -100,10 +102,10 @@ fun RequestDetailScreen(
                         Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
                             Text(
                                 when (req.status) {
-                                    RequestStatus.OPEN -> "Open"
-                                    RequestStatus.MATCHED -> "Matched"
-                                    RequestStatus.WITHDRAWN -> "Withdrawn"
-                                    else -> "Closed"
+                                    RequestStatus.OPEN -> stringResource(R.string.tutor_home_open)
+                                    RequestStatus.MATCHED -> stringResource(R.string.common_matched)
+                                    RequestStatus.WITHDRAWN -> stringResource(R.string.common_withdrawn)
+                                    else -> stringResource(R.string.common_closed)
                                 },
                                 color = CrimsonPrimary,
                                 fontWeight = FontWeight.Bold,
@@ -111,9 +113,9 @@ fun RequestDetailScreen(
                             )
                         }
                     }
-                    DetailLine("Level:", req.level)
-                    DetailLine("Time Window:", req.timeWindow)
-                    DetailLine("Location:", req.preferredVenue)
+                    DetailLine(stringResource(R.string.request_detail_level), req.level)
+                    DetailLine(stringResource(R.string.request_detail_time_window), req.timeWindow)
+                    DetailLine(stringResource(R.string.request_detail_location), req.preferredVenue)
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         "\"${req.description}\"",
@@ -137,23 +139,23 @@ fun RequestDetailScreen(
                         OutlinedButton(
                             onClick = { onEdit(req) },
                             enabled = online,
-                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
-                        ) { Text("Edit request", fontWeight = FontWeight.Bold) }
+                        ) { Text(stringResource(R.string.request_detail_edit_request), fontWeight = FontWeight.Bold) }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.CLOSE },
                             enabled = online,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
-                        ) { Text("Close", fontWeight = FontWeight.Bold) }
+                        ) { Text(stringResource(R.string.request_detail_close), fontWeight = FontWeight.Bold) }
                         OutlinedButton(
                             onClick = { confirming = RequestEnd.WITHDRAW },
                             enabled = online,
-                            modifier = Modifier.weight(1f).height(44.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
-                        ) { Text("Withdraw", fontWeight = FontWeight.Bold, color = CrimsonPrimary) }
+                        ) { Text(stringResource(R.string.request_detail_withdraw), fontWeight = FontWeight.Bold, color = CrimsonPrimary) }
                     }
                     NeedsConnectionHint(online)
                 }
@@ -161,7 +163,7 @@ fun RequestDetailScreen(
         }
 
         item {
-            Text("Applicants (${req.applicants.size})", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.request_detail_applicants, req.applicants.size), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
         items(req.applicants) { applicant ->
@@ -199,7 +201,7 @@ private fun ApplicantCard(applicant: TutorApplicant, canAccept: Boolean, onAccep
                     if (applicant.verified) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Icon(Icons.Default.Verified, contentDescription = null, tint = EmeraldSuccess, modifier = Modifier.size(12.dp))
-                            Text("Verified Institute Mentor", fontSize = 12.sp, color = EmeraldSuccess, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.request_detail_verified_institute_mentor), fontSize = 12.sp, color = EmeraldSuccess, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -213,11 +215,11 @@ private fun ApplicantCard(applicant: TutorApplicant, canAccept: Boolean, onAccep
             Button(
                 onClick = onAccept,
                 enabled = canAccept,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
             ) {
-                Text("Accept & Match", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                Text(stringResource(R.string.request_detail_accept_match), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
             }
         }
     }

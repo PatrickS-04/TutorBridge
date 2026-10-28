@@ -1,0 +1,36 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="student_home_full_calendar">Ikhalenda Eliphelele →</string>
+    <string name="student_home_let_s_learn_today">Ake sifunde namuhla</string>
+    <string name="student_home_schedule_room">Ishedyuli &amp; Ikamelo →</string>
+    <string name="student_home_see_all">Bona konke</string>
+    <string name="student_home_upcoming_on_your_calendar">Okuzayo Ekhalendeni Lakho</string>
+    <string name="tutor_home_accept_sync">Yamukela &amp; Vumelanisa</string>
+    <string name="tutor_home_active">Iyasebenza</string>
+    <string name="tutor_home_choose_the_days_students_can">Khetha izinsuku abafundi abangakubhukha ngazo →</string>
+    <string name="tutor_home_claim_amount">Inani Lesimangalo</string>
+    <string name="tutor_home_claimable">INGAMANGALELWA</string>
+    <string name="tutor_home_decline">Hlehla</string>
+    <string name="tutor_home_export_submit_claim_to_faculty">Thekelisa &amp; Thumela Isimangalo Kumnyango →</string>
+    <string name="tutor_home_faculty_tutor_portal">IPHOTHALI YOTHISHA WOMNYANGO</string>
+    <string name="tutor_home_logged_hours">Amahora Abhaliwe</string>
+    <string name="tutor_home_no_bookings_are_waiting_for">Akukho kubhukha okulindele isinqumo.</string>
+    <string name="tutor_home_open">Vula</string>
+    <string name="tutor_home_upcoming_sessions">Izifundo Ezizayo</string>
+    <string name="tutor_home_weekly_availability">Ukutholakala Kwamasonto</string>
+    <string name="tutor_home_pay_period">Isikhathi Sokukhokha: %1$s</string>
+    <string name="tutor_home_this_month">Lenyanga</string>
+    <string name="student_home_hello">SAWUBONA, %1$s</string>
+    <string name="tutor_home_appointed">Uthisha Oqokwe Umnyango</string>
+    <string name="tutor_home_staff_appointed">Isisebenzi #%1$s • Uthisha Oqokwe Umnyango</string>
+    <string name="tutor_home_hours_value">amahora angu-%1$s</string>
+    <string name="tutor_home_money_value">R%1$d</string>
+    <string name="tutor_home_new_bookings">Ukubhukha Okusha Kwabafundi (%1$d)</string>
+    <string name="student_home_book_your_first_session">Bhukha isifundo sakho sokuqala</string>
+    <string name="student_home_campus">Ikhampasi</string>
+    <string name="student_home_no_sessions_booked">Azikho izifundo ezibhukhiwe</string>
+    <string name="student_home_top_tutors_for_you">Othisha Abahamba Phambili Kuwe</string>
+    <string name="student_home_tutors_on_campus">Othisha Basekhampasi</string>
+    <string name="student_home_verified">✓ Kuqinisekisiwe</string>
+    <string name="student_home_next_session">Isifundo Esilandelayo • %1$s</string>
+</resources>

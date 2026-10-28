@@ -1,0 +1,53 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="force_offline_label">Phoqa imodi engaxhunyiwe</string>
+    <string name="offline_banner_network">Awuxhunyiwe. Ezinye izici zidinga uxhumo.</string>
+    <string name="offline_banner_forced">Imodi engaxhunyiwe ivuliwe. Yivale kuZilungiselelo ukuze uxhume futhi.</string>
+    <string name="offline_showing_saved">Kuboniswa idatha egcinwe ngo-%1$s</string>
+    <plurals name="pending_sync">
+        <item quantity="one">Inguquko e-%d ilindele ukuvumelanisa</item>
+        <item quantity="other">Izinguquko ezi-%d zilindele ukuvumelanisa</item>
+    </plurals>
+    <plurals name="failed_sync">
+        <item quantity="one">Inguquko e-%d ayikwazanga ukuthunyelwa</item>
+        <item quantity="other">Izinguquko ezi-%d azikwazanga ukuthunyelwa</item>
+    </plurals>
+    <plurals name="synced_changes">
+        <item quantity="one">Inguquko e-%d ivumelanisiwe</item>
+        <item quantity="other">Izinguquko ezi-%d zivumelanisiwe</item>
+    </plurals>
+    <string name="needs_connection">Idinga uxhumo</string>
+    <string name="saved_offline">Kugcinwe ungaxhunyiwe. Kuzothunyelwa uma uphinde uxhume.</string>
+    <string name="waiting_to_send">Kulindele ukuthunyelwa</string>
+    <string name="sending">Iyathumela…</string>
+    <string name="waiting_to_sync">Kulindele ukuvumelanisa</string>
+    <string name="sync_status_title">Isimo Sokuvumelanisa</string>
+    <string name="sync_now">Vumelanisa manje</string>
+    <string name="retry_failed">Zama futhi ezehlulekile</string>
+    <string name="discard">Lahla</string>
+    <string name="sync_all_clear">Konke kuvuselelwe.</string>
+    <string name="sync_kind_message">Umlayezo</string>
+    <string name="sync_kind_request">Isicelo sokufundiswa</string>
+    <string name="sync_kind_notes">Amanothi esifundo</string>
+    <string name="sync_kind_settings">Inguquko yezilungiselelo</string>
+    <string name="sync_state_failed">Ayikwazanga ukuthunyelwa</string>
+    <string name="unsent_warning_title">Unezinguquko ezingathunyelwanga</string>
+    <string name="sign_out_anyway">Phuma noma kunjalo</string>
+    <string name="cancel_action">Khansela</string>
+    <string name="error_offline">Awuxhunyiwe. Zama futhi uma uxhumile.</string>
+    <string name="error_unreachable">Ayikwazi ukufinyelela iseva. Hlola uxhumo lwakho bese uzama futhi.</string>
+    <plurals name="unsent_warning_body">
+        <item quantity="one">Inguquko e-%d ayikathunyelwa. Ihlala kule foni futhi izothunyelwa ngesikhathi esilandelayo lapho ungena kule akhawunti uxhumile.</item>
+        <item quantity="other">Izinguquko ezi-%d azikathunyelwa. Zihlala kule foni futhi zizothunyelwa ngesikhathi esilandelayo lapho ungena kule akhawunti uxhumile.</item>
+    </plurals>
+    <plurals name="delete_unsent_warning">
+        <item quantity="one">Inguquko yakho e-%d engathunyelwanga izolahlwa.</item>
+        <item quantity="other">Izinguquko zakho ezi-%d ezingathunyelwanga zizolahlwa.</item>
+    </plurals>
+    <string name="offline_connection_lost">Uxhumo Lulahlekile</string>
+    <string name="offline_offline_mode_active_showing_cach">⚠ Imodi Engaxhunyiwe Isebenza • Kuboniswa Idatha Yeshedyuli Egciniwe</string>
+    <string name="offline_retry_connection">Zama uxhumo futhi</string>
+    <string name="offline_view_cached_calendar">Buka ikhalenda eligciniwe</string>
+    <string name="offline_you_re_offline">Awuxhunyiwe</string>
+    <string name="offline_your_scheduled_lesson_room_locat">Izindawo zezifundo zakho ezihleliwe, izikhathi zokuhlangana, namanothi esilabhasi angaxhunyiwe asafinyeleleka.</string>
+</resources>

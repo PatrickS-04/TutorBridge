@@ -1,0 +1,17 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="time_just_now">Nou net</string>
+    <string name="time_yesterday">Gister</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d minuut gelede</item>
+        <item quantity="other">%d minute gelede</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d uur gelede</item>
+        <item quantity="other">%d ure gelede</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d dag gelede</item>
+        <item quantity="other">%d dae gelede</item>
+    </plurals>
+</resources>
