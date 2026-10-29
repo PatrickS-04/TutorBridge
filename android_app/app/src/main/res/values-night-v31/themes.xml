@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ system splash in dark mode: the navy of the dark splash artwork. No icon, so there is no circle; the in-app splash then shows the artwork. -->
+<resources>
+    <style name="Theme.TutorBridge" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#F4EFE6</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#F4EFE6</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowSplashScreenBackground">#1F2E45</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>
