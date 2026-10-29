@@ -4,6 +4,9 @@
     <string name="student_home_schedule_room">Schedule &amp; Room →</string>
     <string name="student_home_see_all">See All</string>
     <string name="student_home_upcoming_on_your_calendar">Upcoming on Your Calendar</string>
+    <string name="student_home_find_tutor">Find Tutor</string>
+    <string name="student_home_calendar">Calendar</string>
+    <string name="student_home_my_requests">My Requests</string>
     <string name="tutor_home_accept_sync">Accept &amp; Sync</string>
     <string name="tutor_home_active">Active</string>
     <string name="tutor_home_choose_the_days_students_can">Choose the days students can book you →</string>

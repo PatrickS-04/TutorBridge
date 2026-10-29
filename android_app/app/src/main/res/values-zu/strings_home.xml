@@ -5,6 +5,9 @@
     <string name="student_home_schedule_room">Ishedyuli &amp; Ikamelo →</string>
     <string name="student_home_see_all">Bona konke</string>
     <string name="student_home_upcoming_on_your_calendar">Okuzayo Ekhalendeni Lakho</string>
+    <string name="student_home_find_tutor">Thola Umfundisi</string>
+    <string name="student_home_calendar">Ekhalendeni</string>
+    <string name="student_home_my_requests">Izicelo Zami</string>
     <string name="tutor_home_accept_sync">Yamukela &amp; Vumelanisa</string>
     <string name="tutor_home_active">Iyasebenza</string>
     <string name="tutor_home_choose_the_days_students_can">Khetha izinsuku abafundi abangakubhukha ngazo →</string>
