@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.auth
 
+import com.tutorbridge.app.ui.components.AppLogo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -72,11 +73,7 @@ fun AuthScreen(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        Image(
-            painter = painterResource(R.drawable.ic_tutorbridge_logo),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.size(96.dp)
-        )
+        AppLogo(size = 96.dp, contentDescription = stringResource(R.string.app_name))
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -319,11 +316,7 @@ fun NewPasswordScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(24.dp))
-        Image(
-            painter = painterResource(R.drawable.ic_tutorbridge_logo),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.size(72.dp)
-        )
+        AppLogo(size = 72.dp, contentDescription = stringResource(R.string.app_name))
         Spacer(modifier = Modifier.height(16.dp))
         Text(stringResource(R.string.auth_set_a_new_password), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
         Spacer(modifier = Modifier.height(6.dp))

@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.find
 
+import com.tutorbridge.app.ui.components.AppLogo
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.Image
@@ -64,11 +65,7 @@ fun TutorProfileScreen(
                 Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_tutorbridge_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    AppLogo(size = 16.dp, contentDescription = null)
                     Text(
                         listOf(tutor.department, tutor.staffOrTutorId).filter { it.isNotBlank() }.joinToString(" • "),
                         fontSize = 12.sp,
