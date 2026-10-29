@@ -133,9 +133,9 @@ fun StudentHomeScreen(
         // Quick actions row
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickAction(Icons.Default.Search, "Find Tutor", Modifier.weight(1f)) { onNavigate("find_tutors") }
-                QuickAction(Icons.Default.CalendarMonth, "Calendar", Modifier.weight(1f)) { onNavigate("calendar") }
-                QuickAction(Icons.Default.List, "My Requests", Modifier.weight(1f)) { onNavigate("my_requests") }
+                QuickAction(Icons.Default.Search, stringResource(R.string.student_home_find_tutor), Modifier.weight(1f)) { onNavigate("find_tutors") }
+                QuickAction(Icons.Default.CalendarMonth, stringResource(R.string.student_home_calendar), Modifier.weight(1f)) { onNavigate("calendar") }
+                QuickAction(Icons.Default.List, stringResource(R.string.student_home_my_requests), Modifier.weight(1f)) { onNavigate("my_requests") }
             }
         }
 
