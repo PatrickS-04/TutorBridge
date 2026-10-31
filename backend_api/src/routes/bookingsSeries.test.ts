@@ -355,3 +355,200 @@ test("a signed-in stranger can book a series for themselves; the student on the 
   assert.equal(created.length, 2);
   assert.ok(created.every((b) => String(b.studentId) === String(stranger)));
 });
+
+// ==========================================================================================
+// Confirming a series
+// ==========================================================================================
+
+/** A session of an existing series; `weeks` after the first Monday at 14:00. */
+function stubSession(index: number, status: BookingStatus, startsAt?: Date): any {
+  const startTime = startsAt ?? new Date(nextMonday(14).getTime() + (index - 1) * 7 * DAY);
+  return {
+    _id: new mongoose.Types.ObjectId(),
+    tutorId: tutor,
+    studentId: student,
+    subjectName: "Mathematics",
+    startTime,
+    endTime: hours(startTime),
+    status,
+    seriesIndex: index,
+    saves: 0,
+    addressDisclosed: false,
+    confirmedAt: undefined,
+    async save() {
+      this.saves++;
+    },
+  };
+}
+
+/**
+ * Makes `sessions` the series the database holds. The series lookup answers only for people
+ * on it, as the real query does by putting the caller's id in the filter; any other find
+ * is the tutor's-confirmed-sessions clash check.
+ */
+function stubSeries(sessions: any[]) {
+  Booking.find = ((filter: any) => {
+    if (filter.seriesId === undefined) {
+      clashFilter = filter;
+      return Promise.resolve(confirmedSessions);
+    }
+    const mine = filter.$or
+      ? filter.$or.some((c: any) => [tutor, student].some((p) => String(c.tutorId ?? c.studentId) === String(p)))
+      : String(filter.tutorId) === String(tutor);
+    return { sort: async () => (mine ? sessions : []) };
+  }) as any;
+  return sessions;
+}
+
+const seriesId = "66f1a2b3c4d5e6f708192a3c";
+const confirmSeries = () => call("PUT", `/bookings/series/${seriesId}/confirm`);
+
+test("the tutor confirms every waiting session of a series in one go", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2, 3, 4].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.confirmed, 4);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [1, 2, 3, 4]);
+  assert.ok(body.bookings.every((b: any) => b.status === BookingStatus.CONFIRMED));
+  for (const s of sessions) {
+    assert.equal(s.status, BookingStatus.CONFIRMED);
+    assert.ok(s.confirmedAt instanceof Date);
+    assert.equal(s.addressDisclosed, true, "the venue is shared once the session is confirmed");
+    assert.equal(s.saves, 1);
+  }
+});
+
+test("the student is told once that the series is confirmed", async () => {
+  as(tutor, UserRole.TUTOR);
+  stubSeries([1, 2, 3, 4].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+
+  await confirmSeries();
+  await tick();
+
+  assert.equal(notifications.length, 1);
+  assert.equal(String(notifications[0].userId), String(student));
+  assert.equal(notifications[0].title, "Weekly sessions confirmed");
+  assert.match(notifications[0].body, /Sessions: 4/);
+});
+
+test("only sessions still waiting and not yet started are confirmed; the rest are left as they are", async () => {
+  as(tutor, UserRole.TUTOR);
+  const past = stubSession(1, BookingStatus.REQUESTED, new Date(Date.now() - 3 * DAY));
+  const done = stubSession(2, BookingStatus.CONFIRMED);
+  const dropped = stubSession(3, BookingStatus.CANCELLED);
+  const waiting = stubSession(4, BookingStatus.REQUESTED);
+  stubSeries([past, done, dropped, waiting]);
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.confirmed, 1);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [4]);
+  assert.equal(waiting.status, BookingStatus.CONFIRMED);
+  assert.equal(past.status, BookingStatus.REQUESTED);
+  assert.equal(past.saves, 0);
+  assert.equal(done.saves, 0);
+  assert.equal(dropped.status, BookingStatus.CANCELLED);
+  assert.equal(dropped.saves, 0);
+});
+
+test("one clash at confirm time confirms none of the series and names the clashing weeks", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2, 3, 4].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+  // The tutor confirmed something else in week 2 after the student asked.
+  confirmedSessions = [{ startTime: sessions[1].startTime, endTime: sessions[1].endTime }];
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "SERIES_CONFLICT");
+  assert.deepEqual(body.error.dates, [sessions[1].startTime.toISOString()]);
+  for (const s of sessions) {
+    assert.equal(s.status, BookingStatus.REQUESTED, "nothing is half-agreed");
+    assert.equal(s.saves, 0);
+  }
+  await tick();
+  assert.equal(notifications.length, 0);
+});
+
+test("the clash check looks only at the tutor's other confirmed sessions, not the series itself", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2, 3].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+
+  await confirmSeries();
+
+  assert.equal(String(clashFilter.tutorId), String(tutor));
+  assert.equal(clashFilter.status, BookingStatus.CONFIRMED);
+  assert.deepEqual(
+    clashFilter._id.$nin.map(String),
+    sessions.map((s) => String(s._id))
+  );
+  assert.equal(clashFilter.$or.length, 3);
+});
+
+test("a session that only touches another at an edge does not block the series", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+  confirmedSessions = [{ startTime: hours(sessions[0].startTime, -1), endTime: sessions[0].startTime }];
+
+  const { status } = await confirmSeries();
+
+  assert.equal(status, 200);
+});
+
+test("the student cannot confirm their own series, and nothing changes", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = stubSeries([1, 2].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 404);
+  assert.equal(body.error.code, "NOT_FOUND");
+  assert.ok(sessions.every((s) => s.saves === 0 && s.status === BookingStatus.REQUESTED));
+});
+
+test("a different tutor cannot confirm someone else's series", async () => {
+  as(stranger, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2].map((i) => stubSession(i, BookingStatus.REQUESTED)));
+
+  const { status } = await confirmSeries();
+
+  assert.equal(status, 404);
+  assert.ok(sessions.every((s) => s.saves === 0));
+});
+
+test("a series that does not exist is a 404", async () => {
+  as(tutor, UserRole.TUTOR);
+  stubSeries([]);
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 404);
+  assert.equal(body.error.code, "NOT_FOUND");
+});
+
+test("a series with nothing left waiting is a 409, not a silent success", async () => {
+  as(tutor, UserRole.TUTOR);
+  stubSeries([stubSession(1, BookingStatus.CONFIRMED), stubSession(2, BookingStatus.CANCELLED)]);
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "INVALID_STATE");
+  await tick();
+  assert.equal(notifications.length, 0);
+});
+
+test("a series whose sessions are all in the past has nothing to confirm", async () => {
+  as(tutor, UserRole.TUTOR);
+  const old = (i: number) => stubSession(i, BookingStatus.REQUESTED, new Date(Date.now() - i * 7 * DAY));
+  stubSeries([old(1), old(2)]);
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "INVALID_STATE");
+});
