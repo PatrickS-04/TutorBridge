@@ -798,6 +798,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         error is IOException -> text(R.string.error_unreachable)
         error is ApiException && error.code >= 500 -> text(R.string.error_server)
         error is ApiException && errorMessageRes(error.errorCode) != null -> text(errorMessageRes(error.errorCode)!!)
+        // A series error names the weeks it is about, written in the phone's language.
+        error is ApiException && seriesErrorMessageRes(error.errorCode) != null -> getApplication<Application>().getString(
+            seriesErrorMessageRes(error.errorCode)!!,
+            formatSeriesDates(error.dates, ZoneId.systemDefault(), Locale.getDefault())
+        )
         else -> error.message ?: "Could not reach the server"
     }
 
@@ -913,7 +918,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 .onFailure {
                     _uiState.update { state2 ->
-                        state2.copy(isRefreshing = false, dataErrorMessage = it.message ?: "Could not send the booking")
+                        state2.copy(isRefreshing = false, dataErrorMessage = friendlyMessage(it))
                     }
                 }
         }

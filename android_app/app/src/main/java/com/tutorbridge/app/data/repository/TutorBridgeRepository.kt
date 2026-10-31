@@ -215,7 +215,7 @@ class TutorBridgeRepository(
             Result.success(body)
         } else {
             val detail = parseApiErrorDetail(response)
-            Result.failure(ApiException(response.code(), detail?.message ?: "Something went wrong (${response.code()})", detail?.code))
+            Result.failure(ApiException(response.code(), detail?.message ?: "Something went wrong (${response.code()})", detail?.code, detail?.dates.orEmpty()))
         }
     } catch (exception: Exception) {
         Result.failure(exception)
@@ -255,7 +255,13 @@ class TutorBridgeRepository(
 }
 
 /** The server answered, but with an error. Distinct from an IOException, which means it never did. */
-class ApiException(val code: Int, message: String, val errorCode: String? = null) : IllegalStateException(message)
+class ApiException(
+    val code: Int,
+    message: String,
+    val errorCode: String? = null,
+    /** The start times (ISO-8601) a series error is about; empty for any other error. */
+    val dates: List<String> = emptyList()
+) : IllegalStateException(message)
 
 // ==================== MAPPERS ====================
 
