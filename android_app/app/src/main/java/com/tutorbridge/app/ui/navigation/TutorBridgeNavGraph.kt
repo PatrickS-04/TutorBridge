@@ -198,7 +198,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) },
                     onAcceptBooking = { bookingId -> viewModel.acceptTutorBooking(bookingId) },
-                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) }
+                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) },
+                    onAcceptSeries = { seriesId -> viewModel.acceptTutorSeries(seriesId) },
+                    onDeclineSeries = { seriesId -> viewModel.declineTutorSeries(seriesId) }
                 )
                 "find_tutors" -> FindTutorsScreen(
                     uiState = uiState,

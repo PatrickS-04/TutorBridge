@@ -977,6 +977,30 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /** The tutor accepts a whole weekly series at once; a clash with one of their sessions is reported by week. */
+    fun acceptTutorSeries(seriesId: String) {
+        viewModelScope.launch {
+            repository.confirmSeries(seriesId)
+                .onSuccess {
+                    _uiState.update { it.copy(currentRoute = "tutor_home") }
+                    loadBookings()
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
+    /** The tutor turns down every upcoming session of a weekly series. */
+    fun declineTutorSeries(seriesId: String) {
+        viewModelScope.launch {
+            repository.cancelSeries(seriesId, "The tutor is not available at this time")
+                .onSuccess {
+                    _uiState.update { it.copy(currentRoute = "tutor_home") }
+                    loadBookings()
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
     // ==================== TUITION REQUESTS (STUDENT) ====================
 
     fun selectDraftSubject(id: String, name: String) {

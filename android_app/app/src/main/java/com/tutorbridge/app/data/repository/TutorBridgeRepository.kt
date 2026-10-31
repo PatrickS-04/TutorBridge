@@ -129,6 +129,11 @@ class TutorBridgeRepository(
     suspend fun cancelBooking(id: String, reason: String?): Result<BookingAckDto> =
         call { api.cancelBooking(id, CancelRequest(reason)) }
 
+    suspend fun confirmSeries(seriesId: String): Result<SeriesActionDto> = call { api.confirmSeries(seriesId) }
+
+    suspend fun cancelSeries(seriesId: String, reason: String?, fromBookingId: String? = null): Result<SeriesActionDto> =
+        call { api.cancelSeries(seriesId, CancelSeriesRequest(reason, fromBookingId)) }
+
     suspend fun rescheduleBooking(id: String, body: RescheduleRequest): Result<RescheduleAckDto> =
         call { api.rescheduleBooking(id, body) }
 

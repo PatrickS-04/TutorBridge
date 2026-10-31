@@ -248,6 +248,20 @@ data class SeriesBookingDto(
 
 data class CancelRequest(val reason: String?)
 
+/** PUT /bookings/series/:id/cancel - [fromBookingId] cancels from that session onward; null cancels every upcoming one. */
+data class CancelSeriesRequest(val reason: String?, val fromBookingId: String? = null)
+
+/**
+ * The answer to confirming or cancelling a series: how many sessions it touched, and which.
+ * Everything is nullable because Gson leaves what the server did not send as null.
+ */
+data class SeriesActionDto(
+    val seriesId: String? = null,
+    val confirmed: Int? = null,
+    val cancelled: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
+
 /** PUT /bookings/:id/reschedule - the new window, as ISO-8601 instants. */
 data class RescheduleRequest(
     val startTime: String,

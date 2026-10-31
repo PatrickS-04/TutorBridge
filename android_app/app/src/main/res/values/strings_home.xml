@@ -35,4 +35,7 @@
     <string name="student_home_tutors_on_campus">Tutors on Campus</string>
     <string name="student_home_verified">✓ Verified</string>
     <string name="student_home_next_session">Next Session • %1$s</string>
+    <string name="tutor_home_series_summary">Weekly series from %1$s • %2$d sessions waiting</string>
+    <string name="tutor_home_decline_series">Decline series</string>
+    <string name="tutor_home_accept_series">Accept series</string>
 </resources>
