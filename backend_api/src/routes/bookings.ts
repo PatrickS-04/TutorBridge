@@ -245,12 +245,24 @@ router.post(
       `tutorbridge://bookings/${booking._id}`
     );
 
-    res.status(201).json({
-      id: booking._id,
-      status: booking.status,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
+    const summary = (b: (typeof created)[number]) => ({
+      id: b._id,
+      status: b.status,
+      startTime: b.startTime,
+      endTime: b.endTime,
     });
+
+    //A single session answers as it always has. A series also names itself and lists
+    //every session in it, so the app can show the whole run without a second call.
+    if (isSeries) {
+      return res.status(201).json({
+        ...summary(booking),
+        seriesId,
+        seriesCount: created.length,
+        bookings: created.map((b) => ({ ...summary(b), seriesIndex: b.seriesIndex })),
+      });
+    }
+    res.status(201).json(summary(booking));
   })
 );
 

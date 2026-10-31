@@ -875,8 +875,15 @@ export const openapiSpec = {
       post: {
         tags: ["Bookings"],
         summary: "Book a tutor straight from their profile",
-        description:
+        description: [
           "The Find a Tutor path, with no application behind it. Starts REQUESTED for the tutor to confirm.",
+          "",
+          "Send `repeat` to book the same time every week as one series of 2 to 8 sessions. The series is",
+          "checked whole before anything is written: the first session must be in the future, every week",
+          "must sit inside the tutor's weekly availability (otherwise 400 `OUTSIDE_AVAILABILITY`) and clear",
+          "the tutor's confirmed sessions (otherwise 409 `SERIES_CONFLICT`). Both errors list the offending",
+          "start times in `error.dates`, and nothing is booked.",
+        ].join("\n"),
         requestBody: {
           required: true,
           ...json({
@@ -893,11 +900,23 @@ export const openapiSpec = {
                 maxLength: 120,
                 description: "Where to meet: a campus venue, or a place the student named themselves such as a coffee shop.",
               },
+              repeat: {
+                type: "object",
+                description: "Book the same time every week as a series. Leave out for a single session.",
+                required: ["frequency", "count"],
+                properties: {
+                  frequency: { type: "string", enum: ["WEEKLY"] },
+                  count: { type: "integer", minimum: 2, maximum: 8, example: 4, description: "Sessions in the series, 4 being a month." },
+                },
+              },
             },
           }),
         },
         responses: {
-          201: ok("The booking.", ref("BookingSummary")),
+          201: ok(
+            "The booking; for a series, the first session plus every session in it.",
+            { oneOf: [ref("BookingSummary"), ref("BookingSeriesSummary")] }
+          ),
           400: res.badRequest,
           ...authErrors,
           404: res.notFound,
@@ -1528,6 +1547,9 @@ export const openapiSpec = {
           status: enumOf(BookingStatus),
           isTrial: { type: "boolean" },
           addressDisclosed: { type: "boolean" },
+          seriesId: { ...objectId("Shared by every session of a weekly series; unset for a single session."), nullable: true },
+          seriesIndex: { type: "integer", minimum: 1, nullable: true, description: "This session's place in its series, from 1." },
+          seriesCount: { type: "integer", minimum: 2, nullable: true, description: "How many sessions the series has." },
           cancelledBy: { ...objectId("Who cancelled."), nullable: true },
           cancellationReason: { type: "string", nullable: true },
           agreedRatePerHour: { type: "number", description: "ZAR per hour." },
@@ -1572,6 +1594,29 @@ export const openapiSpec = {
           startTime: dateTime("Session start."),
           endTime: dateTime("Session end."),
         },
+      },
+      BookingSeriesSummary: {
+        type: "object",
+        description: "A weekly series as just booked: the first session, and every session in order.",
+        allOf: [
+          ref("BookingSummary"),
+          {
+            type: "object",
+            properties: {
+              seriesId: objectId("Shared by every session of the series."),
+              seriesCount: { type: "integer", example: 4 },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 1 } } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
       },
       Thread: {
         type: "object",
