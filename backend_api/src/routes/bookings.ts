@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Types } from "mongoose";
 import {
   Booking,
   Application,
@@ -17,6 +18,7 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
 import { ensureThread } from "../utils/threads";
 import { syncBookingCreated, syncBookingCancelled, syncBookingRescheduled } from "../utils/googleCalendar";
+import { parseRepeat, seriesWindows, fitsAvailability } from "../utils/series";
 
 const router = Router();
 router.use(authenticate);
@@ -129,7 +131,7 @@ router.post(
 router.post(
   "/direct",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { tutorId, subjectId, startTime, endTime, mode, location } = req.body;
+    const { tutorId, subjectId, startTime, endTime, mode, location, repeat } = req.body;
     if (!tutorId || !startTime || !endTime) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "tutorId, startTime, and endTime are required"));
     }
@@ -150,6 +152,52 @@ router.post(
     }).populate("subjectIds");
     if (!tutor) return res.status(404).json(apiError("NOT_FOUND", "Bookable tutor not found"));
 
+    //A weekly series: the first session and the same time on each following week.
+    //Everything about it is checked before anything is written, so a series is
+    //either booked whole or not at all.
+    let windows = [{ start, end }];
+    if (repeat !== undefined) {
+      const parsed = parseRepeat(repeat);
+      if ("error" in parsed) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", parsed.error, parsed.field));
+      }
+      if (start <= new Date()) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", "The first session of a series must be in the future", "startTime"));
+      }
+      windows = seriesWindows(start, end, parsed.repeat.count);
+
+      //The app only offers slots inside the tutor's weekly hours; a series has to keep to them too.
+      const outside = windows.filter((w) => !fitsAvailability(tutor.availability, w.start, w.end));
+      if (outside.length > 0) {
+        return res.status(400).json({
+          error: {
+            code: "OUTSIDE_AVAILABILITY",
+            message: "The tutor is not available at this time on every week of the series",
+            field: "startTime",
+            dates: outside.map((w) => w.start.toISOString()),
+          },
+        });
+      }
+
+      const taken = await Booking.find({
+        tutorId: tutor._id,
+        status: BookingStatus.CONFIRMED,
+        $or: windows.map((w) => ({ startTime: { $lt: w.end }, endTime: { $gt: w.start } })),
+      });
+      const clashing = windows.filter((w) => taken.some((b) => b.startTime < w.end && b.endTime > w.start));
+      if (clashing.length > 0) {
+        return res.status(409).json({
+          error: {
+            code: "SERIES_CONFLICT",
+            message: "The tutor already has a confirmed session on some of these dates",
+            field: "startTime",
+            dates: clashing.map((w) => w.start.toISOString()),
+          },
+        });
+      }
+    }
+    const isSeries = windows.length > 1;
+
     const clash = await Booking.findOne({
       tutorId: tutor._id,
       status: BookingStatus.CONFIRMED,
@@ -166,18 +214,24 @@ router.post(
     const subjectName =
       subject?.name ?? (tutor.subjectIds as any[])[0]?.name ?? "Tuition session";
 
-    const booking = await Booking.create({
-      institutionId: req.auth!.institutionId,
-      tutorId: tutor._id,
-      studentId: req.auth!.userId,
-      subjectName,
-      startTime: start,
-      endTime: end,
-      mode: mode ?? LessonMode.IN_PERSON,
-      location,
-      status: BookingStatus.REQUESTED,
-      agreedRatePerHour: tutor.hourlyRate ?? 0,
-    });
+    //The sessions of a series are ordinary bookings that share a seriesId.
+    const seriesId = isSeries ? new Types.ObjectId() : undefined;
+    const created = await Booking.create(
+      windows.map((w, i) => ({
+        institutionId: req.auth!.institutionId,
+        tutorId: tutor._id,
+        studentId: req.auth!.userId,
+        subjectName,
+        startTime: w.start,
+        endTime: w.end,
+        mode: mode ?? LessonMode.IN_PERSON,
+        location,
+        status: BookingStatus.REQUESTED,
+        agreedRatePerHour: tutor.hourlyRate ?? 0,
+        ...(isSeries ? { seriesId, seriesIndex: i + 1, seriesCount: windows.length } : {}),
+      }))
+    );
+    const booking = created[0];
 
     //So the tutor can ask the student about the session before confirming it.
     await ensureThread(req.auth!.institutionId, req.auth!.userId, String(tutor._id), { bookingId: booking._id });
