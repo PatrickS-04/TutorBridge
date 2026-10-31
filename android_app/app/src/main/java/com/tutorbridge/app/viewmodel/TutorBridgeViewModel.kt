@@ -1014,7 +1014,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     /** The tutor turns down every upcoming session of a weekly series. */
     fun declineTutorSeries(seriesId: String) {
         viewModelScope.launch {
-            repository.cancelSeries(seriesId, "The tutor is not available at this time")
+            // No reason is sent: a typed-in English sentence would sit untranslated inside the student's
+            // notification, whereas without one the server's own text is shown in the student's language.
+            repository.cancelSeries(seriesId, reason = null)
                 .onSuccess {
                     _uiState.update { it.copy(currentRoute = "tutor_home") }
                     loadBookings()
