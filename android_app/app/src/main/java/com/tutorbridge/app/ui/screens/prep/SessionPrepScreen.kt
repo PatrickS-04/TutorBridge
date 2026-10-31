@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.screens.prep
 
 import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.SeriesBadge
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -115,6 +116,10 @@ fun SessionPrepScreen(
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 12.5.sp
                             )
+                            if (session?.isSeries == true) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                SeriesBadge(session.seriesIndex, session.seriesCount, onDark = true)
+                            }
                         }
                     }
 

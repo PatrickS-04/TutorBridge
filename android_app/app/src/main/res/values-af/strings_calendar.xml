@@ -30,4 +30,5 @@
     <string name="calendar_filter_lessons">Een-tot-een-lesse</string>
     <string name="calendar_filter_office_hours">Kantoorure</string>
     <string name="calendar_filter_exam_prep">Eksamenvoorbereiding</string>
+    <string name="series_badge">Weekliks %1$d van %2$d</string>
 </resources>

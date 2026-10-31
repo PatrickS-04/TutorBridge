@@ -29,4 +29,5 @@
     <string name="calendar_filter_lessons">1-on-1 Lessons</string>
     <string name="calendar_filter_office_hours">Office Hours</string>
     <string name="calendar_filter_exam_prep">Exam Prep</string>
+    <string name="series_badge">Weekly %1$d of %2$d</string>
 </resources>

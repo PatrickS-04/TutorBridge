@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.EventStatus
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.SeriesBadge
 import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
@@ -282,6 +283,10 @@ fun CalendarScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (event.isSeries) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            SeriesBadge(event.seriesIndex, event.seriesCount)
+                        }
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
