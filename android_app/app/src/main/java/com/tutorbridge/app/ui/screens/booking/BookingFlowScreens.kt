@@ -25,7 +25,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.SERIES_MAX
+import com.tutorbridge.app.data.model.SERIES_MIN
 import com.tutorbridge.app.data.model.TutorUi
+import com.tutorbridge.app.data.model.weeklyDates
 import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.ui.components.VenueLink
 import java.time.LocalDate
@@ -211,7 +214,9 @@ fun BookingFlowScreen(
 fun ReviewBookingScreen(
     uiState: TutorBridgeUiState,
     onConfirm: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRepeatChange: (Boolean) -> Unit = {},
+    onRepeatCountChange: (Int) -> Unit = {}
 ) {
     val tutor = uiState.selectedTutor ?: return
 
@@ -219,6 +224,7 @@ fun ReviewBookingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -263,6 +269,15 @@ fun ReviewBookingScreen(
             }
         }
 
+        // A session the student already agreed with a tutor is one session; only a direct booking can repeat.
+        if (!uiState.bookingFromApplication) {
+            RepeatCard(
+                uiState = uiState,
+                onRepeatChange = onRepeatChange,
+                onCountChange = onRepeatCountChange
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,8 +290,9 @@ fun ReviewBookingScreen(
             Text(stringResource(R.string.booking_you_will_meet, tutor.name.split(" ").last()), fontSize = 12.sp, color = NavySecondary)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(8.dp))
 
+        val series = uiState.repeatWeekly && !uiState.bookingFromApplication
         Button(
             onClick = onConfirm,
             enabled = uiState.isOnline,
@@ -284,9 +300,92 @@ fun ReviewBookingScreen(
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
-            Text(stringResource(R.string.booking_confirm_request), fontWeight = FontWeight.Bold)
+            Text(
+                if (series) stringResource(R.string.booking_confirm_series, uiState.repeatCount)
+                else stringResource(R.string.booking_confirm_request),
+                fontWeight = FontWeight.Bold
+            )
         }
         NeedsConnectionHint(uiState.isOnline)
+    }
+}
+
+/**
+ * The switch that turns one session into a weekly series, with how many sessions and the dates they fall on.
+ * The first date is the one picked above; every following one is a week on.
+ */
+@Composable
+private fun RepeatCard(
+    uiState: TutorBridgeUiState,
+    onRepeatChange: (Boolean) -> Unit,
+    onCountChange: (Int) -> Unit
+) {
+    val first = runCatching { LocalDate.parse(uiState.selectedBookingDate) }.getOrNull()
+    val dayFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.booking_repeat_weekly), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        stringResource(R.string.booking_repeat_hint),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = uiState.repeatWeekly, onCheckedChange = onRepeatChange)
+            }
+
+            if (uiState.repeatWeekly && first != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.booking_repeat_sessions), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount - 1) },
+                            enabled = uiState.repeatCount > SERIES_MIN
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.booking_repeat_fewer))
+                        }
+                        Text("${uiState.repeatCount}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount + 1) },
+                            enabled = uiState.repeatCount < SERIES_MAX
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.booking_repeat_more))
+                        }
+                    }
+                }
+
+                Text(
+                    stringResource(
+                        R.string.booking_repeat_summary,
+                        first.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault()),
+                        uiState.selectedSlot,
+                        uiState.repeatCount
+                    ),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavySecondary
+                )
+                Text(stringResource(R.string.booking_repeat_dates), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                weeklyDates(first, uiState.repeatCount).forEachIndexed { index, date ->
+                    Text("${index + 1}.  ${date.format(dayFormat)}", fontSize = 13.sp)
+                }
+            }
+        }
     }
 }
 

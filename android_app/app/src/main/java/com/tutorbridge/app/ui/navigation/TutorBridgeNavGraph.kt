@@ -223,7 +223,9 @@ fun TutorBridgeNavGraph(
                 "review_booking" -> ReviewBookingScreen(
                     uiState = uiState,
                     onConfirm = { viewModel.sendBookingRequest() },
-                    onBack = { viewModel.navigateTo("booking_flow") }
+                    onBack = { viewModel.navigateTo("booking_flow") },
+                    onRepeatChange = viewModel::setRepeatWeekly,
+                    onRepeatCountChange = viewModel::setRepeatCount
                 )
                 "booking_sent" -> BookingRequestSentScreen(
                     onCheckStatus = { viewModel.checkBookingStatus() },

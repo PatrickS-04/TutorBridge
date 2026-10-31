@@ -32,4 +32,12 @@
     <string name="booking_no_hours_published">U-%1$s akakashicileli amahora - khetha omunye uthisha.</string>
     <string name="booking_no_hours_day">U-%1$s akanawo amahora alolu suku - zama olunye usuku.</string>
     <string name="booking_time_one_hour">%1$s (ihora eli-1)</string>
+    <string name="booking_repeat_weekly">Phinda njalo ngeviki</string>
+    <string name="booking_repeat_hint">Bhukha isikhathi esifanayo njalo ngeviki. Uthisha uqinisekisa lonke uchungechunge.</string>
+    <string name="booking_repeat_sessions">Izifundo</string>
+    <string name="booking_repeat_fewer">Izifundo ezimbalwa</string>
+    <string name="booking_repeat_more">Izifundo eziningi</string>
+    <string name="booking_repeat_summary">Njalo ngo-%1$s ngo-%2$s, izifundo ezingu-%3$d</string>
+    <string name="booking_repeat_dates">Izinsuku</string>
+    <string name="booking_confirm_series">Cela izifundo ezingu-%1$d zamasonto onke</string>
 </resources>
