@@ -229,7 +229,8 @@ fun TutorBridgeNavGraph(
                 )
                 "booking_sent" -> BookingRequestSentScreen(
                     onCheckStatus = { viewModel.checkBookingStatus() },
-                    onViewCalendar = { viewModel.navigateTo("calendar") }
+                    onViewCalendar = { viewModel.navigateTo("calendar") },
+                    seriesCount = uiState.lastSeriesCount
                 )
                 "booking_confirmed" -> BookingConfirmationScreen(
                     uiState = uiState,

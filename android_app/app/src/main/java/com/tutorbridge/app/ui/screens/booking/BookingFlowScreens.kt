@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.screens.booking
 
 import com.tutorbridge.app.R
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
@@ -402,7 +403,9 @@ private fun ReviewRow(label: String, value: String) {
 @Composable
 fun BookingRequestSentScreen(
     onCheckStatus: () -> Unit,
-    onViewCalendar: () -> Unit
+    onViewCalendar: () -> Unit,
+    /** Sessions in the weekly series just requested, or 0 for a single session. */
+    seriesCount: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -420,9 +423,19 @@ fun BookingRequestSentScreen(
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(stringResource(R.string.booking_booking_request_sent), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        if (seriesCount > 0) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                pluralStringResource(R.plurals.booking_series_requested, seriesCount, seriesCount),
+                fontWeight = FontWeight.Bold,
+                color = CrimsonPrimary
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            stringResource(R.string.booking_your_request_was_submitted_and),
+            stringResource(
+                if (seriesCount > 0) R.string.booking_series_submitted else R.string.booking_your_request_was_submitted_and
+            ),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 12.dp)
