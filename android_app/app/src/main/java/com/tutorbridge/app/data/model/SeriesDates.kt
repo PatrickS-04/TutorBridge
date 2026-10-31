@@ -15,6 +15,13 @@ const val SERIES_DEFAULT = 4
 fun weeklyDates(first: LocalDate, count: Int): List<LocalDate> =
     (0 until count.coerceIn(SERIES_MIN, SERIES_MAX)).map { first.plusWeeks(it.toLong()) }
 
+/**
+ * How many sessions "this and following" reaches from the [index]th of a series of [count]: that session and every
+ * one after it. An estimate for the confirmation message (a later session may already be cancelled); the server's
+ * answer says how many were really cancelled.
+ */
+fun sessionsFrom(index: Int, count: Int): Int = (count - index + 1).coerceIn(1, count.coerceAtLeast(1))
+
 /** The repeat to send with a booking: null for a single session, a weekly count otherwise. */
 fun repeatFor(weekly: Boolean, count: Int): RepeatDto? =
     if (weekly) RepeatDto(count = count.coerceIn(SERIES_MIN, SERIES_MAX)) else null

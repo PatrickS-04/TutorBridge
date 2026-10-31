@@ -977,6 +977,28 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /**
+     * Cancels this session and every later one of its weekly series. Either person may; the other is told once.
+     * Sessions already held, and ones before this, are left alone.
+     */
+    fun cancelSeriesFrom(event: CalendarEventUi) {
+        val seriesId = event.seriesId ?: return
+        viewModelScope.launch {
+            repository.cancelSeries(seriesId, reason = null, fromBookingId = event.id)
+                .onSuccess { ack ->
+                    val cancelled = ack.cancelled ?: 0
+                    _uiState.update {
+                        it.copy(
+                            noticeMessage = getApplication<Application>().resources
+                                .getQuantityString(R.plurals.calendar_series_cancelled, cancelled, cancelled)
+                        )
+                    }
+                    loadBookings()
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
     /** The tutor accepts a whole weekly series at once; a clash with one of their sessions is reported by week. */
     fun acceptTutorSeries(seriesId: String) {
         viewModelScope.launch {

@@ -250,7 +250,8 @@ fun TutorBridgeNavGraph(
                     onFilterChange = { viewModel.setCalendarFilter(it) },
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") },
-                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) },
+                    onCancelSeries = { session -> viewModel.cancelSeriesFrom(session) }
                 )
 
                 "sync_status" -> SyncStatusScreen(
