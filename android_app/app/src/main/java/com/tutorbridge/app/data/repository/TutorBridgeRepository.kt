@@ -372,7 +372,10 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         },
         sideNotes = tutorNotes?.text.orEmpty(),
         startIso = startTime,
-        endIso = endTime
+        endIso = endTime,
+        seriesId = seriesId,
+        seriesIndex = seriesIndex ?: 0,
+        seriesCount = seriesCount ?: 0
     )
 }
 
@@ -420,7 +423,10 @@ fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
         initials = initialsOf(studentId?.fullName),
         subjectName = subjectName,
         whenLabel = "${start.toLocalDate()} • ${start.format(displayTime)}",
-        location = location.orEmpty()
+        location = location.orEmpty(),
+        seriesId = seriesId,
+        seriesIndex = seriesIndex ?: 0,
+        seriesCount = seriesCount ?: 0
     )
 }
 

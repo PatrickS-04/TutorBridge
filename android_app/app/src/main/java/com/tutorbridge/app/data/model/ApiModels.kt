@@ -185,7 +185,13 @@ data class BookingDto(
     val agreedRatePerHour: Double = 0.0,
     /** Only ever set for the tutor teaching the session - the server leaves it
      *  out of the student's own booking list. */
-    val tutorNotes: TutorNotesDto? = null
+    val tutorNotes: TutorNotesDto? = null,
+    /** Shared by every session of a weekly series; null for a single session. */
+    val seriesId: String? = null,
+    /** This session's place in its series, from 1. */
+    val seriesIndex: Int? = null,
+    /** How many sessions the series was booked with. */
+    val seriesCount: Int? = null
 )
 
 /** The tutor's private prep notes for one session. Also the PUT body. */
