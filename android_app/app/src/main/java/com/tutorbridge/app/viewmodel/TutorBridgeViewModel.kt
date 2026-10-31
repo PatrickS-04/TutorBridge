@@ -819,9 +819,23 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             it.copy(
                 selectedTutor = tutor,
                 selectedLocation = tutor.consultationVenue.ifBlank { it.selectedLocation },
-                selectedSlot = ""
+                selectedSlot = "",
+                // A new booking starts as a single session, and from the tutor's profile.
+                repeatWeekly = false,
+                repeatCount = SERIES_DEFAULT,
+                bookingFromApplication = false
             )
         }
+    }
+
+    /** Book the same time every week instead of one session. Only offered for a direct booking. */
+    fun setRepeatWeekly(enabled: Boolean) {
+        _uiState.update { it.copy(repeatWeekly = enabled) }
+    }
+
+    /** How many weekly sessions in all, kept to what the server accepts. */
+    fun setRepeatCount(count: Int) {
+        _uiState.update { it.copy(repeatCount = count.coerceIn(SERIES_MIN, SERIES_MAX)) }
     }
 
     fun selectSlot(slot: String) {
@@ -875,7 +889,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         startTime = startIso,
                         endTime = endIso,
                         mode = "IN_PERSON",
-                        location = state.selectedLocation.ifBlank { null }
+                        location = state.selectedLocation.ifBlank { null },
+                        repeat = repeatFor(state.repeatWeekly, state.repeatCount)
                     )
                 )
             }
@@ -887,6 +902,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.update {
                         it.copy(
                             isRefreshing = false,
+                            // How many sessions were just asked for, for the "sent" screen; 0 for a single one.
+                            lastSeriesCount = ack.seriesCount ?: 0,
+                            repeatWeekly = false,
+                            bookingFromApplication = false,
                             currentRoute = if (applicationId != null) "booking_confirmed" else "booking_sent"
                         )
                     }
@@ -1130,6 +1149,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                     selectTutor(tutor)                       // clears any earlier direct booking
                     acceptedApplicationId = applicant.id     // ...so this has to follow it
+                    // An agreed session is one session: there is nothing to repeat.
+                    _uiState.update { it.copy(bookingFromApplication = true) }
                     navigateTo("booking_flow")
                 }
                 .onFailure { reportError(it) }

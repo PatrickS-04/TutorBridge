@@ -97,6 +97,13 @@ data class TutorBridgeUiState(
     val selectedSlot: String = "",
     val selectedLocation: String = "",
     val selectedBookingDate: String = LocalDate.now().plusDays(1).toString(),
+    /** Book the same time every week; [repeatCount] is how many sessions in all (a month is 4). */
+    val repeatWeekly: Boolean = false,
+    val repeatCount: Int = SERIES_DEFAULT,
+    /** True when the session being booked is one the student already agreed with a tutor: it cannot repeat. */
+    val bookingFromApplication: Boolean = false,
+    /** Sessions in the series just requested, or 0 when it was a single session. */
+    val lastSeriesCount: Int = 0,
 
     // Student Requests (student view) / Requests board (tutor view)
     val myRequests: List<StudentRequestUi> = emptyList(),
