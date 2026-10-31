@@ -552,3 +552,170 @@ test("a series whose sessions are all in the past has nothing to confirm", async
   assert.equal(status, 409);
   assert.equal(body.error.code, "INVALID_STATE");
 });
+
+// ==========================================================================================
+// Cancelling the rest of a series
+// ==========================================================================================
+
+const cancelSeries = (body?: object) => call("PUT", `/bookings/series/${seriesId}/cancel`, body ?? {});
+
+test("a student cancels every upcoming session of a series, and the tutor is told once", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = stubSeries([
+    stubSession(1, BookingStatus.CONFIRMED),
+    stubSession(2, BookingStatus.REQUESTED),
+    stubSession(3, BookingStatus.CONFIRMED),
+    stubSession(4, BookingStatus.REQUESTED),
+  ]);
+
+  const { status, body } = await cancelSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 4);
+  assert.equal(String(body.cancelledBy), String(student));
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [1, 2, 3, 4]);
+  for (const s of sessions) {
+    assert.equal(s.status, BookingStatus.CANCELLED);
+    assert.equal(String(s.cancelledBy), String(student));
+    assert.equal(s.saves, 1);
+  }
+
+  await tick();
+  assert.equal(notifications.length, 1, "one notification, not one a week");
+  assert.equal(String(notifications[0].userId), String(tutor));
+  assert.equal(notifications[0].title, "Weekly sessions cancelled");
+  assert.match(notifications[0].body, /Sessions: 4/);
+});
+
+test("a tutor cancelling tells the student, and the reason goes with it", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = stubSeries([1, 2, 3].map((i) => stubSession(i, BookingStatus.CONFIRMED)));
+
+  const { status, body } = await cancelSeries({ reason: "Off sick this month" });
+
+  assert.equal(status, 200);
+  assert.equal(body.reason, "Off sick this month");
+  assert.ok(sessions.every((s) => s.cancellationReason === "Off sick this month"));
+  await tick();
+  assert.equal(notifications.length, 1);
+  assert.equal(String(notifications[0].userId), String(student));
+  assert.match(notifications[0].body, /Off sick this month/);
+  assert.match(notifications[0].body, /sessions: 3/);
+});
+
+test("sessions already held or already cancelled are left alone", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const held = stubSession(1, BookingStatus.COMPLETED, new Date(Date.now() - 14 * DAY));
+  const past = stubSession(2, BookingStatus.CONFIRMED, new Date(Date.now() - 7 * DAY));
+  const dropped = stubSession(3, BookingStatus.CANCELLED);
+  const upcoming = stubSession(4, BookingStatus.CONFIRMED);
+  stubSeries([held, past, dropped, upcoming]);
+
+  const { status, body } = await cancelSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 1);
+  assert.equal(upcoming.status, BookingStatus.CANCELLED);
+  for (const s of [held, past, dropped]) assert.equal(s.saves, 0);
+  assert.equal(held.status, BookingStatus.COMPLETED);
+  assert.equal(past.status, BookingStatus.CONFIRMED);
+});
+
+test("with a starting session, that session and the ones after it are cancelled and the earlier ones stay", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = stubSeries([1, 2, 3, 4].map((i) => stubSession(i, BookingStatus.CONFIRMED)));
+
+  const { status, body } = await cancelSeries({ fromBookingId: String(sessions[2]._id) });
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 2);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [3, 4]);
+  assert.equal(sessions[0].status, BookingStatus.CONFIRMED);
+  assert.equal(sessions[1].status, BookingStatus.CONFIRMED);
+  assert.equal(sessions[2].status, BookingStatus.CANCELLED);
+  assert.equal(sessions[3].status, BookingStatus.CANCELLED);
+  assert.equal(sessions[0].saves + sessions[1].saves, 0);
+});
+
+test("naming a session that has already happened still only cancels what is upcoming", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const first = stubSession(1, BookingStatus.CONFIRMED, new Date(Date.now() - 7 * DAY));
+  const second = stubSession(2, BookingStatus.CONFIRMED);
+  stubSeries([first, second]);
+
+  const { status, body } = await cancelSeries({ fromBookingId: String(first._id) });
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 1);
+  assert.equal(first.status, BookingStatus.CONFIRMED);
+  assert.equal(second.status, BookingStatus.CANCELLED);
+});
+
+test("a starting session that is not in the series is a 400, and nothing is cancelled", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = stubSeries([1, 2].map((i) => stubSession(i, BookingStatus.CONFIRMED)));
+
+  const { status, body } = await cancelSeries({ fromBookingId: String(new mongoose.Types.ObjectId()) });
+
+  assert.equal(status, 400);
+  assert.equal(body.error.code, "VALIDATION_ERROR");
+  assert.equal(body.error.field, "fromBookingId");
+  assert.ok(sessions.every((s) => s.saves === 0 && s.status === BookingStatus.CONFIRMED));
+  await tick();
+  assert.equal(notifications.length, 0);
+});
+
+test("someone who is neither the tutor nor the student cannot cancel the series", async () => {
+  as(stranger, UserRole.GUARDIAN_LEARNER);
+  const sessions = stubSeries([1, 2].map((i) => stubSession(i, BookingStatus.CONFIRMED)));
+
+  const { status, body } = await cancelSeries();
+
+  assert.equal(status, 404);
+  assert.equal(body.error.code, "NOT_FOUND");
+  assert.ok(sessions.every((s) => s.saves === 0 && s.status === BookingStatus.CONFIRMED));
+  await tick();
+  assert.equal(notifications.length, 0);
+});
+
+test("a series that does not exist is a 404", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  stubSeries([]);
+
+  const { status } = await cancelSeries();
+
+  assert.equal(status, 404);
+});
+
+test("a series with nothing upcoming left to cancel is a 409, and nobody is told", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  stubSeries([
+    stubSession(1, BookingStatus.COMPLETED, new Date(Date.now() - 7 * DAY)),
+    stubSession(2, BookingStatus.CANCELLED),
+  ]);
+
+  const { status, body } = await cancelSeries();
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "INVALID_STATE");
+  await tick();
+  assert.equal(notifications.length, 0);
+});
+
+test("cancelling one session on its own still cancels only that one, with the ordinary notification", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = [1, 2, 3].map((i) => stubSession(i, BookingStatus.CONFIRMED));
+  Booking.findOne = (async (filter: any) =>
+    sessions.find((s) => String(s._id) === String(filter._id)) ?? null) as any;
+
+  const { status, body } = await call("PUT", `/bookings/${sessions[1]._id}/cancel`, {});
+
+  assert.equal(status, 200);
+  assert.equal(body.status, BookingStatus.CANCELLED);
+  assert.equal(sessions[1].status, BookingStatus.CANCELLED);
+  assert.equal(sessions[0].status, BookingStatus.CONFIRMED);
+  assert.equal(sessions[2].status, BookingStatus.CONFIRMED);
+  await tick();
+  assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].title, "Session cancelled");
+});
