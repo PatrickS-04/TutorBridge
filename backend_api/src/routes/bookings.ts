@@ -240,8 +240,10 @@ router.post(
       req.auth!.institutionId,
       String(tutor._id),
       NotificationCategory.BOOKING,
-      "booking.new",
-      { subject: subjectName, when: start.toISOString().slice(0, 10) },
+      isSeries ? "booking.seriesNew" : "booking.new",
+      isSeries
+        ? { subject: subjectName, when: start.toISOString().slice(0, 10), count: String(windows.length) }
+        : { subject: subjectName, when: start.toISOString().slice(0, 10) },
       `tutorbridge://bookings/${booking._id}`
     );
 
