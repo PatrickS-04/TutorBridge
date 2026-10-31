@@ -604,6 +604,79 @@ router.put(
   })
 );
 
+/**
+ * Cancel the rest of a weekly series.
+ *
+ * Either party may. By default every session that has not started and is still on is
+ * cancelled; send `fromBookingId` to cancel only that session and the ones after it,
+ * which is "this and all following". Sessions already held or already cancelled are
+ * left alone, and a single session can still be cancelled on its own. The other party
+ * is told once, not once a week.
+ */
+router.put(
+  "/series/:seriesId/cancel",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { reason, fromBookingId } = req.body;
+    const sessions = await Booking.find({
+      seriesId: req.params.seriesId,
+      institutionId: req.auth!.institutionId,
+      $or: [{ tutorId: req.auth!.userId }, { studentId: req.auth!.userId }],
+    }).sort({ startTime: 1 });
+    if (sessions.length === 0) return res.status(404).json(apiError("NOT_FOUND", "Series not found"));
+
+    let from = new Date();
+    if (fromBookingId !== undefined) {
+      const first = sessions.find((b) => String(b._id) === String(fromBookingId));
+      if (!first) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", "fromBookingId is not part of this series", "fromBookingId"));
+      }
+      if (first.startTime > from) from = first.startTime;
+    }
+
+    const open = [BookingStatus.REQUESTED, BookingStatus.CONFIRMED, BookingStatus.TRIAL_RUNNING, BookingStatus.ACTIVE];
+    const toCancel = sessions.filter(
+      (b) => open.includes(b.status) && b.startTime >= from && b.startTime > new Date()
+    );
+    if (toCancel.length === 0) {
+      return res.status(409).json(apiError("INVALID_STATE", "This series has no upcoming sessions left to cancel"));
+    }
+
+    for (const booking of toCancel) {
+      booking.status = BookingStatus.CANCELLED;
+      booking.cancelledBy = req.auth!.userId as any;
+      booking.cancellationReason = reason;
+      await booking.save();
+      syncBookingCancelled(booking);
+    }
+
+    // Whoever did not press cancel is the one who needs telling.
+    const otherParty =
+      String(toCancel[0].tutorId) === req.auth!.userId ? toCancel[0].studentId : toCancel[0].tutorId;
+    notify(
+      req.auth!.institutionId,
+      String(otherParty),
+      NotificationCategory.BOOKING,
+      reason ? "booking.seriesCancelledWithReason" : "booking.seriesCancelled",
+      { subject: toCancel[0].subjectName, reason: reason ?? "", count: String(toCancel.length) },
+      `tutorbridge://bookings/${toCancel[0]._id}`
+    );
+
+    res.status(200).json({
+      seriesId: req.params.seriesId,
+      cancelled: toCancel.length,
+      cancelledBy: req.auth!.userId,
+      reason: reason ?? null,
+      bookings: toCancel.map((b) => ({
+        id: b._id,
+        status: b.status,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        seriesIndex: b.seriesIndex,
+      })),
+    });
+  })
+);
+
 router.get(
   "/",
   asyncHandler(async (req: AuthRequest, res) => {

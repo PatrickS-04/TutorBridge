@@ -924,6 +924,52 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/series/{seriesId}/cancel": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Cancel the rest of a weekly series",
+        description: [
+          "Either party may. Every session that has not started and is still on is cancelled, or, with",
+          "`fromBookingId`, only that session and the ones after it (\"this and all following\"). Sessions",
+          "already held or cancelled are left alone, and a single session can still be cancelled on its own.",
+          "The other party gets one notification.",
+        ].join("\n"),
+        parameters: [pathId("seriesId", "Series id, as returned when the series was booked.")],
+        requestBody: {
+          ...json({
+            type: "object",
+            properties: {
+              reason: { type: "string", example: "Clash with a lecture" },
+              fromBookingId: objectId("Cancel from this session onward; leave out to cancel every upcoming session."),
+            },
+          }),
+        },
+        responses: {
+          200: ok("The sessions that were cancelled.", {
+            type: "object",
+            properties: {
+              seriesId: objectId("Series id."),
+              cancelled: { type: "integer", example: 3 },
+              cancelledBy: objectId("Who cancelled."),
+              reason: { type: "string", nullable: true },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 2 } } },
+                  ],
+                },
+              },
+            },
+          }),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
     "/bookings/series/{seriesId}/confirm": {
       put: {
         tags: ["Bookings"],
