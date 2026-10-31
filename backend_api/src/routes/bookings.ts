@@ -526,6 +526,84 @@ router.put(
   })
 );
 
+/**
+ * Confirm a whole weekly series in one go.
+ *
+ * Only the tutor it was booked with may. Every session still waiting and not yet
+ * started is checked again against the tutor's confirmed sessions, since the diary may
+ * have filled since the student asked; one clash and none are confirmed, so a series
+ * is never left half-agreed (the tutor can still confirm the free dates one by one).
+ * The student is told once, not once a week.
+ */
+router.put(
+  "/series/:seriesId/confirm",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const sessions = await Booking.find({
+      seriesId: req.params.seriesId,
+      institutionId: req.auth!.institutionId,
+      tutorId: req.auth!.userId,
+    }).sort({ startTime: 1 });
+    if (sessions.length === 0) return res.status(404).json(apiError("NOT_FOUND", "Series not found"));
+
+    const now = new Date();
+    const waiting = sessions.filter((b) => b.status === BookingStatus.REQUESTED && b.startTime > now);
+    if (waiting.length === 0) {
+      return res.status(409).json(apiError("INVALID_STATE", "This series has no sessions waiting to be confirmed"));
+    }
+
+    const taken = await Booking.find({
+      _id: { $nin: waiting.map((b) => b._id) },
+      tutorId: req.auth!.userId,
+      status: BookingStatus.CONFIRMED,
+      $or: waiting.map((b) => ({ startTime: { $lt: b.endTime }, endTime: { $gt: b.startTime } })),
+    });
+    const clashing = waiting.filter((w) => taken.some((b) => b.startTime < w.endTime && b.endTime > w.startTime));
+    if (clashing.length > 0) {
+      return res.status(409).json({
+        error: {
+          code: "SERIES_CONFLICT",
+          message: "You already have a confirmed session on some of these dates",
+          field: "startTime",
+          dates: clashing.map((b) => b.startTime.toISOString()),
+        },
+      });
+    }
+
+    for (const booking of waiting) {
+      booking.status = BookingStatus.CONFIRMED;
+      booking.confirmedAt = new Date();
+      booking.addressDisclosed = true;
+      await booking.save();
+      syncBookingCreated(booking);
+    }
+
+    notify(
+      req.auth!.institutionId,
+      String(waiting[0].studentId),
+      NotificationCategory.BOOKING,
+      "booking.seriesConfirmed",
+      {
+        subject: waiting[0].subjectName,
+        when: waiting[0].startTime.toISOString().slice(0, 10),
+        count: String(waiting.length),
+      },
+      `tutorbridge://bookings/${waiting[0]._id}`
+    );
+
+    res.status(200).json({
+      seriesId: req.params.seriesId,
+      confirmed: waiting.length,
+      bookings: waiting.map((b) => ({
+        id: b._id,
+        status: b.status,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        seriesIndex: b.seriesIndex,
+      })),
+    });
+  })
+);
+
 router.get(
   "/",
   asyncHandler(async (req: AuthRequest, res) => {

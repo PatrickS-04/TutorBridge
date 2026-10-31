@@ -924,6 +924,40 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/series/{seriesId}/confirm": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Confirm a whole weekly series",
+        description: [
+          "The tutor accepts every session of the series that is still requested and not yet started.",
+          "Each is rechecked against the tutor's confirmed sessions; if any clash, 409 `SERIES_CONFLICT`",
+          "lists the dates and nothing is confirmed. Each confirmed session is written to Google",
+          "Calendar if one is linked, and the student gets a single notification.",
+        ].join("\n"),
+        parameters: [pathId("seriesId", "Series id, as returned when the series was booked.")],
+        responses: {
+          200: ok("The sessions that were confirmed.", {
+            type: "object",
+            properties: {
+              seriesId: objectId("Series id."),
+              confirmed: { type: "integer", example: 4 },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 1 } } },
+                  ],
+                },
+              },
+            },
+          }),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
     "/bookings/{id}/confirm": {
       put: {
         tags: ["Bookings"],
