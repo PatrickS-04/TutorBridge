@@ -210,11 +210,35 @@ data class DirectBookingRequest(
     val startTime: String, // ISO-8601 instant
     val endTime: String,
     val mode: String = "IN_PERSON",
-    val location: String? = null
+    val location: String? = null,
+    /** Left null for a single session; Gson leaves a null out of the body. */
+    val repeat: RepeatDto? = null
 )
 
-/** POST /bookings and /bookings/direct answer with `id`, not the whole document. */
-data class BookingAckDto(val id: String, val status: String)
+/** Book the same time every week: `startTime` is the first session and [count] is how many in all. */
+data class RepeatDto(val frequency: String = "WEEKLY", val count: Int)
+
+/**
+ * POST /bookings and /bookings/direct answer with `id`, not the whole document. A weekly series
+ * also names itself and lists its sessions. The series fields are nullable because Gson leaves a
+ * field the server did not send as null, whatever default the class declares.
+ */
+data class BookingAckDto(
+    val id: String,
+    val status: String,
+    val seriesId: String? = null,
+    val seriesCount: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
+
+/** One session in a series just booked, in order. */
+data class SeriesBookingDto(
+    val id: String,
+    val status: String,
+    val startTime: String? = null,
+    val endTime: String? = null,
+    val seriesIndex: Int? = null
+)
 
 data class CancelRequest(val reason: String?)
 
