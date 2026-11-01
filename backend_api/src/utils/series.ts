@@ -1,4 +1,4 @@
-import { IAvailabilitySlot } from "../models";
+import { IAvailabilitySlot, DayOfWeek } from "../models";
 
 /** A weekly series is 2 to 8 sessions; 4 is "a month". */
 export const SERIES_MIN = 2;
@@ -7,7 +7,11 @@ export const SERIES_MAX = 8;
 /** Availability windows are written in campus time, which is South African time and has no daylight saving. */
 export const CAMPUS_TIME_ZONE = "Africa/Johannesburg";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+
+/** The weekday names in order, Monday first, as campus time and the availability windows write them. */
+const WEEKDAYS: string[] = Object.values(DayOfWeek);
 
 export interface SeriesRepeat {
   count: number;
@@ -38,6 +42,28 @@ export function seriesWindows(start: Date, end: Date, count: number): { start: D
     start: new Date(start.getTime() + i * WEEK_MS),
     end: new Date(end.getTime() + i * WEEK_MS),
   }));
+}
+
+/**
+ * The sessions of a recurring pattern: the same time of day on each of [days], for [weeks] weeks.
+ *
+ * Weeks are rolling blocks of seven days counted from the first session, not calendar weeks, so a
+ * pattern of 3 days over 4 weeks is always exactly 12 sessions and no day is skipped. Each chosen
+ * weekday is its next occurrence on or after the first session, repeated every seven days. The
+ * result is in date order. [days] should include the weekday of [start]; the first session is
+ * always [start] itself, which the caller checks. A duplicate or unsorted day is harmless.
+ */
+export function sessionWindows(start: Date, end: Date, days: string[], weeks: number): { start: Date; end: Date }[] {
+  const from = WEEKDAYS.indexOf(campusParts(start).day);
+  const offsets = [...new Set(days.map((d) => (WEEKDAYS.indexOf(d) - from + 7) % 7))].sort((a, b) => a - b);
+  const windows: { start: Date; end: Date }[] = [];
+  for (let week = 0; week < weeks; week++) {
+    for (const offset of offsets) {
+      const shift = (week * 7 + offset) * DAY_MS;
+      windows.push({ start: new Date(start.getTime() + shift), end: new Date(end.getTime() + shift) });
+    }
+  }
+  return windows;
 }
 
 /** The weekday name and minutes since midnight of an instant, in campus time. */

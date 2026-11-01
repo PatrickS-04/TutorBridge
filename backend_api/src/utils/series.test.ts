@@ -2,7 +2,7 @@
 //   Available at: https://nodejs.org/docs/latest-v22.x/api/test.html [Accessed 21 September 2026].
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseRepeat, seriesWindows, campusParts, fitsAvailability, SERIES_MIN, SERIES_MAX } from "./series";
+import { parseRepeat, seriesWindows, sessionWindows, campusParts, fitsAvailability, SERIES_MIN, SERIES_MAX } from "./series";
 
 /**
  * The rules behind a weekly series that need no database: what a `repeat` may say,
@@ -115,4 +115,104 @@ test("a session that runs past midnight never fits, even if both days have hours
 test("the same wall-clock time every week stays inside the window all the way through a series", () => {
   const windows = seriesWindows(start, end, 8);
   assert.ok(windows.every((w) => fitsAvailability(monday, w.start, w.end)));
+});
+
+// ---- sessions of a pattern over several days ---------------------------------------------
+
+const campusDay = (d: Date) => campusParts(d).day;
+const iso = (list: { start: Date }[]) => list.map((w) => w.start.toISOString());
+
+test("three days over four weeks is twelve sessions, in date order", () => {
+  const windows = sessionWindows(start, end, ["MONDAY", "TUESDAY", "WEDNESDAY"], 4);
+
+  assert.equal(windows.length, 12);
+  assert.deepEqual(iso(windows).slice(0, 6), [
+    "2026-11-02T12:00:00.000Z", // Mon
+    "2026-11-03T12:00:00.000Z", // Tue
+    "2026-11-04T12:00:00.000Z", // Wed
+    "2026-11-09T12:00:00.000Z",
+    "2026-11-10T12:00:00.000Z",
+    "2026-11-11T12:00:00.000Z",
+  ]);
+  const times = windows.map((w) => w.start.getTime());
+  assert.deepEqual(times, [...times].sort((a, b) => a - b), "already in date order");
+});
+
+test("each chosen weekday appears once a week, at the same time every time", () => {
+  const windows = sessionWindows(start, end, ["MONDAY", "TUESDAY", "WEDNESDAY"], 4);
+
+  for (const day of ["MONDAY", "TUESDAY", "WEDNESDAY"]) {
+    assert.equal(windows.filter((w) => campusDay(w.start) === day).length, 4, day);
+  }
+  assert.ok(windows.every((w) => campusParts(w.start).minutes === 14 * 60), "always 14:00 campus time");
+  assert.ok(windows.every((w) => w.end.getTime() - w.start.getTime() === 3_600_000));
+});
+
+test("a pattern that starts mid-week counts each day from the first session, so nothing is skipped", () => {
+  // Starting on Wednesday 4 November: the Monday and Tuesday are the ones after it, not the ones before.
+  const wednesday = new Date("2026-11-04T12:00:00Z");
+  const windows = sessionWindows(wednesday, hours(wednesday), ["MONDAY", "TUESDAY", "WEDNESDAY"], 2);
+
+  assert.deepEqual(iso(windows), [
+    "2026-11-04T12:00:00.000Z", // Wed
+    "2026-11-09T12:00:00.000Z", // Mon
+    "2026-11-10T12:00:00.000Z", // Tue
+    "2026-11-11T12:00:00.000Z", // Wed
+    "2026-11-16T12:00:00.000Z", // Mon
+    "2026-11-17T12:00:00.000Z", // Tue
+  ]);
+});
+
+function hours(d: Date, n = 1) {
+  return new Date(d.getTime() + n * 3_600_000);
+}
+
+test("one day gives exactly what a plain weekly series gives", () => {
+  assert.deepEqual(iso(sessionWindows(start, end, ["MONDAY"], 4)), iso(seriesWindows(start, end, 4)));
+});
+
+test("a pattern carries on across a month and a year", () => {
+  const thursday = new Date("2026-12-24T12:00:00Z");
+  const windows = sessionWindows(thursday, hours(thursday), ["THURSDAY", "SATURDAY"], 2);
+
+  assert.deepEqual(iso(windows), [
+    "2026-12-24T12:00:00.000Z",
+    "2026-12-26T12:00:00.000Z",
+    "2026-12-31T12:00:00.000Z",
+    "2027-01-02T12:00:00.000Z",
+  ]);
+});
+
+test("all seven days for one week is seven days in a row", () => {
+  const all = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+  const windows = sessionWindows(start, end, all, 1);
+
+  assert.equal(windows.length, 7);
+  windows.forEach((w, i) => assert.equal(w.start.getTime(), start.getTime() + i * 86_400_000));
+});
+
+test("a day named twice, or days out of order, give the same sessions", () => {
+  const tidy = iso(sessionWindows(start, end, ["MONDAY", "WEDNESDAY"], 2));
+  assert.deepEqual(iso(sessionWindows(start, end, ["WEDNESDAY", "MONDAY", "WEDNESDAY"], 2)), tidy);
+});
+
+test("building a pattern does not change the dates it was built from", () => {
+  const before = [start.getTime(), end.getTime()];
+  sessionWindows(start, end, ["MONDAY", "TUESDAY"], 3);
+  assert.deepEqual([start.getTime(), end.getTime()], before);
+});
+
+test("every session of a pattern fits Monday to Wednesday hours, and none fits a Thursday", () => {
+  const hoursOpen = [
+    { day: "MONDAY", startTime: "09:00", endTime: "17:00" },
+    { day: "TUESDAY", startTime: "09:00", endTime: "17:00" },
+    { day: "WEDNESDAY", startTime: "09:00", endTime: "17:00" },
+  ] as any;
+  const windows = sessionWindows(start, end, ["MONDAY", "TUESDAY", "WEDNESDAY"], 4);
+  assert.ok(windows.every((w) => fitsAvailability(hoursOpen, w.start, w.end)));
+
+  const withThursday = sessionWindows(start, end, ["MONDAY", "THURSDAY"], 2);
+  const thursdays = withThursday.filter((w) => campusDay(w.start) === "THURSDAY");
+  assert.equal(thursdays.length, 2);
+  assert.ok(thursdays.every((w) => !fitsAvailability(hoursOpen, w.start, w.end)));
 });
