@@ -16,7 +16,7 @@ const end = new Date("2026-11-02T13:00:00Z");
 
 test("a weekly repeat of 2 to 8 sessions is accepted", () => {
   for (const count of [SERIES_MIN, 4, SERIES_MAX]) {
-    assert.deepEqual(parseRepeat({ frequency: "WEEKLY", count }), { repeat: { count } });
+    assert.deepEqual(parseRepeat({ frequency: "WEEKLY", count }), { repeat: { weeks: count } });
   }
 });
 
@@ -215,4 +215,77 @@ test("every session of a pattern fits Monday to Wednesday hours, and none fits a
   const thursdays = withThursday.filter((w) => campusDay(w.start) === "THURSDAY");
   assert.equal(thursdays.length, 2);
   assert.ok(thursdays.every((w) => !fitsAvailability(hoursOpen, w.start, w.end)));
+});
+
+// ---- a repeat over several days -----------------------------------------------------------
+
+test("days and weeks are read as a pattern", () => {
+  assert.deepEqual(parseRepeat({ frequency: "WEEKLY", days: ["MONDAY", "TUESDAY", "WEDNESDAY"], weeks: 4 }), {
+    repeat: { weeks: 4, days: ["MONDAY", "TUESDAY", "WEDNESDAY"] },
+  });
+});
+
+test("with days, count is read as the number of weeks when weeks is left out", () => {
+  assert.deepEqual(parseRepeat({ frequency: "WEEKLY", days: ["MONDAY", "FRIDAY"], count: 3 }), {
+    repeat: { weeks: 3, days: ["MONDAY", "FRIDAY"] },
+  });
+});
+
+test("several days can be booked for a single week", () => {
+  assert.deepEqual(parseRepeat({ frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"], weeks: 1 }), {
+    repeat: { weeks: 1, days: ["MONDAY", "TUESDAY"] },
+  });
+});
+
+test("the largest allowed patterns are accepted: 24 sessions however they are made up", () => {
+  const all = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+  assert.ok("repeat" in parseRepeat({ frequency: "WEEKLY", days: all.slice(0, 3), weeks: 8 })); // 3 x 8
+  assert.ok("repeat" in parseRepeat({ frequency: "WEEKLY", days: all.slice(0, 4), weeks: 6 })); // 4 x 6
+  assert.ok("repeat" in parseRepeat({ frequency: "WEEKLY", days: all.slice(0, 6), weeks: 4 })); // 6 x 4
+  assert.ok("repeat" in parseRepeat({ frequency: "WEEKLY", days: all, weeks: 3 })); // 7 x 3
+});
+
+test("more than 24 sessions is refused, naming the whole repeat", () => {
+  const five = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+  const parsed = parseRepeat({ frequency: "WEEKLY", days: five, weeks: 5 }) as { error?: string; field?: string };
+  assert.equal(parsed.field, "repeat");
+  assert.match(parsed.error!, /at most 24/);
+  assert.equal((parseRepeat({ frequency: "WEEKLY", days: [...five, "SATURDAY", "SUNDAY"], weeks: 4 }) as any).field, "repeat");
+});
+
+test("one day for one week is a single session, not a series", () => {
+  const parsed = parseRepeat({ frequency: "WEEKLY", days: ["MONDAY"], weeks: 1 }) as { error?: string; field?: string };
+  assert.equal(parsed.field, "repeat");
+  assert.match(parsed.error!, /at least 2/);
+});
+
+test("the weeks of a pattern must be a whole number from 1 to 8", () => {
+  for (const weeks of [0, 9, -1, 2.5, "4", undefined]) {
+    const parsed = parseRepeat({ frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"], weeks }) as { field?: string };
+    assert.equal(parsed.field, "repeat.weeks", JSON.stringify(weeks));
+  }
+});
+
+test("the days of a pattern must be 1 to 7 different, spelled weekday names", () => {
+  const bad: unknown[] = [
+    [],
+    "MONDAY",
+    null,
+    ["MONDAY", "MONDAY"],
+    ["monday"],
+    ["FUNDAY"],
+    ["MONDAY", 2],
+    ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY", "MONDAY"],
+  ];
+  for (const days of bad) {
+    const parsed = parseRepeat({ frequency: "WEEKLY", days, weeks: 2 }) as { field?: string };
+    assert.equal(parsed.field, "repeat.days", JSON.stringify(days));
+  }
+});
+
+test("the original shape still reads, and still asks for a count of 2 to 8", () => {
+  assert.deepEqual(parseRepeat({ frequency: "WEEKLY", count: 6 }), { repeat: { weeks: 6 } });
+  assert.equal((parseRepeat({ frequency: "WEEKLY", count: 1 }) as any).field, "repeat.count");
+  assert.equal((parseRepeat({ frequency: "WEEKLY", count: 9 }) as any).field, "repeat.count");
+  assert.equal((parseRepeat({ frequency: "WEEKLY" }) as any).field, "repeat.count");
 });

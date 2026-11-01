@@ -1,8 +1,13 @@
 import { IAvailabilitySlot, DayOfWeek } from "../models";
 
-/** A weekly series is 2 to 8 sessions; 4 is "a month". */
+/**
+ * A series is at least 2 sessions. A plain weekly series is 2 to 8 sessions (4 is "a month"); a pattern over
+ * several days runs for 1 to 8 weeks on 1 to 7 different weekdays, and never more than 24 sessions in all.
+ */
 export const SERIES_MIN = 2;
 export const SERIES_MAX = 8;
+export const SERIES_MAX_DAYS = 7;
+export const SERIES_MAX_SESSIONS = 24;
 
 /** Availability windows are written in campus time, which is South African time and has no daylight saving. */
 export const CAMPUS_TIME_ZONE = "Africa/Johannesburg";
@@ -14,7 +19,10 @@ const WEEK_MS = 7 * DAY_MS;
 const WEEKDAYS: string[] = Object.values(DayOfWeek);
 
 export interface SeriesRepeat {
-  count: number;
+  /** How many weeks the pattern runs for. For a plain weekly series this is also the number of sessions. */
+  weeks: number;
+  /** The weekdays to book, or undefined for just the weekday of the first session. */
+  days?: string[];
 }
 
 /**
@@ -26,14 +34,46 @@ export function parseRepeat(raw: unknown): { repeat: SeriesRepeat } | { error: s
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     return { error: "repeat must be an object like { frequency: \"WEEKLY\", count: 4 }", field: "repeat" };
   }
-  const { frequency, count } = raw as { frequency?: unknown; count?: unknown };
+  const { frequency, count, weeks, days } = raw as {
+    frequency?: unknown;
+    count?: unknown;
+    weeks?: unknown;
+    days?: unknown;
+  };
   if (frequency !== "WEEKLY") {
     return { error: "repeat.frequency must be WEEKLY", field: "repeat.frequency" };
   }
-  if (typeof count !== "number" || !Number.isInteger(count) || count < SERIES_MIN || count > SERIES_MAX) {
-    return { error: `repeat.count must be a whole number from ${SERIES_MIN} to ${SERIES_MAX}`, field: "repeat.count" };
+
+  // Without days it is the original shape: the weekday of the first session, `count` times.
+  if (days === undefined) {
+    const sessions = count ?? weeks;
+    if (typeof sessions !== "number" || !Number.isInteger(sessions) || sessions < SERIES_MIN || sessions > SERIES_MAX) {
+      return { error: `repeat.count must be a whole number from ${SERIES_MIN} to ${SERIES_MAX}`, field: "repeat.count" };
+    }
+    return { repeat: { weeks: sessions } };
   }
-  return { repeat: { count } };
+
+  if (
+    !Array.isArray(days) ||
+    days.length < 1 ||
+    days.length > SERIES_MAX_DAYS ||
+    days.some((d) => typeof d !== "string" || !WEEKDAYS.includes(d)) ||
+    new Set(days).size !== days.length
+  ) {
+    return { error: `repeat.days must list 1 to ${SERIES_MAX_DAYS} different weekdays, such as MONDAY`, field: "repeat.days" };
+  }
+  const runFor = weeks ?? count;
+  if (typeof runFor !== "number" || !Number.isInteger(runFor) || runFor < 1 || runFor > SERIES_MAX) {
+    return { error: `repeat.weeks must be a whole number from 1 to ${SERIES_MAX}`, field: "repeat.weeks" };
+  }
+  const sessions = days.length * runFor;
+  if (sessions < SERIES_MIN) {
+    return { error: `A series needs at least ${SERIES_MIN} sessions: choose more days or more weeks`, field: "repeat" };
+  }
+  if (sessions > SERIES_MAX_SESSIONS) {
+    return { error: `A series can have at most ${SERIES_MAX_SESSIONS} sessions: choose fewer days or weeks`, field: "repeat" };
+  }
+  return { repeat: { weeks: runFor, days: days as string[] } };
 }
 
 /** The windows of a weekly series: the first session, then the same time each week after it. */
