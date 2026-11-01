@@ -719,3 +719,189 @@ test("cancelling one session on its own still cancels only that one, with the or
   assert.equal(notifications.length, 1);
   assert.equal(notifications[0].title, "Session cancelled");
 });
+
+// ==========================================================================================
+// Booking the same time on several days
+// ==========================================================================================
+
+const MON_TUE_WED = ["MONDAY", "TUESDAY", "WEDNESDAY"];
+
+/** Makes the tutor free 09:00-17:00 campus time on exactly these weekdays. */
+function freeOn(days: string[]) {
+  tutorDoc.availability = days.map((day) => ({ day, startTime: "09:00", endTime: "17:00" }));
+}
+
+const campusDayOf = (d: Date) => campusParts(d).day;
+
+test("three days over four weeks books twelve sessions in date order, one series", async () => {
+  freeOn(MON_TUE_WED);
+  const start = nextMonday(14);
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 4 }, start);
+
+  assert.equal(status, 201);
+  assert.equal(created.length, 12);
+  const seriesId = String(created[0].seriesId);
+  created.forEach((b, i) => {
+    assert.equal(String(b.seriesId), seriesId);
+    assert.equal(b.seriesIndex, i + 1);
+    assert.equal(b.seriesCount, 12);
+    assert.equal(b.status, BookingStatus.REQUESTED);
+  });
+  const times = created.map((b) => b.startTime.getTime());
+  assert.deepEqual(times, [...times].sort((a, b) => a - b), "numbered in date order");
+  assert.equal(created[0].startTime.getTime(), start.getTime(), "the first session is the one asked for");
+
+  assert.equal(body.seriesCount, 12);
+  assert.equal(body.bookings.length, 12);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+});
+
+test("each chosen weekday is booked once a week, at the same time every time", async () => {
+  freeOn(MON_TUE_WED);
+  await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 4 });
+
+  for (const day of MON_TUE_WED) {
+    assert.equal(created.filter((b) => campusDayOf(b.startTime) === day).length, 4, day);
+  }
+  assert.ok(created.every((b) => campusParts(b.startTime).minutes === 14 * 60));
+  assert.ok(created.every((b) => b.endTime.getTime() - b.startTime.getTime() === 3_600_000));
+});
+
+test("several days can be booked for a single week", async () => {
+  freeOn(MON_TUE_WED);
+  const { status } = await bookSeries({ frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"], weeks: 1 });
+
+  assert.equal(status, 201);
+  assert.deepEqual(created.map((b) => campusDayOf(b.startTime)), ["MONDAY", "TUESDAY"]);
+});
+
+test("a pattern that starts mid-week books each other day after the first session", async () => {
+  freeOn(MON_TUE_WED);
+  const wednesday = new Date(nextMonday(14).getTime() + 2 * DAY);
+  await bookSeries({ frequency: "WEEKLY", days: ["WEDNESDAY", "MONDAY", "TUESDAY"], weeks: 2 }, wednesday);
+
+  assert.deepEqual(created.map((b) => campusDayOf(b.startTime)), [
+    "WEDNESDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "MONDAY", "TUESDAY",
+  ]);
+  assert.equal(created[0].startTime.getTime(), wednesday.getTime());
+  assert.equal(created[1].startTime.getTime(), wednesday.getTime() + 5 * DAY);
+});
+
+test("the largest pattern, 24 sessions, is booked whole", async () => {
+  freeOn(MON_TUE_WED);
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 8 });
+
+  assert.equal(status, 201);
+  assert.equal(created.length, 24);
+  assert.equal(body.seriesCount, 24);
+});
+
+test("the original shape, a count and no days, still books that weekday every week", async () => {
+  const { status } = await bookSeries({ frequency: "WEEKLY", count: 3 });
+
+  assert.equal(status, 201);
+  assert.equal(created.length, 3);
+  assert.ok(created.every((b) => campusDayOf(b.startTime) === "MONDAY"));
+});
+
+test("weeks without days is read the same as count", async () => {
+  const { status } = await bookSeries({ frequency: "WEEKLY", weeks: 3 });
+
+  assert.equal(status, 201);
+  assert.equal(created.length, 3);
+});
+
+test("one notification tells the tutor about a whole pattern, with the number of sessions", async () => {
+  freeOn(MON_TUE_WED);
+  await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 4 });
+  await tick();
+
+  assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].title, "New recurring booking");
+  assert.match(notifications[0].body, /Sessions: 12/);
+});
+
+test("days that leave out the weekday of the first session are refused, and book nothing", async () => {
+  freeOn(MON_TUE_WED);
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: ["TUESDAY", "WEDNESDAY"], weeks: 2 });
+
+  assert.equal(status, 400);
+  assert.equal(body.error.code, "VALIDATION_ERROR");
+  assert.equal(body.error.field, "repeat.days");
+  assert.equal(created.length, 0);
+});
+
+for (const [name, repeat, field] of [
+  ["a pattern of more than 24 sessions", { frequency: "WEEKLY", days: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], weeks: 5 }, "repeat"],
+  ["one day for one week", { frequency: "WEEKLY", days: ["MONDAY"], weeks: 1 }, "repeat"],
+  ["nine weeks", { frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"], weeks: 9 }, "repeat.weeks"],
+  ["no weeks", { frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"] }, "repeat.weeks"],
+  ["an empty list of days", { frequency: "WEEKLY", days: [], weeks: 2 }, "repeat.days"],
+  ["the same day twice", { frequency: "WEEKLY", days: ["MONDAY", "MONDAY"], weeks: 2 }, "repeat.days"],
+  ["a day that is not a weekday", { frequency: "WEEKLY", days: ["MONDAY", "FUNDAY"], weeks: 2 }, "repeat.days"],
+  ["days in lower case", { frequency: "WEEKLY", days: ["monday", "tuesday"], weeks: 2 }, "repeat.days"],
+  ["days sent as text", { frequency: "WEEKLY", days: "MONDAY,TUESDAY", weeks: 2 }, "repeat.days"],
+] as [string, unknown, string][]) {
+  test(`${name} is refused with a 400 naming ${field}, and books nothing`, async () => {
+    freeOn(MON_TUE_WED);
+    const { status, body } = await bookSeries(repeat);
+
+    assert.equal(status, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.equal(body.error.field, field);
+    assert.equal(created.length, 0);
+  });
+}
+
+test("a weekday the tutor does not work is refused, listing that weekday's dates in every week", async () => {
+  freeOn(["MONDAY", "TUESDAY"]); // not Wednesday
+  const start = nextMonday(14);
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 3 }, start);
+
+  assert.equal(status, 400);
+  assert.equal(body.error.code, "OUTSIDE_AVAILABILITY");
+  assert.deepEqual(
+    body.error.dates,
+    [0, 1, 2].map((w) => new Date(start.getTime() + (w * 7 + 2) * DAY).toISOString())
+  );
+  assert.equal(created.length, 0);
+});
+
+test("a pattern outside the hours on every day is refused, listing every session", async () => {
+  freeOn(MON_TUE_WED);
+  const evening = nextMonday(18);
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: ["MONDAY", "TUESDAY"], weeks: 2 }, evening);
+
+  assert.equal(status, 400);
+  assert.equal(body.error.code, "OUTSIDE_AVAILABILITY");
+  assert.equal(body.error.dates.length, 4);
+  assert.equal(created.length, 0);
+});
+
+test("one confirmed session in the way, on one day of one week, refuses the whole pattern and names it", async () => {
+  freeOn(MON_TUE_WED);
+  const start = nextMonday(14);
+  const tuesdayOfWeek2 = new Date(start.getTime() + (7 + 1) * DAY);
+  confirmedSessions = [{ startTime: tuesdayOfWeek2, endTime: hours(tuesdayOfWeek2) }];
+
+  const { status, body } = await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 4 }, start);
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "SERIES_CONFLICT");
+  assert.deepEqual(body.error.dates, [tuesdayOfWeek2.toISOString()]);
+  assert.equal(created.length, 0);
+  assert.equal(clashFilter.$or.length, 12, "every session of the pattern was checked");
+});
+
+test("the same time on a different day is not a clash", async () => {
+  freeOn(MON_TUE_WED);
+  const start = nextMonday(14);
+  // Busy at 14:00 on Thursday, which the pattern never touches.
+  const thursday = new Date(start.getTime() + 3 * DAY);
+  confirmedSessions = [{ startTime: thursday, endTime: hours(thursday) }];
+
+  const { status } = await bookSeries({ frequency: "WEEKLY", days: MON_TUE_WED, weeks: 2 }, start);
+
+  assert.equal(status, 201);
+  assert.equal(created.length, 6);
+});
