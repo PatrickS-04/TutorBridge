@@ -203,7 +203,7 @@ test("the tutor is told once about a series, not once a week", async () => {
 
   assert.equal(notifications.length, 1);
   assert.equal(String(notifications[0].userId), String(tutor));
-  assert.equal(notifications[0].title, "New weekly booking");
+  assert.equal(notifications[0].title, "New recurring booking");
   assert.match(notifications[0].body, /Mathematics/);
   assert.match(notifications[0].body, /Sessions: 4/);
 });
@@ -430,7 +430,7 @@ test("the student is told once that the series is confirmed", async () => {
 
   assert.equal(notifications.length, 1);
   assert.equal(String(notifications[0].userId), String(student));
-  assert.equal(notifications[0].title, "Weekly sessions confirmed");
+  assert.equal(notifications[0].title, "Recurring sessions confirmed");
   assert.match(notifications[0].body, /Sessions: 4/);
 });
 
@@ -583,7 +583,7 @@ test("a student cancels every upcoming session of a series, and the tutor is tol
   await tick();
   assert.equal(notifications.length, 1, "one notification, not one a week");
   assert.equal(String(notifications[0].userId), String(tutor));
-  assert.equal(notifications[0].title, "Weekly sessions cancelled");
+  assert.equal(notifications[0].title, "Recurring sessions cancelled");
   assert.match(notifications[0].body, /Sessions: 4/);
 });
 
