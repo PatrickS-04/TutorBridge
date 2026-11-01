@@ -221,8 +221,18 @@ data class DirectBookingRequest(
     val repeat: RepeatDto? = null
 )
 
-/** Book the same time every week: `startTime` is the first session and [count] is how many in all. */
-data class RepeatDto(val frequency: String = "WEEKLY", val count: Int)
+/**
+ * Book the same time on a recurring basis; `startTime` is the first session. Two shapes, and Gson leaves out
+ * whichever fields are null:
+ *  - the original, [count] only: the weekday of the first session, one session a week for [count] weeks;
+ *  - a pattern, [days] and [weeks]: the same time on each of those weekdays (MONDAY ... SUNDAY), for [weeks] weeks.
+ */
+data class RepeatDto(
+    val frequency: String = "WEEKLY",
+    val count: Int? = null,
+    val weeks: Int? = null,
+    val days: List<String>? = null
+)
 
 /**
  * POST /bookings and /bookings/direct answer with `id`, not the whole document. A weekly series
