@@ -14,12 +14,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -58,26 +56,7 @@ fun LearningHistoryScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.history_student_health_index), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(stringResource(R.string.history_percent_high, uiState.studentHealthIndexPercent), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LinearProgressIndicator(
-                        progress = uiState.studentHealthIndexPercent / 100f,
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)),
-                        color = CrimsonPrimary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = {}, label = { Text(pluralStringResource(R.plurals.history_lessons_taught, uiState.lessonsTaught, uiState.lessonsTaught)) })
-                        AssistChip(onClick = {}, label = { Text(stringResource(R.string.history_target_grade, uiState.targetGrade)) })
-                    }
+                    AssistChip(onClick = {}, label = { Text(pluralStringResource(R.plurals.history_lessons_taught, uiState.lessonsTaught, uiState.lessonsTaught)) })
                 }
             }
         }
@@ -88,7 +67,10 @@ fun LearningHistoryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(stringResource(R.string.history_past_completed_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(stringResource(R.string.history_active_since, uiState.studentHealthIndexPercent), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Newest first, so the last entry is the student's first session.
+                uiState.learningHistory.lastOrNull()?.let { first ->
+                    Text(stringResource(R.string.history_active_since, first.date), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 

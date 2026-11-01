@@ -148,11 +148,7 @@ data class TutorBridgeUiState(
 
     // Learning history: the student's COMPLETED bookings
     val lessonsTaught: Int = 0,
-    val learningHistory: List<LearningHistoryEntryUi> = emptyList(),
-
-    // ===== Not backed by the API yet: no collections exist for these =====
-    val studentHealthIndexPercent: Int = 80,
-    val targetGrade: String = "A-"
+    val learningHistory: List<LearningHistoryEntryUi> = emptyList()
 ) {
     /** Things done offline that are still waiting to be sent. */
     val pendingSyncCount: Int

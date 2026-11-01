@@ -1,14 +1,11 @@
 <resources>
     <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
     <string name="history_past_completed_sessions">Afgehandelde sessies</string>
-    <string name="history_student_health_index">Studentegesondheidsindeks</string>
     <string name="history_title">%1$s se leergeskiedenis</string>
     <string name="history_default_name">Student</string>
-    <string name="history_percent_high">%1$d%% hoog</string>
     <plurals name="history_lessons_taught">
         <item quantity="one">%d les gegee</item>
         <item quantity="other">%d lesse gegee</item>
     </plurals>
-    <string name="history_target_grade">%1$s sikgraad</string>
-    <string name="history_active_since">Aktiewe student sedert Sept 2026 • %1$d%% bemeestering</string>
+    <string name="history_active_since">Aktiewe student sedert %1$s</string>
 </resources>
