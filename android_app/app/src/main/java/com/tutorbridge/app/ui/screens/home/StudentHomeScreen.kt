@@ -136,6 +136,7 @@ fun StudentHomeScreen(
                 QuickAction(Icons.Default.Search, stringResource(R.string.student_home_find_tutor), Modifier.weight(1f)) { onNavigate("find_tutors") }
                 QuickAction(Icons.Default.CalendarMonth, stringResource(R.string.student_home_calendar), Modifier.weight(1f)) { onNavigate("calendar") }
                 QuickAction(Icons.Default.List, stringResource(R.string.student_home_my_requests), Modifier.weight(1f)) { onNavigate("my_requests") }
+                QuickAction(Icons.Default.History, stringResource(R.string.student_home_history), Modifier.weight(1f)) { onNavigate("learning_history") }
             }
         }
 
