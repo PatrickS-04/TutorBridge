@@ -303,7 +303,12 @@ private fun PendingSeriesCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        stringResource(R.string.tutor_home_series_summary, booking.whenLabel, series.waiting),
+                        stringResource(
+                            R.string.tutor_home_series_pattern,
+                            series.days.joinToString(", ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) },
+                            booking.whenLabel,
+                            series.waiting
+                        ),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = CrimsonPrimary

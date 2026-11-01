@@ -159,10 +159,12 @@ data class PendingBookingUi(
     val subjectName: String,
     val whenLabel: String,
     val location: String,
-    /** Set when this waiting session is one of a weekly series the student booked in one go. */
+    /** Set when this waiting session is one of a recurring series the student booked in one go. */
     val seriesId: String? = null,
     val seriesIndex: Int = 0,
-    val seriesCount: Int = 0
+    val seriesCount: Int = 0,
+    /** The weekday the session falls on, in the phone's time zone, so a series card can say which days it covers. */
+    val dayOfWeek: java.time.DayOfWeek? = null
 )
 
 data class NotificationUi(

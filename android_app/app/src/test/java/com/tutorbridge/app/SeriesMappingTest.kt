@@ -86,4 +86,18 @@ class SeriesMappingTest {
         assertEquals(2, event.seriesIndex)
         assertEquals(4, event.seriesCount)
     }
+
+    @Test
+    fun `a waiting session knows which weekday it falls on, in the phone's time zone`() {
+        val saved = java.util.TimeZone.getDefault()
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Africa/Johannesburg"))
+        try {
+            // 22:30 UTC on Monday 2 November is 00:30 on Tuesday 3 November in South Africa.
+            val lateMonday = session(1, 4).copy(startTime = "2026-11-02T22:30:00.000Z", endTime = "2026-11-02T23:30:00.000Z")
+            assertEquals(java.time.DayOfWeek.TUESDAY, lateMonday.toPendingBookingUi()!!.dayOfWeek)
+            assertEquals(java.time.DayOfWeek.MONDAY, session(1, 4).toPendingBookingUi()!!.dayOfWeek)
+        } finally {
+            java.util.TimeZone.setDefault(saved)
+        }
+    }
 }
