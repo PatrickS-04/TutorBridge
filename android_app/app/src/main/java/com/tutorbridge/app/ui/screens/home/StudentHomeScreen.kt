@@ -66,7 +66,7 @@ fun StudentHomeScreen(
 
         // Next session card
         item {
-            val nextEvent = uiState.calendarEvents.firstOrNull()
+            val nextEvent = uiState.upcomingEvents.firstOrNull()
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,7 +148,7 @@ fun StudentHomeScreen(
             }
         }
 
-        items(uiState.calendarEvents.take(2)) { event ->
+        items(uiState.upcomingEvents.take(2)) { event ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(14.dp),
