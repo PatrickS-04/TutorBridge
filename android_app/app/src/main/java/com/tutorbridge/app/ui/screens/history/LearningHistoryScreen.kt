@@ -10,10 +10,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,6 +28,7 @@ fun LearningHistoryScreen(
     uiState: TutorBridgeUiState,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -44,8 +47,16 @@ fun LearningHistoryScreen(
                         uiState.userName.split(" ").firstOrNull() ?: stringResource(R.string.history_default_name)
                     ),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+                // Nothing to export until a session is completed.
+                IconButton(
+                    onClick = { exportLearningHistory(context, uiState.userName, uiState.institutionName, uiState.learningHistory) },
+                    enabled = uiState.learningHistory.isNotEmpty()
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = stringResource(R.string.history_pdf_share))
+                }
             }
         }
 
