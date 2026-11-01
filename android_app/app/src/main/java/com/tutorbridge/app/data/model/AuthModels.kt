@@ -40,5 +40,7 @@ data class ApiErrorBody(val error: ApiErrorDetail?)
 data class ApiErrorDetail(
     val code: String?,
     val message: String?,
-    val field: String?
+    val field: String?,
+    /** The start times (ISO-8601) a series error is about: the weeks that clash or fall outside the tutor's hours. */
+    val dates: List<String>? = null
 )

@@ -107,6 +107,14 @@ interface TutorBridgeApi {
     @PUT("bookings/{id}/cancel")
     suspend fun cancelBooking(@Path("id") id: String, @Body body: CancelRequest): Response<BookingAckDto>
 
+    /** The tutor confirms every waiting session of a weekly series at once. */
+    @PUT("bookings/series/{seriesId}/confirm")
+    suspend fun confirmSeries(@Path("seriesId") seriesId: String): Response<SeriesActionDto>
+
+    /** Either party cancels the upcoming sessions of a weekly series. */
+    @PUT("bookings/series/{seriesId}/cancel")
+    suspend fun cancelSeries(@Path("seriesId") seriesId: String, @Body body: CancelSeriesRequest): Response<SeriesActionDto>
+
     /** Moves a session; a student's move of a confirmed one goes back to the tutor to confirm. */
     @PUT("bookings/{id}/reschedule")
     suspend fun rescheduleBooking(@Path("id") id: String, @Body body: RescheduleRequest): Response<RescheduleAckDto>

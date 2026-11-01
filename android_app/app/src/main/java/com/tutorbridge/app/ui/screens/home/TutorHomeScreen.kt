@@ -23,6 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import com.tutorbridge.app.data.model.PendingBookingUi
+import com.tutorbridge.app.data.model.PendingItem
+import com.tutorbridge.app.data.model.groupPending
 import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
@@ -35,7 +38,9 @@ fun TutorHomeScreen(
     uiState: TutorBridgeUiState,
     onNavigate: (String) -> Unit,
     onAcceptBooking: (String) -> Unit = {},
-    onDeclineBooking: (String) -> Unit = {}
+    onDeclineBooking: (String) -> Unit = {},
+    onAcceptSeries: (String) -> Unit = {},
+    onDeclineSeries: (String) -> Unit = {}
 ) {
     val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId }
         ?: uiState.institutions.firstOrNull()
@@ -177,48 +182,20 @@ fun TutorHomeScreen(
             }
         }
 
-        items(uiState.pendingBookings) { booking ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(
-                            modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
-                        Column {
-                            Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
-                            Text(
-                                listOf(booking.subjectName, booking.whenLabel)
-                                    .filter { it.isNotBlank() }
-                                    .joinToString(" • "),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            VenueLink(booking.location, fontSize = 12.sp)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(
-                            onClick = { onDeclineBooking(booking.id) },
-                            enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
-                            shape = RoundedCornerShape(22.dp)
-                        ) { Text(stringResource(R.string.tutor_home_decline), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
-                        Button(
-                            onClick = { onAcceptBooking(booking.id) },
-                            enabled = uiState.isOnline,
-                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
-                            shape = RoundedCornerShape(22.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
-                        ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
-                    }
-                    NeedsConnectionHint(uiState.isOnline)
-                }
+        items(groupPending(uiState.pendingBookings)) { item ->
+            when (item) {
+                is PendingItem.Single -> PendingBookingCard(
+                    booking = item.booking,
+                    isOnline = uiState.isOnline,
+                    onAccept = onAcceptBooking,
+                    onDecline = onDeclineBooking
+                )
+                is PendingItem.Series -> PendingSeriesCard(
+                    series = item,
+                    isOnline = uiState.isOnline,
+                    onAccept = onAcceptSeries,
+                    onDecline = onDeclineSeries
+                )
             }
         }
 
@@ -242,6 +219,115 @@ fun TutorHomeScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+/** One waiting session, with the tutor's choice of taking it or not. */
+@Composable
+private fun PendingBookingCard(
+    booking: PendingBookingUi,
+    isOnline: Boolean,
+    onAccept: (String) -> Unit,
+    onDecline: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                Column {
+                    Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                    Text(
+                        listOf(booking.subjectName, booking.whenLabel)
+                            .filter { it.isNotBlank() }
+                            .joinToString(" • "),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    VenueLink(booking.location, fontSize = 12.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = { onDecline(booking.id) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp)
+                ) { Text(stringResource(R.string.tutor_home_decline), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                Button(
+                    onClick = { onAccept(booking.id) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
+            }
+            NeedsConnectionHint(isOnline)
+        }
+    }
+}
+
+/** A whole weekly series waiting on the tutor: one decision for every session in it. */
+@Composable
+private fun PendingSeriesCard(
+    series: PendingItem.Series,
+    isOnline: Boolean,
+    onAccept: (String) -> Unit,
+    onDecline: (String) -> Unit
+) {
+    val booking = series.first
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                Column {
+                    Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                    Text(
+                        booking.subjectName,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        stringResource(R.string.tutor_home_series_summary, booking.whenLabel, series.waiting),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = CrimsonPrimary
+                    )
+                    VenueLink(booking.location, fontSize = 12.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = { onDecline(series.seriesId) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp)
+                ) { Text(stringResource(R.string.tutor_home_decline_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                Button(
+                    onClick = { onAccept(series.seriesId) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
+            }
+            NeedsConnectionHint(isOnline)
         }
     }
 }

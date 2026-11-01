@@ -32,4 +32,17 @@
     <string name="booking_no_hours_published">%1$s het nog geen ure gepubliseer nie - kies \'n ander tutor.</string>
     <string name="booking_no_hours_day">%1$s het geen ure vir hierdie dag gestel nie - probeer \'n ander datum.</string>
     <string name="booking_time_one_hour">%1$s (1 uur)</string>
+    <string name="booking_repeat_weekly">Herhaal weekliks</string>
+    <string name="booking_repeat_hint">Bespreek elke week dieselfde tyd. Die tutor bevestig die hele reeks.</string>
+    <string name="booking_repeat_sessions">Sessies</string>
+    <string name="booking_repeat_fewer">Minder sessies</string>
+    <string name="booking_repeat_more">Meer sessies</string>
+    <string name="booking_repeat_summary">Elke %1$s om %2$s, %3$d sessies</string>
+    <string name="booking_repeat_dates">Datums</string>
+    <string name="booking_confirm_series">Versoek %1$d weeklikse sessies</string>
+    <string name="booking_series_submitted">Jou versoek is ingedien. Die tutor bevestig die hele reeks in een slag. Meeste tutors antwoord binne 2 uur.</string>
+    <plurals name="booking_series_requested">
+        <item quantity="one">%d weeklikse sessie versoek</item>
+        <item quantity="other">%d weeklikse sessies versoek</item>
+    </plurals>
 </resources>

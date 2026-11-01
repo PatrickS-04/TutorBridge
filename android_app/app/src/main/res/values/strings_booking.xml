@@ -31,4 +31,17 @@
     <string name="booking_no_hours_published">%1$s has not published any hours yet - pick another tutor.</string>
     <string name="booking_no_hours_day">%1$s has no hours set for this day - try another date.</string>
     <string name="booking_time_one_hour">%1$s (1 hour)</string>
+    <string name="booking_repeat_weekly">Repeat weekly</string>
+    <string name="booking_repeat_hint">Book the same time every week. The tutor confirms the whole series.</string>
+    <string name="booking_repeat_sessions">Sessions</string>
+    <string name="booking_repeat_fewer">Fewer sessions</string>
+    <string name="booking_repeat_more">More sessions</string>
+    <string name="booking_repeat_summary">Every %1$s at %2$s, %3$d sessions</string>
+    <string name="booking_repeat_dates">Dates</string>
+    <string name="booking_confirm_series">Request %1$d weekly sessions</string>
+    <string name="booking_series_submitted">Your request was submitted. The tutor confirms the whole series at once. Most tutors reply in less than 2 hours.</string>
+    <plurals name="booking_series_requested">
+        <item quantity="one">%d weekly session requested</item>
+        <item quantity="other">%d weekly sessions requested</item>
+    </plurals>
 </resources>

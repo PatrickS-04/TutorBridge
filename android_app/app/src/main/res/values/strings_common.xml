@@ -43,4 +43,6 @@
     <string name="api_error_unverified">Only verified tutors may apply</string>
     <string name="api_error_not_required">There is no temporary password to replace</string>
     <string name="error_server">Something went wrong on our side. Please try again.</string>
+    <string name="api_error_series_conflict">A confirmed session is already booked on: %1$s. Choose another time.</string>
+    <string name="api_error_outside_availability">The tutor is not available at this time every week. Weeks that do not fit: %1$s. Choose another time.</string>
 </resources>
