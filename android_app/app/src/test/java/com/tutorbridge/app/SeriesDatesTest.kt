@@ -4,49 +4,19 @@ import com.google.gson.Gson
 import com.tutorbridge.app.data.model.ApiErrorBody
 import com.tutorbridge.app.data.model.BookingAckDto
 import com.tutorbridge.app.data.model.DirectBookingRequest
-import com.tutorbridge.app.data.model.RepeatDto
 import com.tutorbridge.app.data.model.SERIES_DEFAULT
 import com.tutorbridge.app.data.model.SERIES_MAX
 import com.tutorbridge.app.data.model.SERIES_MIN
 import com.tutorbridge.app.data.model.repeatFor
-import com.tutorbridge.app.data.model.weeklyDates
-import java.time.DayOfWeek
-import java.time.LocalDate
+import java.time.DayOfWeek.MONDAY
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** The limits, and how a request for a series and the server's answers to it are written. */
 class SeriesDatesTest {
-
-    private val monday = LocalDate.of(2026, 11, 2)
-
-    @Test
-    fun `a weekly series is the same weekday each week, starting on the first date`() {
-        val dates = weeklyDates(monday, 4)
-        assertEquals(
-            listOf("2026-11-02", "2026-11-09", "2026-11-16", "2026-11-23"),
-            dates.map { it.toString() }
-        )
-        assertTrue(dates.all { it.dayOfWeek == DayOfWeek.MONDAY })
-    }
-
-    @Test
-    fun `a series carries on across a month and a year`() {
-        val dates = weeklyDates(LocalDate.of(2026, 12, 21), 4)
-        assertEquals(listOf("2026-12-21", "2026-12-28", "2027-01-04", "2027-01-11"), dates.map { it.toString() })
-    }
-
-    @Test
-    fun `the count is kept inside what the server accepts`() {
-        assertEquals(SERIES_MIN, weeklyDates(monday, 0).size)
-        assertEquals(SERIES_MIN, weeklyDates(monday, 1).size)
-        assertEquals(SERIES_MIN, weeklyDates(monday, -5).size)
-        assertEquals(SERIES_MAX, weeklyDates(monday, 9).size)
-        assertEquals(SERIES_MAX, weeklyDates(monday, 99).size)
-        assertEquals(SERIES_DEFAULT, weeklyDates(monday, SERIES_DEFAULT).size)
-    }
 
     @Test
     fun `the limits match the server and a month is the default`() {
@@ -56,20 +26,15 @@ class SeriesDatesTest {
     }
 
     @Test
-    fun `a booking repeats only when weekly is switched on`() {
-        assertNull(repeatFor(false, 4))
-        assertEquals(RepeatDto("WEEKLY", 4), repeatFor(true, 4))
-        assertEquals(RepeatDto("WEEKLY", SERIES_MAX), repeatFor(true, 50))
-        assertEquals(RepeatDto("WEEKLY", SERIES_MIN), repeatFor(true, 0))
-    }
-
-    @Test
     fun `a single booking is sent without a repeat and a series with one`() {
         val single = Gson().toJson(DirectBookingRequest(tutorId = "t1", startTime = "s", endTime = "e"))
         assertFalse(single.contains("repeat"))
 
         val series = Gson().toJson(
-            DirectBookingRequest(tutorId = "t1", startTime = "s", endTime = "e", repeat = repeatFor(true, 4))
+            DirectBookingRequest(
+                tutorId = "t1", startTime = "s", endTime = "e",
+                repeat = repeatFor(true, 4, MONDAY, emptySet())
+            )
         )
         assertTrue(series.contains("\"repeat\":{\"frequency\":\"WEEKLY\",\"count\":4}"))
     }

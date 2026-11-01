@@ -2,7 +2,6 @@ package com.tutorbridge.app
 
 import com.tutorbridge.app.data.model.SERIES_MAX
 import com.tutorbridge.app.data.model.sessionDates
-import com.tutorbridge.app.data.model.weeklyDates
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
@@ -59,8 +58,9 @@ class SessionDatesTest {
 
     @Test
     fun `one day is the same as a plain weekly series`() {
-        assertEquals(weeklyDates(monday, 4), sessionDates(monday, emptySet(), 4))
-        assertEquals(weeklyDates(monday, 4), sessionDates(monday, setOf(MONDAY), 4))
+        val weekly = listOf("2026-11-02", "2026-11-09", "2026-11-16", "2026-11-23")
+        assertEquals(weekly, sessionDates(monday, emptySet(), 4).text())
+        assertEquals(weekly, sessionDates(monday, setOf(MONDAY), 4).text())
     }
 
     @Test

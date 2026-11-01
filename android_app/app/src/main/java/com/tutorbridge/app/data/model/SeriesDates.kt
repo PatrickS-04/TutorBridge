@@ -18,14 +18,6 @@ const val SERIES_MAX_SESSIONS = 24
 fun maxWeeksFor(days: Int): Int = (SERIES_MAX_SESSIONS / days.coerceAtLeast(1)).coerceIn(1, SERIES_MAX)
 
 /**
- * The dates of a weekly series starting on [first]: the same weekday each week, [count] of them.
- * The count is kept inside the allowed range rather than trusted, so a stray value from the
- * stepper can never ask the server for a series it will refuse.
- */
-fun weeklyDates(first: LocalDate, count: Int): List<LocalDate> =
-    (0 until count.coerceIn(SERIES_MIN, SERIES_MAX)).map { first.plusWeeks(it.toLong()) }
-
-/**
  * The dates of a recurring pattern: the same time on each of [days], for [weeks] weeks, starting with [first].
  *
  * Weeks are rolling blocks of seven days counted from [first], not calendar weeks, so 3 days over 4 weeks is always
@@ -89,7 +81,3 @@ fun repeatFor(weekly: Boolean, weeks: Int, firstDay: DayOfWeek, extraDays: Set<D
     val runFor = if (weekly) weeks.coerceIn(SERIES_MIN, maxWeeksFor(days.size).coerceAtLeast(SERIES_MIN)) else 1
     return RepeatDto(weeks = runFor, days = days.map { it.name })
 }
-
-/** The repeat to send with a booking: null for a single session, a weekly count otherwise. */
-fun repeatFor(weekly: Boolean, count: Int): RepeatDto? =
-    if (weekly) RepeatDto(count = count.coerceIn(SERIES_MIN, SERIES_MAX)) else null

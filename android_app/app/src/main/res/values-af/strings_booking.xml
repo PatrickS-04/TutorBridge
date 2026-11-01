@@ -34,10 +34,8 @@
     <string name="booking_time_one_hour">%1$s (1 uur)</string>
     <string name="booking_repeat_weekly">Herhaal weekliks</string>
     <string name="booking_repeat_hint">Bespreek elke week dieselfde tyd. Die tutor bevestig die hele reeks.</string>
-    <string name="booking_repeat_sessions">Sessies</string>
     <string name="booking_repeat_fewer">Minder weke</string>
     <string name="booking_repeat_more">Meer weke</string>
-    <string name="booking_repeat_summary">Elke %1$s om %2$s, %3$d sessies</string>
     <string name="booking_repeat_dates">Datums</string>
     <string name="booking_confirm_series">Versoek %1$d sessies</string>
     <string name="booking_series_submitted">Jou versoek is ingedien. Die tutor bevestig die hele reeks in een slag. Meeste tutors antwoord binne 2 uur.</string>

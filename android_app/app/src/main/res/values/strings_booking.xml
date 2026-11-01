@@ -33,10 +33,8 @@
     <string name="booking_time_one_hour">%1$s (1 hour)</string>
     <string name="booking_repeat_weekly">Repeat weekly</string>
     <string name="booking_repeat_hint">Book the same time every week. The tutor confirms the whole series.</string>
-    <string name="booking_repeat_sessions">Sessions</string>
     <string name="booking_repeat_fewer">Fewer weeks</string>
     <string name="booking_repeat_more">More weeks</string>
-    <string name="booking_repeat_summary">Every %1$s at %2$s, %3$d sessions</string>
     <string name="booking_repeat_dates">Dates</string>
     <string name="booking_confirm_series">Request %1$d sessions</string>
     <string name="booking_series_submitted">Your request was submitted. The tutor confirms the whole series at once. Most tutors reply in less than 2 hours.</string>
