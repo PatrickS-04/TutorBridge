@@ -67,7 +67,10 @@ fun LearningHistoryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(stringResource(R.string.history_past_completed_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(stringResource(R.string.history_active_since), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Newest first, so the last entry is the student's first session.
+                uiState.learningHistory.lastOrNull()?.let { first ->
+                    Text(stringResource(R.string.history_active_since, first.date), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 

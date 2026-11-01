@@ -7,5 +7,5 @@
         <item quantity="one">Isifundo esi-%d sifundisiwe</item>
         <item quantity="other">Izifundo ezi-%d zifundisiwe</item>
     </plurals>
-    <string name="history_active_since">Umfundi osebenzayo kusukela ngoSepthemba 2026</string>
+    <string name="history_active_since">Umfundi osebenzayo kusukela ngo-%1$s</string>
 </resources>

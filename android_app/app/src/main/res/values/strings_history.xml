@@ -6,5 +6,5 @@
         <item quantity="one">%d Lesson Taught</item>
         <item quantity="other">%d Lessons Taught</item>
     </plurals>
-    <string name="history_active_since">Active student since Sept 2026</string>
+    <string name="history_active_since">Active student since %1$s</string>
 </resources>

@@ -7,5 +7,5 @@
         <item quantity="one">%d les gegee</item>
         <item quantity="other">%d lesse gegee</item>
     </plurals>
-    <string name="history_active_since">Aktiewe student sedert Sept 2026</string>
+    <string name="history_active_since">Aktiewe student sedert %1$s</string>
 </resources>
