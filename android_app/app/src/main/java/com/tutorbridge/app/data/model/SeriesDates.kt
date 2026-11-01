@@ -43,6 +43,20 @@ fun sessionDates(first: LocalDate, days: Set<DayOfWeek>, weeks: Int): List<Local
 }
 
 /**
+ * The extra weekdays after tapping [day]: added if it was off, dropped if it was on. The weekday of the first
+ * date, [firstDay], is always booked, so tapping it changes nothing.
+ */
+fun toggledDays(extra: Set<DayOfWeek>, day: DayOfWeek, firstDay: DayOfWeek): Set<DayOfWeek> = when {
+    day == firstDay -> extra - firstDay
+    day in extra -> extra - day
+    else -> extra + day
+}
+
+/** The weeks to show for [requested] when [dayCount] weekdays are booked: 2 to 8, and no more than 24 sessions in all. */
+fun weeksFor(requested: Int, dayCount: Int): Int =
+    requested.coerceIn(SERIES_MIN, maxWeeksFor(dayCount).coerceAtLeast(SERIES_MIN))
+
+/**
  * How many sessions "this and following" reaches from the [index]th of a series of [count]: that session and every
  * one after it. An estimate for the confirmation message (a later session may already be cancelled); the server's
  * answer says how many were really cancelled.

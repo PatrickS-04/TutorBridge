@@ -7,6 +7,7 @@ import com.tutorbridge.app.data.local.pendingMessagesFor
 import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.network.effectivelyOnline
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -97,9 +98,11 @@ data class TutorBridgeUiState(
     val selectedSlot: String = "",
     val selectedLocation: String = "",
     val selectedBookingDate: String = LocalDate.now().plusDays(1).toString(),
-    /** Book the same time every week; [repeatCount] is how many sessions in all (a month is 4). */
+    /** Repeat weekly: when on, [repeatCount] is how many weeks (a month is 4); when off, the chosen days run for one week. */
     val repeatWeekly: Boolean = false,
     val repeatCount: Int = SERIES_DEFAULT,
+    /** Weekdays booked as well as the weekday of the chosen date, which is always booked. */
+    val repeatDays: Set<DayOfWeek> = emptySet(),
     /** True when the session being booked is one the student already agreed with a tutor: it cannot repeat. */
     val bookingFromApplication: Boolean = false,
     /** Sessions in the series just requested, or 0 when it was a single session. */
@@ -182,6 +185,14 @@ data class TutorBridgeUiState(
     /** The session the prep screen is showing, derived so it cannot go stale. */
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
+
+    /** The weekday of the date being booked, which is always one of the days booked; null if the date cannot be read. */
+    val firstDay: DayOfWeek?
+        get() = runCatching { LocalDate.parse(selectedBookingDate).dayOfWeek }.getOrNull()
+
+    /** Every weekday being booked, in week order: the chosen date's own and any extras. */
+    val bookedDays: List<DayOfWeek>
+        get() = (repeatDays + listOfNotNull(firstDay)).sorted()
 }
 
 // ==================== LEARNING HISTORY (no backend collection) ====================
