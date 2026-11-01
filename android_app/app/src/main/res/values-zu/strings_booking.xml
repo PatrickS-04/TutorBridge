@@ -39,11 +39,11 @@
     <string name="booking_repeat_more">Amasonto amaningi</string>
     <string name="booking_repeat_summary">Njalo ngo-%1$s ngo-%2$s, izifundo ezingu-%3$d</string>
     <string name="booking_repeat_dates">Izinsuku</string>
-    <string name="booking_confirm_series">Cela izifundo ezingu-%1$d zamasonto onke</string>
+    <string name="booking_confirm_series">Cela izifundo ezingu-%1$d</string>
     <string name="booking_series_submitted">Isicelo sakho sithunyelwe. Uthisha uqinisekisa lonke uchungechunge ngesikhathi esisodwa. Othisha abaningi baphendula ngaphansi kwamahora ama-2.</string>
     <plurals name="booking_series_requested">
-        <item quantity="one">Isifundo esi-%d samasonto onke sicelwe</item>
-        <item quantity="other">Izifundo ezi-%d zamasonto onke zicelwe</item>
+        <item quantity="one">Isifundo esi-%d sicelwe</item>
+        <item quantity="other">Izifundo ezi-%d zicelwe</item>
     </plurals>
     <string name="booking_days_title">Izinsuku</string>
     <string name="booking_days_hint">Bhukha isikhathi esifanayo ngosuku ngalunye olukhethayo.</string>

@@ -39,11 +39,11 @@
     <string name="booking_repeat_more">Meer weke</string>
     <string name="booking_repeat_summary">Elke %1$s om %2$s, %3$d sessies</string>
     <string name="booking_repeat_dates">Datums</string>
-    <string name="booking_confirm_series">Versoek %1$d weeklikse sessies</string>
+    <string name="booking_confirm_series">Versoek %1$d sessies</string>
     <string name="booking_series_submitted">Jou versoek is ingedien. Die tutor bevestig die hele reeks in een slag. Meeste tutors antwoord binne 2 uur.</string>
     <plurals name="booking_series_requested">
-        <item quantity="one">%d weeklikse sessie versoek</item>
-        <item quantity="other">%d weeklikse sessies versoek</item>
+        <item quantity="one">%d sessie versoek</item>
+        <item quantity="other">%d sessies versoek</item>
     </plurals>
     <string name="booking_days_title">Dae</string>
     <string name="booking_days_hint">Bespreek dieselfde tyd op elke dag wat jy kies.</string>

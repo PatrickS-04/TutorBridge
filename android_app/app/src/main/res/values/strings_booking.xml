@@ -38,11 +38,11 @@
     <string name="booking_repeat_more">More weeks</string>
     <string name="booking_repeat_summary">Every %1$s at %2$s, %3$d sessions</string>
     <string name="booking_repeat_dates">Dates</string>
-    <string name="booking_confirm_series">Request %1$d weekly sessions</string>
+    <string name="booking_confirm_series">Request %1$d sessions</string>
     <string name="booking_series_submitted">Your request was submitted. The tutor confirms the whole series at once. Most tutors reply in less than 2 hours.</string>
     <plurals name="booking_series_requested">
-        <item quantity="one">%d weekly session requested</item>
-        <item quantity="other">%d weekly sessions requested</item>
+        <item quantity="one">%d session requested</item>
+        <item quantity="other">%d sessions requested</item>
     </plurals>
     <string name="booking_days_title">Days</string>
     <string name="booking_days_hint">Book the same time on each day you choose.</string>
