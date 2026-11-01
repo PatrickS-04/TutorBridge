@@ -5,6 +5,7 @@ import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.data.repository.toCalendarEvent
 import com.tutorbridge.app.data.repository.toRequestUi
 import com.tutorbridge.app.data.repository.toInstitutionUi
+import com.tutorbridge.app.data.repository.toLearningHistory
 import com.tutorbridge.app.data.repository.toTutorUi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -179,5 +180,28 @@ class MappingTest {
         ).toInstitutionUi("Test University")
 
         assertEquals(listOf("2026-10", "2026-09", "2026-07"), claims.claimPeriods.map { it.id })
+    }
+
+    @Test
+    fun `learning history keeps only completed sessions, newest first`() {
+        val tutor = UserBriefDto(_id = "t1", fullName = "Thabo Mokoena")
+        // Midday UTC, so the date is the same in any time zone the test runs in.
+        fun booking(id: String, day: String, status: String) = BookingDto(
+            _id = id, tutorId = tutor, subjectName = "Chemistry", status = status,
+            startTime = "${day}T12:00:00Z", endTime = "${day}T13:00:00Z", location = "Upper Campus"
+        )
+
+        val history = listOf(
+            booking("old", "2026-09-25", "COMPLETED"),
+            booking("upcoming", "2026-11-20", "CONFIRMED"),
+            booking("new", "2026-10-02", "COMPLETED"),
+            booking("dropped", "2026-10-05", "CANCELLED")
+        ).toLearningHistory()
+
+        assertEquals(listOf("new", "old"), history.map { it.id })
+        assertEquals("Chemistry", history.first().title)
+        assertEquals("2 Oct 2026", history.first().date)
+        assertTrue(history.first().summary.startsWith("Thabo Mokoena • "))
+        assertTrue(history.first().summary.endsWith(" • Upper Campus"))
     }
 }
