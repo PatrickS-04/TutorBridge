@@ -13,7 +13,6 @@ export const SERIES_MAX_SESSIONS = 24;
 export const CAMPUS_TIME_ZONE = "Africa/Johannesburg";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WEEK_MS = 7 * DAY_MS;
 
 /** The weekday names in order, Monday first, as campus time and the availability windows write them. */
 const WEEKDAYS: string[] = Object.values(DayOfWeek);
@@ -74,14 +73,6 @@ export function parseRepeat(raw: unknown): { repeat: SeriesRepeat } | { error: s
     return { error: `A series can have at most ${SERIES_MAX_SESSIONS} sessions: choose fewer days or weeks`, field: "repeat" };
   }
   return { repeat: { weeks: runFor, days: days as string[] } };
-}
-
-/** The windows of a weekly series: the first session, then the same time each week after it. */
-export function seriesWindows(start: Date, end: Date, count: number): { start: Date; end: Date }[] {
-  return Array.from({ length: count }, (_, i) => ({
-    start: new Date(start.getTime() + i * WEEK_MS),
-    end: new Date(end.getTime() + i * WEEK_MS),
-  }));
 }
 
 /**

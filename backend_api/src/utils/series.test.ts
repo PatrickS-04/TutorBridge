@@ -2,7 +2,7 @@
 //   Available at: https://nodejs.org/docs/latest-v22.x/api/test.html [Accessed 21 September 2026].
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseRepeat, seriesWindows, sessionWindows, campusParts, fitsAvailability, SERIES_MIN, SERIES_MAX } from "./series";
+import { parseRepeat, sessionWindows, campusParts, fitsAvailability, SERIES_MIN, SERIES_MAX } from "./series";
 
 /**
  * The rules behind a weekly series that need no database: what a `repeat` may say,
@@ -45,7 +45,7 @@ test("a repeat that is not a weekly count of 2 to 8 whole sessions is refused, n
 });
 
 test("a series is the first session and the same time each following week", () => {
-  const windows = seriesWindows(start, end, 4);
+  const windows = sessionWindows(start, end, ["MONDAY"], 4);
   assert.equal(windows.length, 4);
   assert.equal(windows[0].start.getTime(), start.getTime());
   windows.forEach((w, i) => {
@@ -60,7 +60,7 @@ test("a series is the first session and the same time each following week", () =
 
 test("building a series does not change the dates it was built from", () => {
   const before = [start.getTime(), end.getTime()];
-  seriesWindows(start, end, 3);
+  sessionWindows(start, end, ["MONDAY"], 3);
   assert.deepEqual([start.getTime(), end.getTime()], before);
 });
 
@@ -113,7 +113,7 @@ test("a session that runs past midnight never fits, even if both days have hours
 });
 
 test("the same wall-clock time every week stays inside the window all the way through a series", () => {
-  const windows = seriesWindows(start, end, 8);
+  const windows = sessionWindows(start, end, ["MONDAY"], 8);
   assert.ok(windows.every((w) => fitsAvailability(monday, w.start, w.end)));
 });
 
@@ -166,10 +166,6 @@ test("a pattern that starts mid-week counts each day from the first session, so 
 function hours(d: Date, n = 1) {
   return new Date(d.getTime() + n * 3_600_000);
 }
-
-test("one day gives exactly what a plain weekly series gives", () => {
-  assert.deepEqual(iso(sessionWindows(start, end, ["MONDAY"], 4)), iso(seriesWindows(start, end, 4)));
-});
 
 test("a pattern carries on across a month and a year", () => {
   const thursday = new Date("2026-12-24T12:00:00Z");
