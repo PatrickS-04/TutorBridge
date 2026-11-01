@@ -7,6 +7,7 @@ import com.tutorbridge.app.data.local.pendingMessagesFor
 import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.network.effectivelyOnline
+import java.time.Instant
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -173,4 +174,19 @@ data class TutorBridgeUiState(
     /** The session the prep screen is showing, derived so it cannot go stale. */
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
+
+    /** What the home screens list as coming up; finished sessions belong to the learning history. */
+    val upcomingEvents: List<CalendarEventUi>
+        get() = upcomingOf(calendarEvents)
 }
+
+/**
+ * Sessions not yet over, soonest first. A session counts until its end time, so one
+ * under way still shows; one that has ended drops off even before the server marks it COMPLETED.
+ */
+fun upcomingOf(events: List<CalendarEventUi>, now: Instant = Instant.now()): List<CalendarEventUi> =
+    events
+        .filter { it.status == EventStatus.CONFIRMED && (parseIso(it.endIso) ?: parseIso(it.startIso))?.isAfter(now) == true }
+        .sortedBy { parseIso(it.startIso) }
+
+private fun parseIso(iso: String): Instant? = runCatching { Instant.parse(iso) }.getOrNull()
