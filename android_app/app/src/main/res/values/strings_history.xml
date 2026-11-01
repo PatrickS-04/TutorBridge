@@ -7,4 +7,17 @@
         <item quantity="other">%d Lessons Taught</item>
     </plurals>
     <string name="history_active_since">Active student since %1$s</string>
+
+    <!-- Learning history PDF export -->
+    <string name="history_pdf_title">Learning History</string>
+    <string name="history_pdf_student">Student: %1$s</string>
+    <string name="history_pdf_institution">Institution: %1$s</string>
+    <string name="history_pdf_generated">Generated on %1$s</string>
+    <plurals name="history_pdf_sessions">
+        <item quantity="one">%d completed session</item>
+        <item quantity="other">%d completed sessions</item>
+    </plurals>
+    <string name="history_pdf_empty">No completed sessions yet.</string>
+    <string name="history_pdf_share">Export learning history</string>
+    <string name="history_pdf_error">Could not create PDF: %1$s</string>
 </resources>

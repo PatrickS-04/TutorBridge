@@ -8,4 +8,17 @@
         <item quantity="other">%d lesse gegee</item>
     </plurals>
     <string name="history_active_since">Aktiewe student sedert %1$s</string>
+
+    <!-- Learning history PDF export -->
+    <string name="history_pdf_title">Leergeskiedenis</string>
+    <string name="history_pdf_student">Student: %1$s</string>
+    <string name="history_pdf_institution">Instelling: %1$s</string>
+    <string name="history_pdf_generated">Gegenereer op %1$s</string>
+    <plurals name="history_pdf_sessions">
+        <item quantity="one">%d afgehandelde sessie</item>
+        <item quantity="other">%d afgehandelde sessies</item>
+    </plurals>
+    <string name="history_pdf_empty">Nog geen afgehandelde sessies nie.</string>
+    <string name="history_pdf_share">Voer leergeskiedenis uit</string>
+    <string name="history_pdf_error">Kon nie PDF skep nie: %1$s</string>
 </resources>
