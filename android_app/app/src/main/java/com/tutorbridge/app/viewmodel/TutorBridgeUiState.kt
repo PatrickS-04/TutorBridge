@@ -146,11 +146,9 @@ data class TutorBridgeUiState(
     val deleteConfirmChecked: Boolean = false,
     val deleteConfirmText: String = "",
 
-    // ===== Not backed by the API yet: no collections exist for these =====
-    val studentHealthIndexPercent: Int = 80,
+    // Learning history: the student's COMPLETED bookings
     val lessonsTaught: Int = 0,
-    val targetGrade: String = "A-",
-    val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
+    val learningHistory: List<LearningHistoryEntryUi> = emptyList()
 ) {
     /** Things done offline that are still waiting to be sent. */
     val pendingSyncCount: Int
@@ -176,20 +174,3 @@ data class TutorBridgeUiState(
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
 }
-
-// ==================== LEARNING HISTORY (no backend collection) ====================
-
-val sampleLearningHistory = listOf(
-    LearningHistoryEntryUi(
-        id = "lh1",
-        title = "Lesson 4: Organic Chemistry Mechanisms",
-        date = "Oct 2, 2026",
-        summary = "Mastered electrophilic addition mechanisms. Quiz score: 92%."
-    ),
-    LearningHistoryEntryUi(
-        id = "lh2",
-        title = "Lesson 3: Acids, Bases & Buffers",
-        date = "Sep 25, 2026",
-        summary = "Worked through the Henderson-Hasselbalch equation and titration curves."
-    )
-)

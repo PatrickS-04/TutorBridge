@@ -1,13 +1,10 @@
 <resources>
     <string name="history_past_completed_sessions">Past Completed Sessions</string>
-    <string name="history_student_health_index">Student Health Index</string>
     <string name="history_title">%1$s\'s Learning History</string>
     <string name="history_default_name">Student</string>
-    <string name="history_percent_high">%1$d%% High</string>
     <plurals name="history_lessons_taught">
         <item quantity="one">%d Lesson Taught</item>
         <item quantity="other">%d Lessons Taught</item>
     </plurals>
-    <string name="history_target_grade">%1$s Target Grade</string>
-    <string name="history_active_since">Active student since Sept 2026 • %1$d%% Mastery</string>
+    <string name="history_active_since">Active student since %1$s</string>
 </resources>

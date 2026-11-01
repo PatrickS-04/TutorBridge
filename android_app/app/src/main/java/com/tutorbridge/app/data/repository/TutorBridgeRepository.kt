@@ -418,6 +418,30 @@ fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
     )
 }
 
+private val historyDate get() = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+
+/**
+ * The student's finished sessions, newest first, as the learning history lists them.
+ * The summary is tutor, time and venue only - no words, so it reads the same in every language.
+ */
+fun List<BookingDto>.toLearningHistory(): List<LearningHistoryEntryUi> =
+    filter { it.status == "COMPLETED" }
+        .mapNotNull { booking -> parseInstant(booking.startTime)?.let { booking to it } }
+        .sortedByDescending { (_, start) -> start }
+        .map { (booking, start) ->
+            val end = parseInstant(booking.endTime)
+            LearningHistoryEntryUi(
+                id = booking._id,
+                title = booking.subjectName,
+                date = start.format(historyDate),
+                summary = listOfNotNull(
+                    booking.tutorId?.fullName?.ifBlank { null },
+                    end?.let { "${start.format(displayTime)} – ${it.format(displayTime)}" },
+                    booking.location?.ifBlank { null }
+                ).joinToString(" • ")
+            )
+        }
+
 fun NotificationEventDto.toNotificationUi(): NotificationUi = NotificationUi(
     id = _id,
     emoji = when (category) {
