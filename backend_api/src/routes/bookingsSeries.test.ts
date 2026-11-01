@@ -8,7 +8,7 @@ import admin from "firebase-admin";
 import mongoose from "mongoose";
 import { routeMounts } from ".";
 import { errorHandler } from "../middleware/errors";
-import { campusParts } from "../utils/series";
+import { campusParts, sessionWindows } from "../utils/series";
 import {
   User,
   UserRole,
@@ -904,4 +904,76 @@ test("the same time on a different day is not a clash", async () => {
 
   assert.equal(status, 201);
   assert.equal(created.length, 6);
+});
+
+// ==========================================================================================
+// Confirming and cancelling a pattern over several days
+// ==========================================================================================
+
+/** The sessions of Monday, Tuesday and Wednesday for `weeks` weeks, as an existing series. */
+function monTueWedSeries(weeks: number, status: BookingStatus) {
+  const start = nextMonday(14);
+  const windows = sessionWindows(start, hours(start), ["MONDAY", "TUESDAY", "WEDNESDAY"], weeks);
+  return stubSeries(windows.map((w, i) => stubSession(i + 1, status, w.start)));
+}
+
+test("a tutor confirms every session of a three-day pattern in one go", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = monTueWedSeries(2, BookingStatus.REQUESTED);
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.confirmed, 6);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [1, 2, 3, 4, 5, 6]);
+  assert.ok(sessions.every((s) => s.status === BookingStatus.CONFIRMED && s.saves === 1));
+  await tick();
+  assert.equal(notifications.length, 1, "one notification for six sessions");
+  assert.match(notifications[0].body, /Sessions: 6/);
+});
+
+test("a clash on one day of one week confirms none of a three-day pattern and names that day", async () => {
+  as(tutor, UserRole.TUTOR);
+  const sessions = monTueWedSeries(2, BookingStatus.REQUESTED);
+  const tuesdayOfWeek2 = sessions[4]; // Mon, Tue, Wed, Mon, Tue, Wed
+  assert.equal(campusParts(tuesdayOfWeek2.startTime).day, "TUESDAY");
+  confirmedSessions = [{ startTime: tuesdayOfWeek2.startTime, endTime: tuesdayOfWeek2.endTime }];
+
+  const { status, body } = await confirmSeries();
+
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "SERIES_CONFLICT");
+  assert.deepEqual(body.error.dates, [tuesdayOfWeek2.startTime.toISOString()]);
+  assert.ok(sessions.every((s) => s.status === BookingStatus.REQUESTED && s.saves === 0));
+});
+
+test("cancelling from one day of a pattern cancels that session and every later one, on any day", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = monTueWedSeries(2, BookingStatus.CONFIRMED);
+
+  const { status, body } = await cancelSeries({ fromBookingId: String(sessions[2]._id) }); // the Wednesday of week 1
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 4);
+  assert.deepEqual(body.bookings.map((b: any) => b.seriesIndex), [3, 4, 5, 6]);
+  assert.equal(sessions[0].status, BookingStatus.CONFIRMED);
+  assert.equal(sessions[1].status, BookingStatus.CONFIRMED);
+  assert.ok(sessions.slice(2).every((s) => s.status === BookingStatus.CANCELLED));
+  await tick();
+  assert.equal(notifications.length, 1);
+});
+
+test("cancelling a whole three-day pattern tells the tutor once", async () => {
+  as(student, UserRole.GUARDIAN_LEARNER);
+  const sessions = monTueWedSeries(4, BookingStatus.CONFIRMED);
+
+  const { status, body } = await cancelSeries();
+
+  assert.equal(status, 200);
+  assert.equal(body.cancelled, 12);
+  assert.ok(sessions.every((s) => s.status === BookingStatus.CANCELLED));
+  await tick();
+  assert.equal(notifications.length, 1);
+  assert.equal(String(notifications[0].userId), String(tutor));
+  assert.match(notifications[0].body, /Sessions: 12/);
 });
