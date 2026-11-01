@@ -857,7 +857,16 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun selectSlot(slot: String) {
-        _uiState.update { it.copy(selectedSlot = slot) }
+        _uiState.update { state ->
+            // Extra days are only kept where the tutor still works at the new time.
+            val open = availableDays(state.selectedTutor?.windows.orEmpty(), slot)
+            val days = state.repeatDays.filter { it in open }.toSet()
+            state.copy(
+                selectedSlot = slot,
+                repeatDays = days,
+                repeatCount = weeksFor(state.repeatCount, days.size + 1)
+            )
+        }
     }
 
     fun selectLocation(location: String) {

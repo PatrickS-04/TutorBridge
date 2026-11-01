@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.SERIES_MIN
 import com.tutorbridge.app.data.model.TutorUi
+import com.tutorbridge.app.data.model.availableDays
 import com.tutorbridge.app.data.model.maxWeeksFor
 import com.tutorbridge.app.data.model.sessionDates
 import com.tutorbridge.app.data.repository.slotsOn
@@ -334,6 +335,8 @@ private fun RepeatCard(
     val weeks = if (uiState.repeatWeekly) uiState.repeatCount else 1
     val dates = firstDate?.let { sessionDates(it, uiState.repeatDays, weeks) }.orEmpty()
     val maxWeeks = maxWeeksFor(uiState.bookedDays.size)
+    // Only days the tutor works at this time can be added; the chosen date's own weekday is always on.
+    val open = availableDays(uiState.selectedTutor?.windows.orEmpty(), uiState.selectedSlot)
     val dayName = { day: DayOfWeek -> day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
     val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
@@ -359,9 +362,18 @@ private fun RepeatCard(
                     FilterChip(
                         selected = day in uiState.bookedDays,
                         onClick = { onToggleDay(day) },
+                        enabled = day == uiState.firstDay || day in open,
                         label = { Text(dayName(day), fontSize = 12.sp) }
                     )
                 }
+            }
+
+            if (DayOfWeek.values().any { it != uiState.firstDay && it !in open }) {
+                Text(
+                    stringResource(R.string.booking_days_unavailable),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(4.dp))

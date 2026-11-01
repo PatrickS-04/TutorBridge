@@ -53,4 +53,5 @@
         <item quantity="one">%d sessie altesaam</item>
         <item quantity="other">%d sessies altesaam</item>
     </plurals>
+    <string name="booking_days_unavailable">Gryserige dae is wanneer die tutor nie op hierdie tyd beskikbaar is nie.</string>
 </resources>

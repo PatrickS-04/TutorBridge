@@ -1,7 +1,9 @@
 package com.tutorbridge.app.data.model
 
 import java.time.DayOfWeek
+import com.tutorbridge.app.data.repository.slotTime
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** A weekly series is 2 to 8 sessions, 4 being "a month". Mirrors the limits the server enforces. */
 const val SERIES_MIN = 2
@@ -40,6 +42,17 @@ fun sessionDates(first: LocalDate, days: Set<DayOfWeek>, weeks: Int): List<Local
     return (0 until weeks.coerceIn(1, SERIES_MAX)).flatMap { week ->
         offsets.map { offset -> first.plusDays((week * 7 + offset).toLong()) }
     }
+}
+
+/**
+ * The weekdays the tutor works at the chosen [slot] (such as "02:00 PM") for [hours] hours: those with a weekly window
+ * that holds the whole session. A slot that cannot be read, or that would run past midnight, fits no day.
+ */
+fun availableDays(windows: List<AvailabilityWindowUi>, slot: String, hours: Long = 1): Set<DayOfWeek> {
+    val start = runCatching { LocalTime.parse(slot, slotTime) }.getOrNull() ?: return emptySet()
+    val end = start.plusHours(hours)
+    if (!end.isAfter(start)) return emptySet()
+    return windows.filter { !start.isBefore(it.start) && !end.isAfter(it.end) }.map { it.day }.toSet()
 }
 
 /**

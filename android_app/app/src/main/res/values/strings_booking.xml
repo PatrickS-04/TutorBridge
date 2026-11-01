@@ -52,4 +52,5 @@
         <item quantity="one">%d session in all</item>
         <item quantity="other">%d sessions in all</item>
     </plurals>
+    <string name="booking_days_unavailable">Greyed-out days are when the tutor is not available at this time.</string>
 </resources>

@@ -53,4 +53,5 @@
         <item quantity="one">Isifundo esi-%d sisonke</item>
         <item quantity="other">Izifundo ezi-%d zisonke</item>
     </plurals>
+    <string name="booking_days_unavailable">Izinsuku ezimpunga yilapho uthisha engatholakali kulesi sikhathi.</string>
 </resources>
