@@ -24,6 +24,25 @@ fun weeklyDates(first: LocalDate, count: Int): List<LocalDate> =
     (0 until count.coerceIn(SERIES_MIN, SERIES_MAX)).map { first.plusWeeks(it.toLong()) }
 
 /**
+ * The dates of a recurring pattern: the same time on each of [days], for [weeks] weeks, starting with [first].
+ *
+ * Weeks are rolling blocks of seven days counted from [first], not calendar weeks, so 3 days over 4 weeks is always
+ * exactly 12 dates and no day is skipped. Each chosen weekday is its next occurrence on or after [first], repeated
+ * every seven days. [first] is always the first date, whether or not its weekday is in [days], and the result is in
+ * date order. This mirrors how the server counts them (the same cases are tested on both sides), so the dates shown
+ * before booking are the dates that get booked.
+ */
+fun sessionDates(first: LocalDate, days: Set<DayOfWeek>, weeks: Int): List<LocalDate> {
+    val offsets = (days + first.dayOfWeek)
+        .map { (it.value - first.dayOfWeek.value + 7) % 7 }
+        .distinct()
+        .sorted()
+    return (0 until weeks.coerceIn(1, SERIES_MAX)).flatMap { week ->
+        offsets.map { offset -> first.plusDays((week * 7 + offset).toLong()) }
+    }
+}
+
+/**
  * How many sessions "this and following" reaches from the [index]th of a series of [count]: that session and every
  * one after it. An estimate for the confirmation message (a later session may already be cancelled); the server's
  * answer says how many were really cancelled.
