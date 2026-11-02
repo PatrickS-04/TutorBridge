@@ -431,7 +431,8 @@ fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
         location = location.orEmpty(),
         seriesId = seriesId,
         seriesIndex = seriesIndex ?: 0,
-        seriesCount = seriesCount ?: 0
+        seriesCount = seriesCount ?: 0,
+        dayOfWeek = start.dayOfWeek
     )
 }
 

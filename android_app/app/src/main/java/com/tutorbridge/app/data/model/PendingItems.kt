@@ -7,9 +7,16 @@ sealed interface PendingItem {
 
     /**
      * Several waiting sessions the same student booked in one go.
-     * [first] is the earliest of them, [waiting] how many still wait on the tutor, [total] how many the series had.
+     * [first] is the earliest of them, [waiting] how many still wait on the tutor, [total] how many the series had,
+     * and [days] the weekdays the waiting sessions fall on, in week order.
      */
-    data class Series(val seriesId: String, val first: PendingBookingUi, val waiting: Int, val total: Int) : PendingItem
+    data class Series(
+        val seriesId: String,
+        val first: PendingBookingUi,
+        val waiting: Int,
+        val total: Int,
+        val days: List<java.time.DayOfWeek> = emptyList()
+    ) : PendingItem
 }
 
 /**
@@ -31,7 +38,8 @@ fun groupPending(bookings: List<PendingBookingUi>): List<PendingItem> {
                 seriesId = seriesId,
                 first = members.minBy { it.seriesIndex },
                 waiting = members.size,
-                total = members.maxOf { it.seriesCount }
+                total = members.maxOf { it.seriesCount },
+                days = members.mapNotNull { it.dayOfWeek }.distinct().sorted()
             )
             else -> null
         }

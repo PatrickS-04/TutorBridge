@@ -18,7 +18,7 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
 import { ensureThread } from "../utils/threads";
 import { syncBookingCreated, syncBookingCancelled, syncBookingRescheduled } from "../utils/googleCalendar";
-import { parseRepeat, seriesWindows, fitsAvailability } from "../utils/series";
+import { parseRepeat, sessionWindows, campusParts, fitsAvailability } from "../utils/series";
 
 const router = Router();
 router.use(authenticate);
@@ -164,7 +164,15 @@ router.post(
       if (start <= new Date()) {
         return res.status(400).json(apiError("VALIDATION_ERROR", "The first session of a series must be in the future", "startTime"));
       }
-      windows = seriesWindows(start, end, parsed.repeat.count);
+      //Without days it repeats the weekday of the first session; with them, each chosen weekday.
+      const startDay = campusParts(start).day;
+      const days = parsed.repeat.days ?? [startDay];
+      if (!days.includes(startDay)) {
+        return res
+          .status(400)
+          .json(apiError("VALIDATION_ERROR", "repeat.days must include the weekday of the first session", "repeat.days"));
+      }
+      windows = sessionWindows(start, end, days, parsed.repeat.weeks);
 
       //The app only offers slots inside the tutor's weekly hours; a series has to keep to them too.
       const outside = windows.filter((w) => !fitsAvailability(tutor.availability, w.start, w.end));

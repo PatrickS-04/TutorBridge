@@ -828,6 +828,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 // A new booking starts as a single session, and from the tutor's profile.
                 repeatWeekly = false,
                 repeatCount = SERIES_DEFAULT,
+                repeatDays = emptySet(),
                 bookingFromApplication = false
             )
         }
@@ -838,13 +839,34 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(repeatWeekly = enabled) }
     }
 
-    /** How many weekly sessions in all, kept to what the server accepts. */
+    /** How many weeks the booking repeats for, kept to what the server accepts for the days chosen. */
     fun setRepeatCount(count: Int) {
-        _uiState.update { it.copy(repeatCount = count.coerceIn(SERIES_MIN, SERIES_MAX)) }
+        _uiState.update { it.copy(repeatCount = weeksFor(count, it.repeatDays.size + 1)) }
+    }
+
+    /**
+     * Adds or removes a weekday from the days booked. The weekday of the chosen date is always booked; with more days
+     * the most weeks allowed shrinks (24 sessions at most), so the weeks are brought back into range.
+     */
+    fun toggleRepeatDay(day: DayOfWeek) {
+        _uiState.update { state ->
+            val first = state.firstDay ?: return@update state
+            val days = toggledDays(state.repeatDays, day, first)
+            state.copy(repeatDays = days, repeatCount = weeksFor(state.repeatCount, days.size + 1))
+        }
     }
 
     fun selectSlot(slot: String) {
-        _uiState.update { it.copy(selectedSlot = slot) }
+        _uiState.update { state ->
+            // Extra days are only kept where the tutor still works at the new time.
+            val open = availableDays(state.selectedTutor?.windows.orEmpty(), slot)
+            val days = state.repeatDays.filter { it in open }.toSet()
+            state.copy(
+                selectedSlot = slot,
+                repeatDays = days,
+                repeatCount = weeksFor(state.repeatCount, days.size + 1)
+            )
+        }
     }
 
     fun selectLocation(location: String) {
@@ -852,7 +874,17 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun selectBookingDate(date: String) {
-        _uiState.update { it.copy(selectedBookingDate = date, selectedSlot = "") }
+        _uiState.update { state ->
+            // The new date's weekday is booked anyway, so it is no longer an extra day.
+            val first = runCatching { LocalDate.parse(date).dayOfWeek }.getOrNull()
+            val days = if (first != null) state.repeatDays - first else state.repeatDays
+            state.copy(
+                selectedBookingDate = date,
+                selectedSlot = "",
+                repeatDays = days,
+                repeatCount = weeksFor(state.repeatCount, days.size + 1)
+            )
+        }
     }
 
     /**
@@ -895,7 +927,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         endTime = endIso,
                         mode = "IN_PERSON",
                         location = state.selectedLocation.ifBlank { null },
-                        repeat = repeatFor(state.repeatWeekly, state.repeatCount)
+                        repeat = repeatFor(state.repeatWeekly, state.repeatCount, start.dayOfWeek, state.repeatDays)
                     )
                 )
             }
@@ -910,6 +942,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             // How many sessions were just asked for, for the "sent" screen; 0 for a single one.
                             lastSeriesCount = ack.seriesCount ?: 0,
                             repeatWeekly = false,
+                            repeatDays = emptySet(),
                             bookingFromApplication = false,
                             currentRoute = if (applicationId != null) "booking_confirmed" else "booking_sent"
                         )
@@ -1014,7 +1047,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     /** The tutor turns down every upcoming session of a weekly series. */
     fun declineTutorSeries(seriesId: String) {
         viewModelScope.launch {
-            repository.cancelSeries(seriesId, "The tutor is not available at this time")
+            // No reason is sent: a typed-in English sentence would sit untranslated inside the student's
+            // notification, whereas without one the server's own text is shown in the student's language.
+            repository.cancelSeries(seriesId, reason = null)
                 .onSuccess {
                     _uiState.update { it.copy(currentRoute = "tutor_home") }
                     loadBookings()

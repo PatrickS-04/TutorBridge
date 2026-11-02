@@ -86,4 +86,58 @@ class PendingGroupingTest {
         )
         assertEquals(listOf("s1", "s2"), items.map { (it as PendingItem.Series).seriesId })
     }
+
+    // ---- the days a series card covers ---------------------------------------------------
+
+    private fun onDay(id: String, seriesId: String, index: Int, count: Int, day: java.time.DayOfWeek?) =
+        waiting(id, seriesId, index, count).copy(dayOfWeek = day)
+
+    @Test
+    fun `a series card lists the weekdays it covers, once each, in week order`() {
+        val items = groupPending(
+            listOf(
+                onDay("1", "s1", 1, 6, java.time.DayOfWeek.WEDNESDAY),
+                onDay("2", "s1", 2, 6, java.time.DayOfWeek.MONDAY),
+                onDay("3", "s1", 3, 6, java.time.DayOfWeek.TUESDAY),
+                onDay("4", "s1", 4, 6, java.time.DayOfWeek.WEDNESDAY),
+                onDay("5", "s1", 5, 6, java.time.DayOfWeek.MONDAY),
+                onDay("6", "s1", 6, 6, java.time.DayOfWeek.TUESDAY)
+            )
+        )
+
+        val series = items.single() as PendingItem.Series
+        assertEquals(
+            listOf(java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY, java.time.DayOfWeek.WEDNESDAY),
+            series.days
+        )
+        assertEquals(6, series.waiting)
+    }
+
+    @Test
+    fun `a series on one weekday lists just that day`() {
+        val items = groupPending((1..4).map { onDay("$it", "s1", it, 4, java.time.DayOfWeek.FRIDAY) })
+        assertEquals(listOf(java.time.DayOfWeek.FRIDAY), (items.single() as PendingItem.Series).days)
+    }
+
+    @Test
+    fun `sessions with no weekday known give a card with no days rather than failing`() {
+        val items = groupPending((1..3).map { waiting("$it", "s1", it, 3) })
+        assertTrue((items.single() as PendingItem.Series).days.isEmpty())
+    }
+
+    @Test
+    fun `only the days still waiting are listed`() {
+        // Monday's session was already dealt with, so the card covers what is left.
+        val items = groupPending(
+            listOf(
+                onDay("2", "s1", 2, 4, java.time.DayOfWeek.TUESDAY),
+                onDay("3", "s1", 3, 4, java.time.DayOfWeek.WEDNESDAY)
+            )
+        )
+        assertEquals(
+            listOf(java.time.DayOfWeek.TUESDAY, java.time.DayOfWeek.WEDNESDAY),
+            (items.single() as PendingItem.Series).days
+        )
+        assertEquals(4, (items.single() as PendingItem.Series).total)
+    }
 }
