@@ -4,4 +4,6 @@
     <!-- Reference: Android Developers. 2025. Setting up file sharing. [Online].
            Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026]. -->
     <cache-path name="vouchers" path="vouchers/" />
+    <!-- Exported learning history PDFs, shared the same way. -->
+    <cache-path name="history" path="history/" />
 </paths>
