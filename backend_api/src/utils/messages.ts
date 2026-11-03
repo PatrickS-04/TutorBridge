@@ -23,6 +23,7 @@ export type NotificationKey =
   | "booking.cancelledWithReason"
   | "booking.rescheduled"
   | "booking.rescheduleRequested"
+  | "attendance.checkedIn"
   | "message.new";
 
 export interface NotificationText {
@@ -89,6 +90,10 @@ export const english: Catalogue = {
     title: "Reschedule requested",
     body: "{subject} was moved to {when} - confirm the new time.",
   },
+  "attendance.checkedIn": {
+      title: "Student checked in",
+      body: "Your student checked in to {subject}.",
+  },
   "message.new": {
     title: "New message",
     body: "{text}",
@@ -153,6 +158,10 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
       title: "Herskedulering versoek",
       body: "{subject} is verskuif na {when} - bevestig die nuwe tyd.",
     },
+    "attendance.checkedIn": {
+      title: "Student het ingeteken",
+      body: "Jou student het vir {subject} ingeteken.",
+    },
     "message.new": {
       title: "Nuwe boodskap",
       body: "{text}",
@@ -210,6 +219,10 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
     "booking.rescheduleRequested": {
       title: "Kucelwe ukuhlela kabusha",
       body: "I-{subject} ifuduselwe ku-{when} - qinisekisa isikhathi esisha.",
+    },
+    "attendance.checkedIn": {
+          title: "Umfundi ufikile",
+          body: "Umfundi wakho ubhalise ukuthi ukhona ku-{subject}.",
     },
     "message.new": {
       title: "Umlayezo omusha",
