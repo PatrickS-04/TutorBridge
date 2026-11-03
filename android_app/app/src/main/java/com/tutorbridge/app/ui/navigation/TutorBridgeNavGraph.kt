@@ -245,7 +245,12 @@ fun TutorBridgeNavGraph(
                     onFilterChange = { viewModel.setCalendarFilter(it) },
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") },
-                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) },
+                    onShowCheckInCode = { session -> viewModel.showCheckInCode(session) },
+                    onDismissCheckInCode = { viewModel.dismissCheckInCode() },
+                    onScannedCheckIn = { session, raw -> viewModel.checkInFromScan(session, raw) },
+                    onTypedCheckIn = { session, code -> viewModel.checkIn(session, code, "CODE") },
+                    onScannerUnavailable = { viewModel.scannerUnavailable() }
                 )
 
                 "sync_status" -> SyncStatusScreen(
