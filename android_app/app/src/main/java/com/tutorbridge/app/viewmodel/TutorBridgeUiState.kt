@@ -150,7 +150,11 @@ data class TutorBridgeUiState(
     val studentHealthIndexPercent: Int = 80,
     val lessonsTaught: Int = 0,
     val targetGrade: String = "A-",
-    val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
+    val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory,
+
+    // Check-in
+    val checkInCode: CheckInCodeUi? = null,
+    val isCheckingIn: Boolean = false
 ) {
     /** Things done offline that are still waiting to be sent. */
     val pendingSyncCount: Int
