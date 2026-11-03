@@ -990,6 +990,53 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/{id}/check-in-code": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Issue a check-in code for a session",
+        description:
+          "The tutor of a confirmed session gets a fresh 6-digit code to show the student, as text and " +
+          "as a QR code (qrPayload). It works from 15 minutes before the start until the end, lasts 5 " +
+          "minutes, and replaces any earlier code. Only a hash of it is stored.",
+        parameters: [pathId("id", "Booking id.")],
+        responses: {
+          201: ok("The code to show the student.", ref("CheckInCode")),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict
+        },
+      },
+    },
+    "/bookings/{id}/check-in": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Check in to a session",
+        description:
+          "The student of the session sends the code from the tutor's screen. Five wrong codes lock " +
+          "check-in until the tutor issues a new code. Checking in again returns the first check-in. " +
+          "The tutor is notified.",
+        paramaters: [pathId("id", "Booking id.")],
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["code"],
+            properties: {
+              code: { type: "string", pattern: "^\\d{6}$", example: "042917" },
+              method: { type: "string", enum: ["QR", "CODE"], description: "How the code was entered." }
+            },
+          }),
+        },
+        responses: {
+          200: ok("The check-in.", ref("Attendance")),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+          429: { description: "Too many wrong codes - the tutor has to issue a new one." }
+        },
+      },
+    },
     "/bookings/{id}/notes": {
       put: {
         tags: ["Bookings"],
@@ -1538,6 +1585,15 @@ export const openapiSpec = {
             ...ref("TutorNotes"),
             description: "Only present for the tutor teaching the session.",
           },
+          attendance: {
+            type: "object",
+            nullable: true,
+            description: "Set once the student has checked in.",
+            properties: {
+              checkedInAt: dateTime("When the student checked in."),
+              method: { type: "string", enum: ["QR", "CODE"] }
+            },
+          },
         },
       },
       TutorNotes: {
@@ -1561,6 +1617,23 @@ export const openapiSpec = {
             description: "Free-text side notes.",
             example: "Guardian asked for a progress update before the test.",
           },
+        },
+      },
+      CheckInCode: {
+        type: "object",
+        properties: {
+          bookingId: objectId("Booking id."),
+          code: { type: "string", example: "042917" },
+          expiresAt: dateTime("When the code stops working."),
+          qrPayload: { type: "string", example: "tutorbridge://checkin?booking=665f...&code=042917" }
+        },
+      },
+      Attendance: {
+        type: "object",
+        properties: {
+          bookingId: objectId("Booking id."),
+          checkedInAt: dateTime("When the student checked in."),
+          method: { type: "string", enum: ["QR", "CODE"] }
         },
       },
       BookingSummary: {
