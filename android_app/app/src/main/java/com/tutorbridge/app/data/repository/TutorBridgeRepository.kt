@@ -143,6 +143,11 @@ class TutorBridgeRepository(
     suspend fun saveSessionNotes(bookingId: String, notes: TutorNotesDto): Result<TutorNotesDto> =
         call { api.saveSessionNotes(bookingId, notes) }
 
+    suspend fun checkInCode(bookingId: String): Result<CheckInCodeDto> = call { api.checkInCode(bookingId) }
+
+    suspend fun checkIn(bookingId: String, code: String, method: String): Result<CheckInAckDto> =
+        call { api.checkIn(bookingId, CheckInRequest(code, method)) }
+
     // ==================== MESSAGING ====================
 
     suspend fun threads(selfId: String): Result<List<ThreadUi>> =
@@ -366,7 +371,9 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         },
         sideNotes = tutorNotes?.text.orEmpty(),
         startIso = startTime,
-        endIso = endTime
+        endIso = endTime,
+        isConfirmed = status == "CONFIRMED",
+        checkedInTime = parseInstant(attendance?.checkedInAt)?.format(displayTime).orEmpty()
     )
 }
 
@@ -451,6 +458,7 @@ fun TimesheetPeriodsDto.toInstitutionUi(institutionName: String): InstitutionUi 
             status = if (period.isCurrent) ClaimStatus.ACTIVE_DRAFT else ClaimStatus.PAID,
             totalHours = period.totalHours,
             sessionsCount = period.sessionCount,
+            verifiedCount = period.verifiedCount,
             claimValue = period.claimValue,
             sessions = period.sessions.map { session ->
                 ClaimSessionUi(
@@ -465,7 +473,8 @@ fun TimesheetPeriodsDto.toInstitutionUi(institutionName: String): InstitutionUi 
                     studentName = session.studentName,
                     studentIdTag = "",
                     topic = session.location,
-                    hours = session.hours
+                    hours = session.hours,
+                    checkedIn = session.checkedIn
                 )
             }
         )
