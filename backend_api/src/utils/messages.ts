@@ -23,6 +23,7 @@ export type NotificationKey =
   | "booking.cancelledWithReason"
   | "booking.rescheduled"
   | "booking.rescheduleRequested"
+  | "attendance.checkedIn"
   | "booking.seriesNew"
   | "booking.seriesConfirmed"
   | "booking.seriesCancelled"
@@ -92,6 +93,10 @@ export const english: Catalogue = {
   "booking.rescheduleRequested": {
     title: "Reschedule requested",
     body: "{subject} was moved to {when} - confirm the new time.",
+  },
+  "attendance.checkedIn": {
+    title: "Student checked in",
+    body: "Your student checked in to {subject}.",
   },
   "booking.seriesNew": {
     title: "New recurring booking",
@@ -173,6 +178,10 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
       title: "Herskedulering versoek",
       body: "{subject} is verskuif na {when} - bevestig die nuwe tyd.",
     },
+    "attendance.checkedIn": {
+      title: "Student het ingeteken",
+      body: "Jou student het vir {subject} ingeteken.",
+    },
     "booking.seriesNew": {
       title: "Nuwe herhalende bespreking",
       body: "{subject}: 'n herhalende reeks vanaf {when} - bevestig of weier dit. Sessies: {count}.",
@@ -246,6 +255,10 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
     "booking.rescheduleRequested": {
       title: "Kucelwe ukuhlela kabusha",
       body: "I-{subject} ifuduselwe ku-{when} - qinisekisa isikhathi esisha.",
+    },
+    "attendance.checkedIn": {
+      title: "Umfundi ufikile",
+      body: "Umfundi wakho ubhalise ukuthi ukhona ku-{subject}.",
     },
     "booking.seriesNew": {
       title: "Ukubhukha okusha okuphindaphindwayo",

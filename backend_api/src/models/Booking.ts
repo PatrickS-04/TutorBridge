@@ -10,6 +10,19 @@ export interface ITutorNoteItem {
   done: boolean;
 }
 
+/**
+ * Proof the session happened: the student scanned or typed the tutor's check-in
+ * code. The code itself is only ever stored hashed, and the select: false paths
+ * keep the hash, its expiry and the wrong-guess count out of every normal query.
+ */
+export interface IAttendance {
+    checkedInAt?: Date;
+    method?: "QR" | "CODE";
+    codeHash?: string;
+    codeExpiresAt?: Date;
+    failedAttempts?: number;
+}
+
 /** A tutor's private working notes for one session. */
 export interface ITutorNotes {
   items: ITutorNoteItem[];
@@ -54,6 +67,7 @@ export interface IBooking extends Document {
    * them: the `select: false` below keeps it out of every query that does not
    * ask for it by name, so the student's own booking list cannot carry it. */
   tutorNotes?: ITutorNotes;
+  attendance?: IAttendance;
 }
 
 //The whole list is replaced on every save, so an item is a value rather than
@@ -73,6 +87,17 @@ const TutorNotesSchema = new Schema<ITutorNotes>(
   },
   { _id: false }
 );
+
+const AttendanceSchema = new Schema<IAttendance>(
+    {
+        checkedInAt: { type: Date },
+        method: { type: String, enum: ["QR", "CODE"] },
+        codeHash: { type: String, select: false },
+        codeExpiresAt: { type: Date, select: false },
+        failedAttempts: { type: Number, default: 0, select: false },
+        },
+        { _id: false }
+        );
 
 const BookingSchema = new Schema<IBooking>(
   {
@@ -99,6 +124,7 @@ const BookingSchema = new Schema<IBooking>(
     confirmedAt: { type: Date },
     completedAt: { type: Date },
     tutorNotes: { type: TutorNotesSchema, select: false },
+    attendance: { type: AttendanceSchema }
   },
   { timestamps: true }
 );

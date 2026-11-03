@@ -273,7 +273,7 @@ fun TutorExportClaimsScreen(
             item {
                 Column {
                     Text(stringResource(R.string.claims_itemized_sessions, period.sessionsCount), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(stringResource(R.string.claims_verified_with_student_attendance), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.claims_verified_count, period.verifiedCount, period.sessionsCount), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -303,6 +303,11 @@ fun TutorExportClaimsScreen(
                             Text(stringResource(R.string.claims_topic, session.topic), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(stringResource(R.string.claims_hours_at_rate, session.hours.toString(), institution.rate.toInt()), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(if (session.checkedIn) R.string.claims_session_checked_in else R.string.claims_session_not_checked_in),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (session.checkedIn) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }

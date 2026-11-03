@@ -521,6 +521,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         val route = routeForRole(requested, _uiState.value.role)
         _uiState.update { it.copy(currentRoute = route) }
         if (route != "chat") chatPoller?.cancel()
+        if (route != "calendar" && _uiState.value.checkInCode != null) dismissCheckInCode()
         // Screens that are worth having fresh the moment they are opened.
         when (route) {
             "student_home", "tutor_home" -> {
@@ -1492,6 +1493,73 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 }
                 .onFailure { reportError(it) }
         }
+    }
+
+    // ==================== ATTENDANCE CHECK-IN ====================
+
+    private var checkInPoller: Job? = null
+
+    fun showCheckInCode(event: CalendarEventUi) {
+        viewModelScope.launch {
+            repository.checkInCode(event.id)
+                .onSuccess { dto ->
+                    val expires = runCatching { Instant.parse(dto.expiresAt) }
+                        .getOrDefault(Instant.now().plusSeconds(300))
+                    _uiState.update { it.copy(checkInCode = CheckInCodeUi(dto.bookingId, dto.code, dto.qrPayload, expires)) }
+                    watchForCheckIn(event.id)
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
+    private fun watchForCheckIn(bookingId: String) {
+        checkInPoller?.cancel()
+        checkInPoller = viewModelScope.launch {
+            while (isActive && _uiState.value.checkInCode?.bookingId == bookingId) {
+                delay(4_000)
+                repository.bookings().onSuccess { bookings ->
+                    val done = bookings.firstOrNull { it._id == bookingId }?.attendance?.checkedInAt != null
+                    if (done) {
+                        _uiState.update { it.copy(checkInCode = null, noticeMessage = text(R.string.checkin_student_checked_in)) }
+                        loadBookings()
+                    }
+                }
+            }
+        }
+    }
+
+    fun dismissCheckInCode() {
+        checkInPoller?.cancel()
+        _uiState.update { it.copy(checkInCode = null) }
+    }
+
+    fun checkIn(event: CalendarEventUi, code: String, method: String) {
+        if (_uiState.value.isCheckingIn) return
+        _uiState.update { it.copy(isCheckingIn = true) }
+        viewModelScope.launch {
+            repository.checkIn(event.id, code.trim(), method)
+                .onSuccess {
+                    _uiState.update { it.copy(isCheckingIn = false, noticeMessage = text(R.string.checkin_you_are_checked_in)) }
+                    loadBookings()
+                }
+                .onFailure { error ->
+                    _uiState.update { it.copy(isCheckingIn = false) }
+                    reportError(error)
+                }
+        }
+    }
+
+    fun checkInFromScan(event: CalendarEventUi, raw: String?) {
+        val scanned = parseCheckInQr(raw)
+        when {
+            scanned == null -> _uiState.update { it.copy(dataErrorMessage = text(R.string.checkin_not_a_tutorbridge_code)) }
+            scanned.bookingId != event.id -> _uiState.update { it.copy(dataErrorMessage = text(R.string.checkin_wrong_session)) }
+            else -> checkIn(event, scanned.code, "QR")
+        }
+    }
+
+    fun scannerUnavailable() {
+        _uiState.update { it.copy(dataErrorMessage = text(R.string.checkin_scanner_unavailable)) }
     }
 
     // ==================== MESSAGING ====================

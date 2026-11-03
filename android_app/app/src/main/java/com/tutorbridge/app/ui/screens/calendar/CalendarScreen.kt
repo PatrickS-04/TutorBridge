@@ -33,6 +33,7 @@ import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
+import com.tutorbridge.app.viewmodel.ScannedCheckIn
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import java.time.DayOfWeek
 import java.time.Instant
@@ -42,6 +43,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CalendarScreen(
@@ -51,6 +53,11 @@ fun CalendarScreen(
     onOpenSessionNotes: (CalendarEventUi) -> Unit,
     onAddEvent: () -> Unit,
     onReschedule: (CalendarEventUi, LocalDate, LocalTime) -> Unit = { _, _, _ -> },
+    onShowCheckInCode: (CalendarEventUi) -> Unit = {},
+    onDismissCheckInCode: () -> Unit = {},
+    onScannedCheckIn: (CalendarEventUi, String?) -> Unit = { _, _ -> },
+    onTypedCheckIn: (CalendarEventUi, String) -> Unit = { _, _ -> },
+    onScannerUnavailable: () -> Unit = {},
     onCancelSeries: (CalendarEventUi) -> Unit = {}
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
@@ -64,6 +71,22 @@ fun CalendarScreen(
                 rescheduling = null
                 onReschedule(event, date, time)
             }
+        )
+    }
+    val context = LocalContext.current
+    // The session the student is typing a code for, while that dialog is open
+    var enteringCodeFor by remember { mutableStateOf<CalendarEventUi?>(null) }
+    enteringCodeFor?.let { event ->
+        EnterCheckInCodeDialog(
+            onSubmit = { code -> enteringCodeFor = null; onTypedCheckIn(event, code) },
+            onDismiss = { enteringCodeFor = null }
+        )
+    }
+    uiState.checkInCode?.let { code ->
+        CheckInCodeDialog(
+            code = code,
+            onNewCode = { uiState.calendarEvents.firstOrNull { it.id == code.bookingId }?.let(onShowCheckInCode) },
+            onDismiss = onDismissCheckInCode
         )
     }
     // The series session being cancelled "and following", while its confirmation is open.
@@ -315,6 +338,16 @@ fun CalendarScreen(
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CheckInRow(
+                            event = event,
+                            isTutor = isTutor,
+                            // The server checks the code, so this needs a connection
+                            enabled = uiState.isOnline && !uiState.isCheckingIn,
+                            onShowCode = { onShowCheckInCode(event) },
+                            onScan = { scanCheckInQr(context, { raw -> onScannedCheckIn(event, raw) }, onScannerUnavailable) },
+                            onEnterCode = { enteringCodeFor = event }
+                        )
 
                         if (isTutor) {
                             Spacer(modifier = Modifier.height(8.dp))

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkin_show_code">Bonisa ikhodi yokubhalisa</string>
+    <string name="checkin_show_code_title">Ukubhalisa komfundi</string>
+    <string name="checkin_show_code_hint">Cela umfundi wakho askene le khodi ku-TutorBridge, noma athayiphe izinombolo ezi-6.</string>
+    <string name="checkin_qr_description">Ikhodi ye-QR yokubhalisa</string>
+    <string name="checkin_code_expires_in">Iphelelwa yisikhathi ku-%1$d:%2$02d</string>
+    <string name="checkin_code_expired">Ikhodi iphelelwe yisikhathi - thepha Ikhodi entsha</string>
+    <string name="checkin_new_code">Ikhodi entsha</string>
+    <string name="checkin_close">Vala</string>
+    <string name="checkin_scan">Skena ukuze ubhalise</string>
+    <string name="checkin_enter_code">Faka ikhodi</string>
+    <string name="checkin_enter_code_title">Faka ikhodi yokubhalisa</string>
+    <string name="checkin_code_label">Ikhodi yezinombolo ezi-6</string>
+    <string name="checkin_check_in">Bhalisa</string>
+    <string name="checkin_checked_in_at">Ubhalise ngo-%1$s</string>
+    <string name="checkin_you_are_checked_in">Ubhalisile. Jabulela isifundo!</string>
+    <string name="checkin_student_checked_in">Umfundi wakho ubhalisile.</string>
+    <string name="checkin_not_a_tutorbridge_code">Lena akuyona ikhodi yokubhalisa ye-TutorBridge.</string>
+    <string name="checkin_wrong_session">Leyo khodi ingeyesinye isifundo.</string>
+    <string name="checkin_scanner_unavailable">Isikena asitholakali - faka ikhodi esikhundleni salokho.</string>
+    <string name="api_error_wrong_code">Leyo khodi ayilungile - yihlole bese uzama futhi.</string>
+    <string name="api_error_code_expired">Leyo khodi iphelelwe yisikhathi - cela uthisha wakho enye entsha.</string>
+    <string name="api_error_too_many_attempts">Amakhodi amaningi angalungile - cela uthisha wakho enye entsha.</string>
+    <string name="api_error_check_in_closed">Ukubhalisa kuvula imizuzu eyi-15 ngaphambi kwesifundo futhi kuvala uma siphela.</string>
+    <string name="api_error_already_checked_in">Umfundi usevele ubhalisile.</string>
+    <string name="claims_verified_count">Izifundo ezingu-%1$d kwezingu-%2$d ziqinisekiswe ngokubhalisa kokuba khona komfundi</string>
+    <string name="claims_session_checked_in">✓ Umfundi ubhalisile</string>
+    <string name="claims_session_not_checked_in">Akukho ukubhalisa okurekhodiwe</string>
+</resources>

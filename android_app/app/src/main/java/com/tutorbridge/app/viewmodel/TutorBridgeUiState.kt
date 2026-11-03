@@ -159,7 +159,11 @@ data class TutorBridgeUiState(
 
     // Learning history: the student's COMPLETED bookings
     val lessonsTaught: Int = 0,
-    val learningHistory: List<LearningHistoryEntryUi> = emptyList()
+    val learningHistory: List<LearningHistoryEntryUi> = emptyList(),
+
+    // Check-in
+    val checkInCode: CheckInCodeUi? = null,
+    val isCheckingIn: Boolean = false
 ) {
     /** Things done offline that are still waiting to be sent. */
     val pendingSyncCount: Int

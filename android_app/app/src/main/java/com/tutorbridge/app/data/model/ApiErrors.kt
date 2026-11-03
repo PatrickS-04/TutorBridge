@@ -26,6 +26,11 @@ fun errorMessageRes(code: String?): Int? = when (code) {
     "GOOGLE_AUTH_FAILED" -> R.string.api_error_google_auth_failed
     "UNVERIFIED" -> R.string.api_error_unverified
     "NOT_REQUIRED" -> R.string.api_error_not_required
+    "WRONG_CODE" -> R.string.api_error_wrong_code
+    "CODE_EXPIRED" -> R.string.api_error_code_expired
+    "TOO_MANY_ATTEMPTS" -> R.string.api_error_too_many_attempts
+    "CHECK_IN_CLOSED" -> R.string.api_error_check_in_closed
+    "ALREADY_CHECKED_IN" -> R.string.api_error_already_checked_in
     else -> null
 }
 

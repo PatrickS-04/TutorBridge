@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkin_show_code">Show check-in code</string>
+    <string name="checkin_show_code_title">Student check-in</string>
+    <string name="checkin_show_code_hint">Ask your student to scan this code in TutorBridge, or type the 6 digits.</string>
+    <string name="checkin_qr_description">Check-in QR code</string>
+    <string name="checkin_code_expires_in">Expires in %1$d:%2$02d</string>
+    <string name="checkin_code_expired">Code expired - tap New code</string>
+    <string name="checkin_new_code">New code</string>
+    <string name="checkin_close">Close</string>
+    <string name="checkin_scan">Scan to check in</string>
+    <string name="checkin_enter_code">Enter code</string>
+    <string name="checkin_enter_code_title">Enter check-in code</string>
+    <string name="checkin_code_label">6-digit code</string>
+    <string name="checkin_check_in">Check in</string>
+    <string name="checkin_checked_in_at">Checked in at %1$s</string>
+    <string name="checkin_you_are_checked_in">You\'re checked in. Enjoy the session!</string>
+    <string name="checkin_student_checked_in">Your student has checked in.</string>
+    <string name="checkin_not_a_tutorbridge_code">That isn\'t a TutorBridge check-in code.</string>
+    <string name="checkin_wrong_session">That code is for a different session.</string>
+    <string name="checkin_scanner_unavailable">The scanner isn\'t available - enter the code instead.</string>
+    <string name="api_error_wrong_code">That code is not right - check it and try again.</string>
+    <string name="api_error_code_expired">That code has expired - ask your tutor for a new one.</string>
+    <string name="api_error_too_many_attempts">Too many wrong codes - ask your tutor for a new one.</string>
+    <string name="api_error_check_in_closed">Check-in opens 15 minutes before the session and closes when it ends.</string>
+    <string name="api_error_already_checked_in">The student has already checked in.</string>
+    <string name="claims_verified_count">%1$d of %2$d sessions verified with student attendance check-in</string>
+    <string name="claims_session_checked_in">✓ Student checked in</string>
+    <string name="claims_session_not_checked_in">No check-in recorded</string>
+</resources>

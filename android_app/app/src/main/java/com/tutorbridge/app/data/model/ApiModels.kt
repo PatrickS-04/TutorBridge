@@ -186,6 +186,7 @@ data class BookingDto(
     /** Only ever set for the tutor teaching the session - the server leaves it
      *  out of the student's own booking list. */
     val tutorNotes: TutorNotesDto? = null,
+    val attendance: AttendanceDto? = null,
     /** Shared by every session of a weekly series; null for a single session. */
     val seriesId: String? = null,
     /** This session's place in its series, from 1. */
@@ -193,6 +194,14 @@ data class BookingDto(
     /** How many sessions the series was booked with. */
     val seriesCount: Int? = null
 )
+
+data class AttendanceDto(val checkedInAt: String? = null, val method: String? = null)
+
+data class CheckInCodeDto(val bookingId: String, val code: String, val expiresAt: String, val qrPayload: String)
+
+data class CheckInRequest(val code: String, val method: String)
+
+data class CheckInAckDto(val bookingId: String, val checkedInAt: String, val method: String)
 
 /** The tutor's private prep notes for one session. Also the PUT body. */
 data class TutorNotesDto(
@@ -329,7 +338,8 @@ data class TimesheetSessionDto(
     val studentName: String = "",
     val location: String = "",
     val hours: Double = 0.0,
-    val amount: Double = 0.0
+    val amount: Double = 0.0,
+    val checkedIn: Boolean = false
 )
 
 data class TimesheetPeriodDto(
@@ -339,7 +349,8 @@ data class TimesheetPeriodDto(
     val totalHours: Double = 0.0,
     val claimValue: Double = 0.0,
     val sessionCount: Int = 0,
-    val sessions: List<TimesheetSessionDto> = emptyList()
+    val verifiedCount: Int = 0,
+    val sessions: List<TimesheetSessionDto> = emptyList(),
 )
 
 data class TimesheetPeriodsDto(

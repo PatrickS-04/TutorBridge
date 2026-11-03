@@ -86,6 +86,8 @@ router.get(
             location: b.location ?? "",
             hours: round1(hours),
             amount: round1(hours * b.agreedRatePerHour),
+            checkedIn: Boolean(b.attendance?.checkedInAt),
+            checkedInAt: b.attendance?.checkedInAt ?? null
           };
         });
 
@@ -96,6 +98,7 @@ router.get(
         totalHours: round1(sessions.reduce((sum, s) => sum + s.hours, 0)),
         claimValue: round1(sessions.reduce((sum, s) => sum + s.amount, 0)),
         sessionCount: sessions.length,
+        verifiedCount: sessions.filter((s) => s.checkedIn).length,
         sessions,
       });
     }
@@ -133,7 +136,7 @@ router.get(
 
     const bookings = await Booking.find(filter).populate("tutorId").populate("studentId");
 
-    const rows = ["date,tutorName,startTime,endTime,subjectName,studentName,hours,ratePerHour,lineTotal"];
+    const rows = ["date,tutorName,startTime,endTime,subjectName,studentName,hours,ratePerHour,lineTotal,checkIn"];
     for (const b of bookings) {
       const tutor = b.tutorId as any;
       const student = b.studentId as any;
@@ -149,6 +152,7 @@ router.get(
           hours.toFixed(1),
           b.agreedRatePerHour,
           round1(hours * b.agreedRatePerHour),
+          b.attendance?.checkedInAt ? "yes" : "no"
         ]
           .map(csvCell)
           .join(",")
