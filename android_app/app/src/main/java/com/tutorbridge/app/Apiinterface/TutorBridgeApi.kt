@@ -115,6 +115,14 @@ interface TutorBridgeApi {
     @PUT("bookings/{id}/notes")
     suspend fun saveSessionNotes(@Path("id") id: String, @Body body: TutorNotesDto): Response<TutorNotesDto>
 
+    /** Tutor: a fresh 6-digit code (and QR payload) for the student to check in with. */
+    @POST("bookings/{id}/check-in-code")
+    suspend fun checkInCode(@Path("id") id: String): Response<CheckInCodeDto>
+
+    /** Student: check in with the code scanned or typed from the tutor's screen. */
+    @POST("bookings/{id}/check-in")
+    suspend fun checkIn(@Path("id") id: String, @Body body: CheckInRequest): Response<CheckInAckDto>
+
     // ==================== MESSAGING ====================
 
     @GET("threads")
