@@ -112,8 +112,14 @@ data class CalendarEventUi(
     val sideNotes: String = "",
     /** The session's window as the server sent it (ISO-8601), which a reschedule keeps the length of. */
     val startIso: String = "",
-    val endIso: String = ""
-)
+    val endIso: String = "",
+    /** CONFIRMED on the server. EventStatus folds REQUESTED into CONFIRMED, and check-in needs the real thing. */
+    val isConfirmed: Boolean = false,
+    /** "14:02" once the student has checked in; blank until then. */
+    val checkedInTime: String = ""
+) {
+    val checkedIn: Boolean get() = checkedInTime.isNotEmpty()
+}
 
 // ==================== MESSAGING ====================
 
@@ -193,7 +199,7 @@ data class ClaimSessionUi(
     val studentIdTag: String,
     val topic: String,
     val hours: Double,
-    val checkedIn: Boolean = true
+    val checkedIn: Boolean = false
 )
 
 data class ClaimPeriodUi(
@@ -204,7 +210,8 @@ data class ClaimPeriodUi(
     val sessionsCount: Int,
     val claimValue: Double,
     val claimRef: String = "",
-    val sessions: List<ClaimSessionUi> = emptyList()
+    val sessions: List<ClaimSessionUi> = emptyList(),
+    val verifiedCount: Int = 0
 )
 
 data class InstitutionUi(
@@ -254,4 +261,13 @@ data class UserProfileUi(
     val profileCompleteness: Int = 100,
     val languagesSpoken: String = "",
     val consultationRoom: String = ""
+)
+
+// ==================== CHECK-IN ====================
+// The code on the tutor's screen while the check-in dialog is open
+data class CheckInCodeUi(
+    val bookingId: String,
+    val code: String,
+    val qrPayload: String,
+    val expiresAt: java.time.Instant
 )
