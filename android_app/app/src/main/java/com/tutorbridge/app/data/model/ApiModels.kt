@@ -185,7 +185,13 @@ data class BookingDto(
     val agreedRatePerHour: Double = 0.0,
     /** Only ever set for the tutor teaching the session - the server leaves it
      *  out of the student's own booking list. */
-    val tutorNotes: TutorNotesDto? = null
+    val tutorNotes: TutorNotesDto? = null,
+    /** Shared by every session of a weekly series; null for a single session. */
+    val seriesId: String? = null,
+    /** This session's place in its series, from 1. */
+    val seriesIndex: Int? = null,
+    /** How many sessions the series was booked with. */
+    val seriesCount: Int? = null
 )
 
 /** The tutor's private prep notes for one session. Also the PUT body. */
@@ -210,13 +216,61 @@ data class DirectBookingRequest(
     val startTime: String, // ISO-8601 instant
     val endTime: String,
     val mode: String = "IN_PERSON",
-    val location: String? = null
+    val location: String? = null,
+    /** Left null for a single session; Gson leaves a null out of the body. */
+    val repeat: RepeatDto? = null
 )
 
-/** POST /bookings and /bookings/direct answer with `id`, not the whole document. */
-data class BookingAckDto(val id: String, val status: String)
+/**
+ * Book the same time on a recurring basis; `startTime` is the first session. Two shapes, and Gson leaves out
+ * whichever fields are null:
+ *  - the original, [count] only: the weekday of the first session, one session a week for [count] weeks;
+ *  - a pattern, [days] and [weeks]: the same time on each of those weekdays (MONDAY ... SUNDAY), for [weeks] weeks.
+ */
+data class RepeatDto(
+    val frequency: String = "WEEKLY",
+    val count: Int? = null,
+    val weeks: Int? = null,
+    val days: List<String>? = null
+)
+
+/**
+ * POST /bookings and /bookings/direct answer with `id`, not the whole document. A weekly series
+ * also names itself and lists its sessions. The series fields are nullable because Gson leaves a
+ * field the server did not send as null, whatever default the class declares.
+ */
+data class BookingAckDto(
+    val id: String,
+    val status: String,
+    val seriesId: String? = null,
+    val seriesCount: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
+
+/** One session in a series just booked, in order. */
+data class SeriesBookingDto(
+    val id: String,
+    val status: String,
+    val startTime: String? = null,
+    val endTime: String? = null,
+    val seriesIndex: Int? = null
+)
 
 data class CancelRequest(val reason: String?)
+
+/** PUT /bookings/series/:id/cancel - [fromBookingId] cancels from that session onward; null cancels every upcoming one. */
+data class CancelSeriesRequest(val reason: String?, val fromBookingId: String? = null)
+
+/**
+ * The answer to confirming or cancelling a series: how many sessions it touched, and which.
+ * Everything is nullable because Gson leaves what the server did not send as null.
+ */
+data class SeriesActionDto(
+    val seriesId: String? = null,
+    val confirmed: Int? = null,
+    val cancelled: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
 
 /** PUT /bookings/:id/reschedule - the new window, as ISO-8601 instants. */
 data class RescheduleRequest(

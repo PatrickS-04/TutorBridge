@@ -112,8 +112,16 @@ data class CalendarEventUi(
     val sideNotes: String = "",
     /** The session's window as the server sent it (ISO-8601), which a reschedule keeps the length of. */
     val startIso: String = "",
-    val endIso: String = ""
-)
+    val endIso: String = "",
+    /** Set when this session is one of a weekly series; the same for every session in it. */
+    val seriesId: String? = null,
+    /** Its place in the series, from 1; 0 for a single session. */
+    val seriesIndex: Int = 0,
+    /** How many sessions the series has; 0 for a single session. */
+    val seriesCount: Int = 0
+) {
+    val isSeries: Boolean get() = seriesId != null && seriesCount > 1
+}
 
 // ==================== MESSAGING ====================
 
@@ -150,7 +158,13 @@ data class PendingBookingUi(
     val initials: String,
     val subjectName: String,
     val whenLabel: String,
-    val location: String
+    val location: String,
+    /** Set when this waiting session is one of a recurring series the student booked in one go. */
+    val seriesId: String? = null,
+    val seriesIndex: Int = 0,
+    val seriesCount: Int = 0,
+    /** The weekday the session falls on, in the phone's time zone, so a series card can say which days it covers. */
+    val dayOfWeek: java.time.DayOfWeek? = null
 )
 
 data class NotificationUi(

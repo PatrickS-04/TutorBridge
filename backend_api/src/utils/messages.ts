@@ -23,6 +23,10 @@ export type NotificationKey =
   | "booking.cancelledWithReason"
   | "booking.rescheduled"
   | "booking.rescheduleRequested"
+  | "booking.seriesNew"
+  | "booking.seriesConfirmed"
+  | "booking.seriesCancelled"
+  | "booking.seriesCancelledWithReason"
   | "message.new";
 
 export interface NotificationText {
@@ -89,6 +93,22 @@ export const english: Catalogue = {
     title: "Reschedule requested",
     body: "{subject} was moved to {when} - confirm the new time.",
   },
+  "booking.seriesNew": {
+    title: "New recurring booking",
+    body: "{subject}: a recurring series from {when} - confirm or decline it. Sessions: {count}.",
+  },
+  "booking.seriesConfirmed": {
+    title: "Recurring sessions confirmed",
+    body: "{subject}: the recurring series from {when} is confirmed. Sessions: {count}.",
+  },
+  "booking.seriesCancelled": {
+    title: "Recurring sessions cancelled",
+    body: "The upcoming {subject} sessions were cancelled. Sessions: {count}.",
+  },
+  "booking.seriesCancelledWithReason": {
+    title: "Recurring sessions cancelled",
+    body: "{subject}: {reason} (sessions: {count})",
+  },
   "message.new": {
     title: "New message",
     body: "{text}",
@@ -153,6 +173,22 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
       title: "Herskedulering versoek",
       body: "{subject} is verskuif na {when} - bevestig die nuwe tyd.",
     },
+    "booking.seriesNew": {
+      title: "Nuwe herhalende bespreking",
+      body: "{subject}: 'n herhalende reeks vanaf {when} - bevestig of weier dit. Sessies: {count}.",
+    },
+    "booking.seriesConfirmed": {
+      title: "Herhalende sessies bevestig",
+      body: "{subject}: die herhalende reeks vanaf {when} is bevestig. Sessies: {count}.",
+    },
+    "booking.seriesCancelled": {
+      title: "Herhalende sessies gekanselleer",
+      body: "Die komende {subject}-sessies is gekanselleer. Sessies: {count}.",
+    },
+    "booking.seriesCancelledWithReason": {
+      title: "Herhalende sessies gekanselleer",
+      body: "{subject}: {reason} (sessies: {count})",
+    },
     "message.new": {
       title: "Nuwe boodskap",
       body: "{text}",
@@ -210,6 +246,22 @@ export const translations: Partial<Record<Locale, Partial<Catalogue>>> = {
     "booking.rescheduleRequested": {
       title: "Kucelwe ukuhlela kabusha",
       body: "I-{subject} ifuduselwe ku-{when} - qinisekisa isikhathi esisha.",
+    },
+    "booking.seriesNew": {
+      title: "Ukubhukha okusha okuphindaphindwayo",
+      body: "{subject}: uchungechunge oluphindaphindwayo kusukela ku-{when} - luqinisekise noma ulunqabe. Izifundo: {count}.",
+    },
+    "booking.seriesConfirmed": {
+      title: "Izifundo eziphindaphindwayo ziqinisekisiwe",
+      body: "{subject}: uchungechunge oluphindaphindwayo kusukela ku-{when} luqinisekisiwe. Izifundo: {count}.",
+    },
+    "booking.seriesCancelled": {
+      title: "Izifundo eziphindaphindwayo zikhanseliwe",
+      body: "Izifundo ezizayo ze-{subject} zikhanseliwe. Izifundo: {count}.",
+    },
+    "booking.seriesCancelledWithReason": {
+      title: "Izifundo eziphindaphindwayo zikhanseliwe",
+      body: "{subject}: {reason} (izifundo: {count})",
     },
     "message.new": {
       title: "Umlayezo omusha",

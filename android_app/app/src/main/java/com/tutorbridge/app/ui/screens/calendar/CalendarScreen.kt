@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.EventStatus
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.data.model.sessionsFrom
+import com.tutorbridge.app.ui.components.SeriesBadge
 import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.NavySecondary
@@ -48,7 +50,8 @@ fun CalendarScreen(
     onFilterChange: (String) -> Unit,
     onOpenSessionNotes: (CalendarEventUi) -> Unit,
     onAddEvent: () -> Unit,
-    onReschedule: (CalendarEventUi, LocalDate, LocalTime) -> Unit = { _, _, _ -> }
+    onReschedule: (CalendarEventUi, LocalDate, LocalTime) -> Unit = { _, _, _ -> },
+    onCancelSeries: (CalendarEventUi) -> Unit = {}
 ) {
     val isTutor = uiState.role == UserRole.TUTOR
     // The session being moved, while its dialog is open.
@@ -60,6 +63,29 @@ fun CalendarScreen(
             onConfirm = { date, time ->
                 rescheduling = null
                 onReschedule(event, date, time)
+            }
+        )
+    }
+    // The series session being cancelled "and following", while its confirmation is open.
+    var cancellingSeries by remember { mutableStateOf<CalendarEventUi?>(null) }
+    cancellingSeries?.let { event ->
+        val sessions = sessionsFrom(event.seriesIndex, event.seriesCount)
+        AlertDialog(
+            onDismissRequest = { cancellingSeries = null },
+            title = { Text(stringResource(R.string.calendar_series_cancel_title)) },
+            text = { Text(pluralStringResource(R.plurals.calendar_series_cancel_body, sessions, sessions)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    cancellingSeries = null
+                    onCancelSeries(event)
+                }) {
+                    Text(stringResource(R.string.calendar_series_cancel_confirm), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { cancellingSeries = null }) {
+                    Text(stringResource(R.string.calendar_series_cancel_keep))
+                }
             }
         )
     }
@@ -282,6 +308,10 @@ fun CalendarScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (event.isSeries) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            SeriesBadge(event.seriesIndex, event.seriesCount)
+                        }
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
@@ -324,6 +354,23 @@ fun CalendarScreen(
                                 Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(stringResource(R.string.calendar_reschedule), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            // A weekly series can be dropped from this session onward in one go.
+                            if (event.isSeries) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                OutlinedButton(
+                                    onClick = { cancellingSeries = event },
+                                    enabled = uiState.isOnline,
+                                    shape = RoundedCornerShape(20.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        stringResource(R.string.calendar_series_cancel),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = CrimsonPrimary
+                                    )
+                                }
                             }
                         }
                     }

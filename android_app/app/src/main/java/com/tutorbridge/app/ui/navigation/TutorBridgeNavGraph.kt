@@ -198,7 +198,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) },
                     onAcceptBooking = { bookingId -> viewModel.acceptTutorBooking(bookingId) },
-                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) }
+                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) },
+                    onAcceptSeries = { seriesId -> viewModel.acceptTutorSeries(seriesId) },
+                    onDeclineSeries = { seriesId -> viewModel.declineTutorSeries(seriesId) }
                 )
                 "find_tutors" -> FindTutorsScreen(
                     uiState = uiState,
@@ -223,11 +225,15 @@ fun TutorBridgeNavGraph(
                 "review_booking" -> ReviewBookingScreen(
                     uiState = uiState,
                     onConfirm = { viewModel.sendBookingRequest() },
-                    onBack = { viewModel.navigateTo("booking_flow") }
+                    onBack = { viewModel.navigateTo("booking_flow") },
+                    onRepeatChange = viewModel::setRepeatWeekly,
+                    onRepeatCountChange = viewModel::setRepeatCount,
+                    onToggleDay = viewModel::toggleRepeatDay
                 )
                 "booking_sent" -> BookingRequestSentScreen(
                     onCheckStatus = { viewModel.checkBookingStatus() },
-                    onViewCalendar = { viewModel.navigateTo("calendar") }
+                    onViewCalendar = { viewModel.navigateTo("calendar") },
+                    seriesCount = uiState.lastSeriesCount
                 )
                 "booking_confirmed" -> BookingConfirmationScreen(
                     uiState = uiState,
@@ -245,7 +251,8 @@ fun TutorBridgeNavGraph(
                     onFilterChange = { viewModel.setCalendarFilter(it) },
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
                     onAddEvent = { viewModel.navigateTo("find_tutors") },
-                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) }
+                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) },
+                    onCancelSeries = { session -> viewModel.cancelSeriesFrom(session) }
                 )
 
                 "sync_status" -> SyncStatusScreen(

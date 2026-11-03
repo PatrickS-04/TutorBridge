@@ -44,4 +44,6 @@
     <string name="api_error_unverified">Othisha abaqinisekisiwe kuphela abangafaka izicelo</string>
     <string name="api_error_not_required">Alikho iphasiwedi yesikhashana okufanele ishintshwe</string>
     <string name="error_server">Kukhona okungahambanga kahle ohlangothini lwethu. Sicela uzame futhi.</string>
+    <string name="api_error_series_conflict">Sekuvele kunesifundo esiqinisekisiwe: %1$s. Khetha esinye isikhathi.</string>
+    <string name="api_error_outside_availability">Uthisha akatholakali kulesi sikhathi njalo ngeviki. Amasonto angafaneleki: %1$s. Khetha esinye isikhathi.</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.screens.booking
 
 import com.tutorbridge.app.R
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
@@ -25,9 +26,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.SERIES_MIN
 import com.tutorbridge.app.data.model.TutorUi
+import com.tutorbridge.app.data.model.availableDays
+import com.tutorbridge.app.data.model.maxWeeksFor
+import com.tutorbridge.app.data.model.sessionDates
 import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.ui.components.VenueLink
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -211,7 +217,10 @@ fun BookingFlowScreen(
 fun ReviewBookingScreen(
     uiState: TutorBridgeUiState,
     onConfirm: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRepeatChange: (Boolean) -> Unit = {},
+    onRepeatCountChange: (Int) -> Unit = {},
+    onToggleDay: (DayOfWeek) -> Unit = {}
 ) {
     val tutor = uiState.selectedTutor ?: return
 
@@ -219,6 +228,7 @@ fun ReviewBookingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -263,6 +273,16 @@ fun ReviewBookingScreen(
             }
         }
 
+        // A session the student already agreed with a tutor is one session; only a direct booking can repeat.
+        if (!uiState.bookingFromApplication) {
+            RepeatCard(
+                uiState = uiState,
+                onToggleDay = onToggleDay,
+                onRepeatChange = onRepeatChange,
+                onCountChange = onRepeatCountChange
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,8 +295,11 @@ fun ReviewBookingScreen(
             Text(stringResource(R.string.booking_you_will_meet, tutor.name.split(" ").last()), fontSize = 12.sp, color = NavySecondary)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(8.dp))
 
+        // How many sessions this will ask for: the days booked, for one week or for each week it repeats.
+        val sessions = uiState.bookedDays.size * (if (uiState.repeatWeekly) uiState.repeatCount else 1)
+        val series = !uiState.bookingFromApplication && sessions >= 2
         Button(
             onClick = onConfirm,
             enabled = uiState.isOnline,
@@ -284,9 +307,141 @@ fun ReviewBookingScreen(
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
         ) {
-            Text(stringResource(R.string.booking_confirm_request), fontWeight = FontWeight.Bold)
+            Text(
+                if (series) stringResource(R.string.booking_confirm_series, sessions)
+                else stringResource(R.string.booking_confirm_request),
+                fontWeight = FontWeight.Bold
+            )
         }
         NeedsConnectionHint(uiState.isOnline)
+    }
+}
+
+/**
+ * Which days to book, whether to repeat them weekly, and the dates that result.
+ *
+ * The date picked above is the first session and its weekday is always booked. Every other day, and every following
+ * week, is counted from it in rolling blocks of seven days (see [sessionDates]), so the dates listed here are the
+ * dates the server books.
+ */
+@Composable
+private fun RepeatCard(
+    uiState: TutorBridgeUiState,
+    onToggleDay: (DayOfWeek) -> Unit,
+    onRepeatChange: (Boolean) -> Unit,
+    onCountChange: (Int) -> Unit
+) {
+    val firstDate = runCatching { LocalDate.parse(uiState.selectedBookingDate) }.getOrNull()
+    val weeks = if (uiState.repeatWeekly) uiState.repeatCount else 1
+    val dates = firstDate?.let { sessionDates(it, uiState.repeatDays, weeks) }.orEmpty()
+    val maxWeeks = maxWeeksFor(uiState.bookedDays.size)
+    // Only days the tutor works at this time can be added; the chosen date's own weekday is always on.
+    val open = availableDays(uiState.selectedTutor?.windows.orEmpty(), uiState.selectedSlot)
+    val dayName = { day: DayOfWeek -> day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
+    val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column {
+                Text(stringResource(R.string.booking_days_title), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    stringResource(R.string.booking_days_hint),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                DayOfWeek.values().forEach { day ->
+                    FilterChip(
+                        selected = day in uiState.bookedDays,
+                        onClick = { onToggleDay(day) },
+                        enabled = day == uiState.firstDay || day in open,
+                        label = { Text(dayName(day), fontSize = 12.sp) }
+                    )
+                }
+            }
+
+            if (DayOfWeek.values().any { it != uiState.firstDay && it !in open }) {
+                Text(
+                    stringResource(R.string.booking_days_unavailable),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.booking_repeat_weekly), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        stringResource(R.string.booking_repeat_hint),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = uiState.repeatWeekly, onCheckedChange = onRepeatChange)
+            }
+
+            if (uiState.repeatWeekly) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.booking_repeat_weeks), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount - 1) },
+                            enabled = uiState.repeatCount > SERIES_MIN
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.booking_repeat_fewer))
+                        }
+                        Text("${uiState.repeatCount}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount + 1) },
+                            enabled = uiState.repeatCount < maxWeeks
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.booking_repeat_more))
+                        }
+                    }
+                }
+            }
+
+            // Two or more dates is a series; one is the ordinary booking and needs no list.
+            if (dates.size >= 2) {
+                Text(
+                    stringResource(
+                        R.string.booking_pattern_summary,
+                        uiState.bookedDays.joinToString(", ") { dayName(it) },
+                        uiState.selectedSlot
+                    ),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavySecondary
+                )
+                Text(
+                    pluralStringResource(R.plurals.booking_pattern_total, dates.size, dates.size),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(stringResource(R.string.booking_repeat_dates), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                dates.forEachIndexed { index, date ->
+                    Text("${index + 1}.  ${date.format(dateFormat)}", fontSize = 13.sp)
+                }
+            }
+        }
     }
 }
 
@@ -303,7 +458,9 @@ private fun ReviewRow(label: String, value: String) {
 @Composable
 fun BookingRequestSentScreen(
     onCheckStatus: () -> Unit,
-    onViewCalendar: () -> Unit
+    onViewCalendar: () -> Unit,
+    /** Sessions in the weekly series just requested, or 0 for a single session. */
+    seriesCount: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -321,9 +478,19 @@ fun BookingRequestSentScreen(
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(stringResource(R.string.booking_booking_request_sent), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        if (seriesCount > 0) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                pluralStringResource(R.plurals.booking_series_requested, seriesCount, seriesCount),
+                fontWeight = FontWeight.Bold,
+                color = CrimsonPrimary
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            stringResource(R.string.booking_your_request_was_submitted_and),
+            stringResource(
+                if (seriesCount > 0) R.string.booking_series_submitted else R.string.booking_your_request_was_submitted_and
+            ),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 12.dp)

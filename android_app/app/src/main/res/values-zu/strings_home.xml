@@ -37,4 +37,7 @@
     <string name="student_home_tutors_on_campus">Othisha Basekhampasi</string>
     <string name="student_home_verified">✓ Kuqinisekisiwe</string>
     <string name="student_home_next_session">Isifundo Esilandelayo • %1$s</string>
+    <string name="tutor_home_decline_series">Nqaba uchungechunge</string>
+    <string name="tutor_home_accept_series">Yamukela uchungechunge</string>
+    <string name="tutor_home_series_pattern">%1$s kusukela ku-%2$s • izifundo ezingu-%3$d zilindile</string>
 </resources>
