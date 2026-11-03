@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -71,7 +70,7 @@ fun SplashScreen(
             colors = ButtonDefaults.buttonColors(
                 // Navy on the navy canvas would vanish, so the dark splash gets a cream button.
                 containerColor = if (dark) CanvasCream else NavySecondary,
-                contentColor = if (dark) NavySecondary else Color.White
+                contentColor = if (dark) NavySecondary else MaterialTheme.colorScheme.onSecondary
             )
         ) {
             Text(

@@ -23,8 +23,6 @@ import com.tutorbridge.app.R
 import com.tutorbridge.app.data.local.OutboxItemUi
 import com.tutorbridge.app.data.local.OutboxType
 import com.tutorbridge.app.data.local.toItemUis
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -64,7 +62,7 @@ fun SyncStatusScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.CloudDone, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(40.dp))
+                Icon(Icons.Default.CloudDone, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(40.dp))
                 Text(stringResource(R.string.sync_all_clear), fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
             return@Column
@@ -79,7 +77,7 @@ fun SyncStatusScreen(
                 Text(
                     pluralStringResource(R.plurals.failed_sync, uiState.failedSyncCount, uiState.failedSyncCount),
                     fontSize = 13.sp,
-                    color = CrimsonPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -98,7 +96,7 @@ fun SyncStatusScreen(
                 enabled = uiState.isOnline && uiState.pendingSyncCount > 0,
                 modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) { Text(stringResource(R.string.sync_now), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
 
             OutlinedButton(
@@ -133,7 +131,7 @@ private fun ItemCard(item: OutboxItemUi, onDiscard: (Long) -> Unit) {
                     Text(
                         stringResource(if (item.failed) R.string.sync_state_failed else R.string.waiting_to_send),
                         fontSize = 12.sp,
-                        color = if (item.failed) CrimsonPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (item.failed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -146,7 +144,7 @@ private fun ItemCard(item: OutboxItemUi, onDiscard: (Long) -> Unit) {
             }
             if (item.failed) {
                 TextButton(onClick = { onDiscard(item.id) }, contentPadding = PaddingValues(0.dp)) {
-                    Text(stringResource(R.string.discard), color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(stringResource(R.string.discard), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }

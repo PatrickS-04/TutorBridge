@@ -209,6 +209,13 @@ The project is split into layers, so each part has one job.
 
 ---
 
+## Offline Sync
+Screens read what was last saved in Room, and anything done offline goes into an outbox table. WorkManager sends the outbox as soon as there is a connection, retries with a growing delay if the server cannot be reached, and runs every 15 minutes as a backup. A `GET /health` call wakes the API when the app starts.
+
+**Conflicts:** changes are sent in the order they were made, and the last one to reach the server wins. Settings merge field by field, so a later value replaces an earlier one. If the server refuses a change it is marked as failed on the Sync status screen, where it can be retried or discarded.
+
+---
+
 ## Setup
 
 ### Prerequisites

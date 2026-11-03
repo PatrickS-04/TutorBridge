@@ -84,7 +84,6 @@ data class NotificationPreferencesDto(
 data class UserSettingsDto(
     val language: String = "EN",
     val notifications: NotificationPreferencesDto = NotificationPreferencesDto(),
-    val smsFallback: Boolean = true,
     val biometricEntry: Boolean = true,
     val theme: String = "SYSTEM"
 )
@@ -100,7 +99,6 @@ data class UpdateProfileRequest(
 data class UpdateSettingsRequest(
     val language: String? = null,
     val notifications: NotificationPreferencesDto? = null,
-    val smsFallback: Boolean? = null,
     val biometricEntry: Boolean? = null,
     val theme: String? = null
 )

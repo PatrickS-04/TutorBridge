@@ -16,15 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.TutorUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -109,11 +106,11 @@ fun FindTutorsScreen(
                             // No match scoring behind this yet - shown only when there is one.
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text(stringResource(R.string.find_subject_with_code, tutor.subject, tutor.courseCode), fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.find_subject_with_code, tutor.subject, tutor.courseCode), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(

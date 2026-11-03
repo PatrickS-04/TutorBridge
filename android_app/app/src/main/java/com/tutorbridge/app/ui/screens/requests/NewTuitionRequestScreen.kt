@@ -15,14 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavyTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.data.model.NamedIdDto
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
@@ -78,7 +74,7 @@ fun NewTuitionRequestScreen(
                             .weight(1f)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(if (i <= step) CrimsonPrimary else MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (i <= step) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     )
                 }
             }
@@ -114,13 +110,13 @@ fun NewTuitionRequestScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(CircleShape)
-                                .background(if (selected) CrimsonPrimary else MaterialTheme.colorScheme.surfaceVariant)
+                                .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable { onToggleDay(day) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
@@ -172,16 +168,16 @@ fun NewTuitionRequestScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(NavyTint)
+                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(Icons.Default.Bookmark, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Bookmark, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
             Text(
                 stringResource(R.string.new_request_your_request_goes_to_every),
                 fontSize = 12.sp,
-                color = NavySecondary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -206,7 +202,7 @@ fun NewTuitionRequestScreen(
                 enabled = canContinue && !uiState.isRefreshing && (uiState.isOnline || draft.editingRequestId == null || step < totalSteps),
                 modifier = Modifier.weight(1f).heightIn(min = 50.dp),
                 shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 val submitLabel = if (draft.editingRequestId != null) stringResource(R.string.edit_profile_save_changes) else stringResource(R.string.new_request_submit_request)
                 Text(if (step < totalSteps) stringResource(R.string.new_request_next_step) else submitLabel, fontWeight = FontWeight.Bold)

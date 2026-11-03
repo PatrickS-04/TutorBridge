@@ -43,6 +43,11 @@ class AuthRepository(private val authApi: AuthApi) {
         Result.failure(exception)
     }
 
+    /** Only there to wake the server; whether it answers changes nothing here. */
+    suspend fun wakeServer() {
+        runCatching { authApi.health() }
+    }
+
     suspend fun listInstitutions(): List<InstitutionSummary> {
         return try {
             val response = authApi.listInstitutions()

@@ -17,15 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -82,7 +79,7 @@ fun SessionPrepScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -90,12 +87,12 @@ fun SessionPrepScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Box(
-                            modifier = Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)),
+                            modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 initialsOf(session?.participantName),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
@@ -103,7 +100,7 @@ fun SessionPrepScreen(
                         Column {
                             Text(
                                 session?.participantName ?: stringResource(R.string.prep_this_session),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
@@ -113,7 +110,7 @@ fun SessionPrepScreen(
                                     session?.date,
                                     session?.startTime?.takeIf { it.isNotBlank() }
                                 ).joinToString(" • "),
-                                color = Color.White.copy(alpha = 0.85f),
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.85f),
                                 fontSize = 12.5.sp
                             )
                             if (session?.isSeries == true) {
@@ -132,16 +129,16 @@ fun SessionPrepScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.08f))
+                                .background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.08f))
                                 .padding(10.dp)
                         ) {
                             Icon(
                                 Icons.Default.Place,
                                 contentDescription = stringResource(R.string.prep_venue),
-                                tint = CrimsonPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                             )
-                            Text(venue, color = Color.White, fontSize = 12.sp)
+                            Text(venue, color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
                         }
                     }
                 }
@@ -193,7 +190,7 @@ fun SessionPrepScreen(
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f),
                                 textDecoration = if (goal.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                color = if (goal.completed) CrimsonPrimary else MaterialTheme.colorScheme.onSurface
+                                color = if (goal.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                             IconButton(onClick = { onRemoveGoal(goal.id) }) {
                                 Icon(
@@ -221,7 +218,7 @@ fun SessionPrepScreen(
                                 onClick = onAddItem,
                                 enabled = uiState.newChecklistItem.isNotBlank()
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.prep_add_to_do), tint = CrimsonPrimary)
+                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.prep_add_to_do), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     )
@@ -254,7 +251,7 @@ fun SessionPrepScreen(
                 onClick = onSaveNotes,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))

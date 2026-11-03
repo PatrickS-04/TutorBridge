@@ -24,6 +24,12 @@ val AmberTint = Color(0xFFFFF3E0)
 val EmeraldSuccess = Color(0xFF1D6033)
 val EmeraldTint = Color(0xFFEAF3EC)
 
+// A QR code scans only as dark on light, whatever the app's theme is.
+val QrBackground = Color(0xFFFFFFFF)
+val QrForeground = Color(0xFF000000)
+
+val CheckedInGreen = Color(0xFF2E7D32)
+
 // Dark Palette
 val DarkBackground = Color(0xFF131A24)
 val DarkSurface = Color(0xFF1C2636)

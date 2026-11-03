@@ -1602,7 +1602,6 @@ export const openapiSpec = {
               verification: { type: "boolean" },
             },
           },
-          smsFallback: { type: "boolean" },
           biometricEntry: { type: "boolean" },
           theme: enumOf(Theme),
         },

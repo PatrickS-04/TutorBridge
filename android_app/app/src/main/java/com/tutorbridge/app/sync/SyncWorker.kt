@@ -5,9 +5,11 @@ import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.tutorbridge.app.TutorBridgeApp
@@ -46,7 +48,18 @@ object SyncScheduler {
 
     private const val TAG = "Sync"
     private const val UNIQUE_NAME = "outbox-sync"
+    private const val PERIODIC_NAME = "outbox-sync-periodic"
     private const val BACKOFF_SECONDS = 30L
+
+    /** The backup: every 15 minutes (WorkManager's shortest), in case a request was missed. KEEP, so app starts do not reset the clock. */
+    fun schedulePeriodic(context: Context) {
+        val work = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(context.applicationContext)
+            .enqueueUniquePeriodicWork(PERIODIC_NAME, ExistingPeriodicWorkPolicy.KEEP, work)
+    }
 
     fun request(context: Context) {
         val work = OneTimeWorkRequestBuilder<SyncWorker>()

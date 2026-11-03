@@ -46,4 +46,18 @@
     <string name="error_server">Kukhona okungahambanga kahle ohlangothini lwethu. Sicela uzame futhi.</string>
     <string name="api_error_series_conflict">Sekuvele kunesifundo esiqinisekisiwe: %1$s. Khetha esinye isikhathi.</string>
     <string name="api_error_outside_availability">Uthisha akatholakali kulesi sikhathi njalo ngeviki. Amasonto angafaneleki: %1$s. Khetha esinye isikhathi.</string>
+    <string name="vm_sign_in_to_save">Ngena ukuze ulondoloze izinguquko zakho</string>
+    <string name="vm_profile_saved">Iphrofayili ilondoloziwe.</string>
+    <string name="vm_profile_saved_confirm_email">Iphrofayili ilondoloziwe. Hlola ibhokisi lakho le-imeyili elisha ukuze uqinisekise ukushintsha kwekheli.</string>
+    <string name="vm_email_update_failed">Ayikwazanga ukubuyekeza i-imeyili</string>
+    <string name="vm_still_waiting_tutor">Kusalindelwe ukuthi uthisha aphendule</string>
+    <string name="vm_save_changes_failed">Ayikwazanga ukulondoloza izinguquko</string>
+    <string name="vm_post_request_failed">Ayikwazanga ukuthumela isicelo</string>
+    <string name="vm_reschedule_sent">Kuthunyelwe kuthisha wakho - kufanele aqinisekise isikhathi esisha.</string>
+    <string name="vm_session_moved">Iseshini ihanjiswe ku-%1$s ngo-%2$s.</string>
+    <string name="vm_delete_failed">Ayikwazanga ukususa i-akhawunti</string>
+    <string name="calendar_not_granted">Ukufinyelela ikhalenda akuvunyelwe</string>
+    <string name="calendar_no_code">I-Google ayibuyisanga ikhodi yokugunyaza</string>
+    <string name="calendar_unreachable">Ayikwazanga ukufinyelela i-Google</string>
+    <string name="calendar_no_account">Ayikho i-akhawunti ye-Google ekhethiwe</string>
 </resources>

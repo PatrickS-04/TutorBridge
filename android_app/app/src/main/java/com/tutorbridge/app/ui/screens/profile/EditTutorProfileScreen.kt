@@ -15,8 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -54,18 +52,18 @@ fun EditTutorProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(stringResource(R.string.edit_tutor_profile_completeness), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("${uiState.tutorProfileCompleteness}%", color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("${uiState.tutorProfileCompleteness}%", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 LinearProgressIndicator(
                     progress = uiState.tutorProfileCompleteness / 100f,
                     modifier = Modifier.fillMaxWidth().height(6.dp),
-                    color = NavySecondary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 if (uiState.tutorProfileCompleteness < 100) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(stringResource(R.string.edit_tutor_add_languages_spoken_to_reach), fontSize = 12.sp, color = CrimsonPrimary)
+                    Text(stringResource(R.string.edit_tutor_add_languages_spoken_to_reach), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -94,7 +92,7 @@ fun EditTutorProfileScreen(
             onClick = onSave,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text(stringResource(R.string.edit_tutor_save_profile), fontWeight = FontWeight.Bold)
         }

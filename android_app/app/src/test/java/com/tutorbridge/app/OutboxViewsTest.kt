@@ -119,13 +119,13 @@ class OutboxViewsTest {
 
         assertEquals("LIGHT", merged.theme)
         assertEquals("ZU", merged.language)
-        assertNull(merged.smsFallback)
+        assertNull(merged.biometricEntry)
         assertNull(emptyList<OutboxEntity>().pendingSettings())
     }
 
     @Test
     fun `a reload does not undo a setting that has not been sent yet`() {
-        val fromServer = UserSettingsDto(language = "EN", theme = "LIGHT", smsFallback = true)
+        val fromServer = UserSettingsDto(language = "EN", theme = "LIGHT")
         val pending = UpdateSettingsRequest(theme = "DARK", notifications = NotificationPreferencesDto(booking = false))
 
         val shown = fromServer.withPending(pending)

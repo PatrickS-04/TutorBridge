@@ -52,8 +52,8 @@ data class TutorBridgeUiState(
     val outboxItems: List<OutboxEntity> = emptyList(),
     val selectedLanguage: String = "English",
     val bookingUpdatesEnabled: Boolean = true,
-    val sessionRemindersEnabled: Boolean = true,
-    val smsFallbackEnabled: Boolean = false,
+    val messageNotificationsEnabled: Boolean = true,
+    val showBiometricOffer: Boolean = false,
     val biometricEnabled: Boolean = false,
 
     // Google Calendar: linked once, then every confirmed booking is written there.

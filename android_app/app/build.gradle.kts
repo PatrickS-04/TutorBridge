@@ -159,6 +159,7 @@ dependencies {
     //Google Maps is reached by intent (see VenueLink), so the SDK is not a dependency.
 
     implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     implementation("com.google.zxing:core:3.5.3")

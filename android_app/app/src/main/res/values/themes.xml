@@ -5,4 +5,10 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">#F4EFE6</item>
     </style>
+    <!-- The system splash, through core-splashscreen so it looks the same on every Android version. -->
+    <style name="Theme.TutorBridge.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F4EFE6</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.TutorBridge</item>
+    </style>
 </resources>

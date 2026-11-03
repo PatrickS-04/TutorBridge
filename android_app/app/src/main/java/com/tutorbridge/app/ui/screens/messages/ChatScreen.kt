@@ -17,7 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.MessageUi
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -107,7 +105,7 @@ fun ChatScreen(
             FilledIconButton(
                 onClick = onSend,
                 enabled = uiState.chatDraft.isNotBlank(),
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = NavySecondary)
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Icon(Icons.Default.Send, contentDescription = stringResource(R.string.chat_send))
             }
@@ -125,13 +123,13 @@ private fun Bubble(message: MessageUi) {
             modifier = Modifier
                 .widthIn(max = 280.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (message.mine) NavySecondary else MaterialTheme.colorScheme.surfaceVariant)
+                .background(if (message.mine) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(
                 message.body,
                 fontSize = 14.sp,
-                color = if (message.mine) Color.White else MaterialTheme.colorScheme.onSurface
+                color = if (message.mine) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
             )
             Text(
                 when {
@@ -140,7 +138,7 @@ private fun Bubble(message: MessageUi) {
                     else -> message.time
                 },
                 fontSize = 12.sp,
-                color = if (message.mine) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (message.mine) MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

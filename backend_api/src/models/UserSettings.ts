@@ -8,7 +8,6 @@ export interface IUserSettings extends Document {
   userId: Types.ObjectId;
   language: Locale;
   notifications: INotificationPreferences;
-  smsFallback: boolean;
   biometricEntry: boolean;
   theme: Theme;
   updatedAt: Date;
@@ -19,7 +18,6 @@ const UserSettingsSchema = new Schema<IUserSettings>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     language: { type: String, enum: Object.values(Locale), default: Locale.EN },
     notifications: { type: NotificationPreferencesSchema, default: () => ({}) },
-    smsFallback: { type: Boolean, default: true },
     biometricEntry: { type: Boolean, default: true },
     theme: { type: String, enum: Object.values(Theme), default: Theme.SYSTEM },
   },

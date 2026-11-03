@@ -19,12 +19,12 @@ import java.util.concurrent.TimeUnit
 //   Available at: https://github.com/google/gson [Accessed 21 September 2026].
 object RetrofitInstance {
 
-    // Set in app/build.gradle.kts: the deployed Azure App Service API unless
-    // local.properties overrides API_BASE_URL (10.0.2.2 for a local API from an emulator).
+    // Set in app/build.gradle.kts; local.properties can override API_BASE_URL.
     private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        // Bodies hold personal data, so they only reach logcat in debug builds.
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
     }
 
     // One client for everything: AuthInterceptor attaches the Firebase ID
@@ -36,8 +36,9 @@ object RetrofitInstance {
             .addInterceptor(OfflineGateInterceptor())
             .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthInterceptor())
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            // Long enough for a free host to wake from sleep.
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 

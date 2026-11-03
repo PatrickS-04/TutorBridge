@@ -45,4 +45,18 @@
     <string name="error_server">Something went wrong on our side. Please try again.</string>
     <string name="api_error_series_conflict">A confirmed session is already booked on: %1$s. Choose another time.</string>
     <string name="api_error_outside_availability">The tutor is not available at this time every week. Weeks that do not fit: %1$s. Choose another time.</string>
+    <string name="vm_sign_in_to_save">Sign in to save your changes</string>
+    <string name="vm_profile_saved">Profile saved.</string>
+    <string name="vm_profile_saved_confirm_email">Profile saved. Check your new email inbox to confirm the address change.</string>
+    <string name="vm_email_update_failed">Could not update email</string>
+    <string name="vm_still_waiting_tutor">Still waiting for the tutor to reply</string>
+    <string name="vm_save_changes_failed">Could not save the changes</string>
+    <string name="vm_post_request_failed">Could not post the request</string>
+    <string name="vm_reschedule_sent">Sent to your tutor - they need to confirm the new time.</string>
+    <string name="vm_session_moved">Session moved to %1$s at %2$s.</string>
+    <string name="vm_delete_failed">Could not delete account</string>
+    <string name="calendar_not_granted">Calendar access was not granted</string>
+    <string name="calendar_no_code">Google returned no authorisation code</string>
+    <string name="calendar_unreachable">Could not reach Google</string>
+    <string name="calendar_no_account">No Google account chosen</string>
 </resources>

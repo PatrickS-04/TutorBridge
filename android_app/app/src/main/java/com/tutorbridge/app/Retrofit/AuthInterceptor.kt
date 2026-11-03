@@ -5,6 +5,10 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
@@ -42,18 +46,34 @@ sealed class TokenResult {
  * the request fails the way any request would on a dead connection (an
  * IOException), and the cache and the outbox treat it as exactly that.
  */
-class AuthInterceptor(private val tokens: () -> TokenResult = ::firebaseToken) : Interceptor {
+class AuthInterceptor(
+    private val onRejected: () -> Unit = SessionEvents::notifyExpired,
+    private val tokens: () -> TokenResult = ::firebaseToken
+) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         return when (val result = tokens()) {
             TokenResult.NoUser -> chain.proceed(request)
-            is TokenResult.Token -> chain.proceed(request.newBuilder().header("Authorization", "Bearer ${result.value}").build())
+            is TokenResult.Token -> chain.proceed(request.newBuilder().header("Authorization", "Bearer ${result.value}").build()).reportRejection()
             TokenResult.NetworkFailure -> throw IOException("Could not refresh your sign-in without a connection")
             // Not a connectivity problem: let the server say what it thinks (a 401), which
             // is the signal that the user really does have to sign in again.
-            TokenResult.Failed -> chain.proceed(request)
+            TokenResult.Failed -> chain.proceed(request).reportRejection()
         }
+    }
+
+    /** Someone signed in was told 401: their session is no longer good, whichever call found out. */
+    private fun Response.reportRejection(): Response = also { if (it.code == 401) onRejected() }
+}
+
+/** Tells the ViewModel the server refused the signed-in user's token. Every call goes through the interceptor, so this is the one place that sees all of them. */
+object SessionEvents {
+    private val _expired = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val expired: SharedFlow<Unit> = _expired.asSharedFlow()
+
+    fun notifyExpired() {
+        _expired.tryEmit(Unit)
     }
 }
 

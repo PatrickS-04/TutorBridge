@@ -1,11 +1,32 @@
 package com.tutorbridge.app.data.model
 
 import androidx.annotation.StringRes
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.tutorbridge.app.R
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+/**
+ * What a failed Firebase sign-in or sign-up means to the person using the app, in their
+ * language, rather than Firebase's own English message. The weak password comes first
+ * because it is a kind of invalid credential.
+ */
+@StringRes
+fun authErrorRes(error: Exception): Int = when (error) {
+    is FirebaseAuthWeakPasswordException -> R.string.auth_error_weak_password
+    is FirebaseAuthInvalidCredentialsException, is FirebaseAuthInvalidUserException -> R.string.auth_error_bad_credentials
+    is FirebaseAuthUserCollisionException -> R.string.api_error_email_taken
+    is FirebaseTooManyRequestsException -> R.string.auth_error_too_many
+    is FirebaseNetworkException -> R.string.error_unreachable
+    else -> R.string.auth_error_generic
+}
 
 /**
  * The words for an error the server reports by code. The server's own message is

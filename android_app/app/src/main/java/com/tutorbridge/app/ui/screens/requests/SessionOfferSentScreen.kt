@@ -19,8 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.theme.CrimsonTint
-import com.tutorbridge.app.ui.theme.NavySecondary
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 
 @Composable
@@ -40,7 +38,7 @@ fun SessionOfferSentScreen(
             modifier = Modifier.size(84.dp).clip(CircleShape).background(CrimsonTint),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Send, contentDescription = null, tint = CrimsonPrimary, modifier = Modifier.size(34.dp))
+            Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(stringResource(R.string.offer_sent_session_offer_sent), fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -56,7 +54,7 @@ fun SessionOfferSentScreen(
             onClick = onViewApplications,
             modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text(stringResource(R.string.offer_sent_view_my_applications), fontWeight = FontWeight.Bold)
         }

@@ -36,6 +36,12 @@ async function main() {
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec, { customSiteTitle: "TutorBridge API" }));
   app.get("/openapi.json", (_req, res) => res.json(openapiSpec));
 
+  // Public and needs no token: the app calls it on start to wake a sleeping free host.
+  app.get("/health", (_req, res) => {
+    const database = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    res.status(database === "connected" ? 200 : 503).json({ status: database === "connected" ? "ok" : "degraded", database });
+  });
+
   registerRoutes(app);
 
   // Housekeeping no request can trigger. Hourly suits both - a 14-day

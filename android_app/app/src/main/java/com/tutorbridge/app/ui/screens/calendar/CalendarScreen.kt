@@ -30,8 +30,6 @@ import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.data.model.sessionsFrom
 import com.tutorbridge.app.ui.components.SeriesBadge
 import com.tutorbridge.app.ui.components.VenueLink
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.ScannedCheckIn
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
@@ -102,7 +100,7 @@ fun CalendarScreen(
                     cancellingSeries = null
                     onCancelSeries(event)
                 }) {
-                    Text(stringResource(R.string.calendar_series_cancel_confirm), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.calendar_series_cancel_confirm), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -143,7 +141,7 @@ fun CalendarScreen(
                     Button(
                         onClick = onAddEvent,
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -167,7 +165,7 @@ fun CalendarScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = NavySecondary)
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                         Column {
                             Text(
                                 "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${yearMonth.year}",
@@ -233,7 +231,7 @@ fun CalendarScreen(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .clip(CircleShape)
-                                                .background(if (isSelected) NavySecondary else Color.Transparent)
+                                                .background(if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent)
                                                 .clickable { onSelectDate(date) },
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -241,7 +239,7 @@ fun CalendarScreen(
                                                 "$dayNum",
                                                 fontSize = 12.5.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                                color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }
@@ -291,7 +289,7 @@ fun CalendarScreen(
                         modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.EventBusy, contentDescription = null, tint = CrimsonPrimary)
+                        Icon(Icons.Default.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(stringResource(R.string.calendar_no_sessions_on_this_date), fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -324,9 +322,9 @@ fun CalendarScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("${event.startTime} - ${event.endTime}", fontWeight = FontWeight.Bold, color = CrimsonPrimary, fontSize = 13.sp)
+                            Text("${event.startTime} - ${event.endTime}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
                             Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                                Text(event.type.name, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                                Text(event.type.name, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -337,7 +335,7 @@ fun CalendarScreen(
                         }
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(8.dp))
                         CheckInRow(
                             event = event,
@@ -358,7 +356,7 @@ fun CalendarScreen(
                                 Icon(
                                     Icons.Default.EditNote,
                                     contentDescription = null,
-                                    tint = CrimsonPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
@@ -401,7 +399,7 @@ fun CalendarScreen(
                                         stringResource(R.string.calendar_series_cancel),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = CrimsonPrimary
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -478,7 +476,7 @@ private fun RescheduleDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(date, time) }) {
-                Text(stringResource(R.string.calendar_move_session), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_move_session), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calendar_keep_current_time)) } }

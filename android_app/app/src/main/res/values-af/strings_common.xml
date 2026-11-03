@@ -46,4 +46,18 @@
     <string name="error_server">Iets het aan ons kant verkeerd gegaan. Probeer asseblief weer.</string>
     <string name="api_error_series_conflict">\'n Bevestigde sessie is reeds bespreek op: %1$s. Kies \'n ander tyd.</string>
     <string name="api_error_outside_availability">Die tutor is nie elke week op hierdie tyd beskikbaar nie. Weke wat nie pas nie: %1$s. Kies \'n ander tyd.</string>
+    <string name="vm_sign_in_to_save">Teken in om jou veranderinge te stoor</string>
+    <string name="vm_profile_saved">Profiel gestoor.</string>
+    <string name="vm_profile_saved_confirm_email">Profiel gestoor. Kyk in jou nuwe e-posinkassie om die adresverandering te bevestig.</string>
+    <string name="vm_email_update_failed">Kon nie e-pos opdateer nie</string>
+    <string name="vm_still_waiting_tutor">Wag steeds vir die tutor se antwoord</string>
+    <string name="vm_save_changes_failed">Kon nie die veranderinge stoor nie</string>
+    <string name="vm_post_request_failed">Kon nie die versoek plaas nie</string>
+    <string name="vm_reschedule_sent">Aan jou tutor gestuur - hulle moet die nuwe tyd bevestig.</string>
+    <string name="vm_session_moved">Sessie is geskuif na %1$s om %2$s.</string>
+    <string name="vm_delete_failed">Kon nie rekening skrap nie</string>
+    <string name="calendar_not_granted">Kalendertoegang is nie toegestaan nie</string>
+    <string name="calendar_no_code">Google het geen magtigingskode teruggestuur nie</string>
+    <string name="calendar_unreachable">Kon nie Google bereik nie</string>
+    <string name="calendar_no_account">Geen Google-rekening gekies nie</string>
 </resources>

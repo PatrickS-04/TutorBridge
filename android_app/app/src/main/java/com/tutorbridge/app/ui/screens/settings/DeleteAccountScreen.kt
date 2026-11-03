@@ -16,13 +16,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -53,7 +51,7 @@ fun DeleteAccountScreen(
                     stringResource(R.string.delete_account_delete_student_account),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = CrimsonPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -66,8 +64,8 @@ fun DeleteAccountScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.WarningAmber, contentDescription = null, tint = CrimsonPrimary, modifier = Modifier.size(18.dp))
-                        Text(stringResource(R.string.delete_account_permanent_action_warning), fontWeight = FontWeight.Bold, color = CrimsonPrimary)
+                        Icon(Icons.Default.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                        Text(stringResource(R.string.delete_account_permanent_action_warning), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     Text(
                         stringResource(R.string.delete_account_deleting_your_student_account_is),
@@ -147,10 +145,10 @@ fun DeleteAccountScreen(
                 enabled = canDelete && !uiState.isAuthLoading && uiState.isOnline,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 shape = RoundedCornerShape(26.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (uiState.isAuthLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
                     Icon(Icons.Default.DeleteForever, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -184,7 +182,7 @@ fun DeleteAccountScreen(
 @Composable
 private fun PurgeBullet(text: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("•", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+        Text("•", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         Text(text, fontSize = 13.sp)
     }
 }

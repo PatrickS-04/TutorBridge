@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,8 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
-import com.tutorbridge.app.ui.theme.NavySecondary
-import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import kotlinx.coroutines.launch
@@ -78,7 +75,7 @@ fun AuthScreen(
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
+                Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface)
                 Text(stringResource(R.string.auth_higher_education_tutoring_networ), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -134,24 +131,24 @@ fun AuthScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = NavyTint)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Default.Shield, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(15.dp))
-                    Text(stringResource(R.string.auth_role_sorted_campus_access), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = NavySecondary)
+                    Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(15.dp))
+                    Text(stringResource(R.string.auth_role_sorted_campus_access), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.auth_students_sign_in_with_your),
                     fontSize = 12.sp,
-                    color = NavySecondary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     stringResource(R.string.auth_tutors_log_in_with_your),
                     fontSize = 12.sp,
-                    color = NavySecondary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -229,10 +226,10 @@ fun AuthScreen(
             enabled = canSubmit,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             if (uiState.isAuthLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onSecondary, strokeWidth = 2.dp)
             } else {
                 Text(
                     if (isSignUp) stringResource(R.string.auth_create_account) else stringResource(R.string.auth_login),
@@ -254,7 +251,7 @@ fun AuthScreen(
             Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
         uiState.authInfoMessage?.let { message ->
-            Text(message, color = NavySecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+            Text(message, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -267,7 +264,7 @@ fun AuthScreen(
                         onRoleSelect(role)
                         onGoogleSignIn(idToken)
                     } catch (exception: Exception) {
-                        onGoogleSignInError(exception.message ?: context.getString(R.string.auth_google_sign_in_failed))
+                        onGoogleSignInError(context.getString(R.string.auth_google_sign_in_failed))
                     }
                 }
             },
@@ -318,7 +315,7 @@ fun NewPasswordScreen(
         Spacer(modifier = Modifier.height(24.dp))
         AppLogo(size = 72.dp, contentDescription = stringResource(R.string.app_name))
         Spacer(modifier = Modifier.height(16.dp))
-        Text(stringResource(R.string.auth_set_a_new_password), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = NavySecondary)
+        Text(stringResource(R.string.auth_set_a_new_password), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             stringResource(R.string.auth_you_signed_in_with_a),
@@ -374,10 +371,10 @@ fun NewPasswordScreen(
             enabled = canSubmit,
             modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             if (uiState.isAuthLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onSecondary, strokeWidth = 2.dp)
             } else {
                 Text(stringResource(R.string.auth_save_password), fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
             }

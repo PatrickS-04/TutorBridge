@@ -86,7 +86,6 @@ fun List<OutboxEntity>.pendingSettings(): UpdateSettingsRequest? {
         UpdateSettingsRequest(
             language = next.language ?: merged.language,
             notifications = next.notifications ?: merged.notifications,
-            smsFallback = next.smsFallback ?: merged.smsFallback,
             biometricEntry = next.biometricEntry ?: merged.biometricEntry,
             theme = next.theme ?: merged.theme
         )
@@ -99,7 +98,6 @@ fun UserSettingsDto.withPending(pending: UpdateSettingsRequest?): UserSettingsDt
     return copy(
         language = pending.language ?: language,
         notifications = pending.notifications ?: notifications,
-        smsFallback = pending.smsFallback ?: smsFallback,
         biometricEntry = pending.biometricEntry ?: biometricEntry,
         theme = pending.theme ?: theme
     )
