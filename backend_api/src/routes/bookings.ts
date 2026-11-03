@@ -17,6 +17,15 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
 import { ensureThread } from "../utils/threads";
 import { syncBookingCreated, syncBookingCancelled, syncBookingRescheduled } from "../utils/googleCalendar";
+import {
+    CODE_TTL_MS,
+    MAX_FAILED_ATTEMPTS,
+    isCheckInOpen,
+    newCheckInCode,
+    hashCheckInCode,
+    checkInCodeMatches,
+    checkInQrPayload
+} from "../utils/attendance";
 
 const router = Router();
 router.use(authenticate);
@@ -456,6 +465,145 @@ router.put(
 
     res.status(200).json(booking.tutorNotes);
   })
+);
+
+/**
+ * The tutor asks for a check-in code to show the student. Each call issues a
+ * fresh code (and forgets the old one and any wrong guesses), so "New code" on
+ * the tutor's screen is just this call again.
+ */
+router.post(
+"/:id/check-in-code",
+asyncHandler(async (req: AuthRequest, res) => {
+ //Matching on tutorId is the authorisation check: only the session's own tutor can issue a code
+ const booking = await Booking.findOne({
+     _id: req.params.id,
+     institutionId: req.auth!.institutionId,
+     tutorId: req.auth!.userId
+ });
+ if (!booking)
+ {
+     return res.status(404).json(apiError("NOT_FOUND", "Booking not found"));
+ }
+
+ if (booking.status !== BookingStatus.CONFIRMED)
+ {
+     return res.status(409).json(apiError("INVALID_STATE", "Only a confirmed session can be checked in to"));
+ }
+
+ if (booking.attendance?.checkedInAt)
+ {
+     return res.status(409).json(apiError("ALREADY_CHECKED_IN", "The student has already checked in"));
+ }
+
+ if (!isCheckInOpen(booking.startTime, booking.endTime))
+ {
+     return res.status(409).json(apiError("CHECK_IN_CLOSED", "Check-in opens 15 minutes before the session and closes when it ends"));
+ }
+
+ const code = newCheckInCode();
+ const expiresAt = new Date(Date.now() + CODE_TTL_MS);
+ await Booking.updateOne(
+     { _id: booking._id },
+     {
+         $set: {
+             "attendance.codeHash": hashCheckInCode(String(booking._id), code),
+             "attendance.codeExpiresAt": expiresAt,
+             "attendance.failedAttempts": 0
+         },
+     }
+ );
+
+ res.status(201).json({
+     bookingId: booking._id,
+     code,
+     expiresAt,
+     qrPayload: checkInQrPayload(String(booking._id), code)
+ });
+})
+);
+
+/**
+ * The student checks in with the code from the tutor's screen - scanned from
+ * the QR code or typed in. Checking in twice is harmless: the second call just
+ * returns the first check-in
+ */
+router.post(
+ "/:id/check-in",
+ asyncHandler(async (req: AuthRequest, res) => {
+     const code = String(req.body?.code ?? "").trim();
+     const method = req.body?.method === "QR" ? "QR" : "CODE";
+     if (!/^\d{6}$/.test(code))
+     {
+         return res.status(400).json(apiError("VALIDATION_ERROR", "code must be 6 digits", "code"));
+     }
+
+     // Only the session's own student may check in, the hidden code fields are asked for by name
+     const booking = await Booking.findOne({
+         _id: req.params.id,
+         institutionId: req.auth!.institutionId,
+         studentId: req.auth!.userId
+     }).select("+attendance.codeHash +attendance.codeExpiresAt +attendance.failedAttempts");
+
+     if (!booking)
+     {
+         return res.status(404).json(apiError("NOT_FOUND", "Booking not found"));
+     }
+
+     const attendance = booking.attendance;
+     if (attendance?.checkedInAt)
+     {
+         return res.status(200).json({ bookingId: booking._id, checkedInAt: attendance.checkedInAt, method: attendance.method });
+     }
+
+     if (booking.status !== BookingStatus.CONFIRMED)
+     {
+         return res.status(409).json(apiError("INVALID_STATE", "Only a confirmed session can be checked in to"));
+     }
+
+     if (!isCheckInOpen(booking.startTime, booking.endTime))
+     {
+         return res.status(409).json(apiError("CHECK_IN_CLOSED", "Check-in opens 15 minutes before the session and closes when it ends"));
+     }
+
+     if (!attendance?.codeHash || !attendance.codeExpiresAt || attendance.codeExpiresAt <= new Date())
+     {
+         return res.status(409).json(apiError("CODE_EXPIRED", "That code has expired - ask your tutor for a new one", "code"));
+     }
+
+     if ((attendance.failedAttempts ?? 0) >= MAX_FAILED_ATTEMPTS)
+     {
+         return res.status(429).json(apiError("TOO_MANY_ATTEMPTS", "Too many wrong codes - ask your tutor for a new one", "code"));
+     }
+
+     if (!checkInCodeMatches(String(booking._id), code, attendance.codeHash))
+     {
+         await Booking.updateOne({ _id: booking._id }, { $inc: { "attendance.failedAttempts": 1 } });
+         return res.status(400).json(apiError("WRONG_CODE", "That code is not right - check it and try again", "code"));
+     }
+
+     // Conditional on not being checked in yet, so two taps at once cannot both win
+     const updated = await Booking.findOneAndUpdate(
+         { _id: booking._id, "attendance.checkedInAt": null },
+         {
+             $set: { "attendance.checkedInAt": new Date(), "attendance.method": method },
+             $unset: { "attendance.codeHash": "", "attendance.codeExpiresAt": "" }
+         },
+         { new: true }
+     );
+     const checkedInAt = updated?.attendance?.checkedInAt ?? new Date();
+
+     notify(
+         req.auth!.institutionId,
+         String(booking.tutorId),
+         NotificationCategory.BOOKING,
+         "attendance.checkedIn",
+         { subject: booking.subjectName },
+         `tutorbridge://bookings/${booking._id}`
+     );
+
+     res.status(200).json({ bookingId: booking._id, checkedInAt, method });
+ })
 );
 
 router.get(
