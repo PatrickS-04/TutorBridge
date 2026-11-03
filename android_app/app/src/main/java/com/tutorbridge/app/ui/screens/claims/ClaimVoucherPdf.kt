@@ -80,11 +80,12 @@ private fun writeVoucherPdf(
     line("Claim value: R${period.claimValue.toInt()}", heading, gap = 24f)
 
     line("Itemized tutoring sessions", heading)
-    line("Verified with student attendance check-in", muted, gap = 18f)
+    line("Student attendance check-in: ${period.verifiedCount} of ${period.sessionsCount} sessions verified", muted, gap = 18f)
 
     period.sessions.forEach { s ->
         line("${s.courseCode}  ${s.date}  ${s.timeRange}", heading, gap = 13f)
         line("${s.studentName} (${s.studentIdTag}) - ${s.hours} hrs @ R$rate - ${s.amount}")
+        line(if (s.checkedIn) "Attendance: student checked in" else "Attendance: no check-in recorded", muted, gap = 13f)
         if (s.topic.isNotBlank()) line("Topic: ${s.topic}", muted, gap = 16f) else y += 4f
     }
     if (period.sessions.isEmpty()) line("No sessions recorded for this period.", muted)
