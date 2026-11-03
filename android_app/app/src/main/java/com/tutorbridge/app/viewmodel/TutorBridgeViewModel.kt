@@ -31,6 +31,7 @@ import com.tutorbridge.app.data.repository.AuthResult
 import com.tutorbridge.app.data.repository.TutorBridgeRepository
 import com.tutorbridge.app.data.repository.toCalendarEvent
 import com.tutorbridge.app.data.repository.toDayWindows
+import com.tutorbridge.app.data.repository.toLearningHistory
 import com.tutorbridge.app.data.repository.toPendingBookingUi
 import com.tutorbridge.app.data.repository.toWindowUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -713,7 +714,11 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             bookings.filter { it.status == "REQUESTED" }.mapNotNull { it.toPendingBookingUi() }
                         } else {
                             emptyList()
-                        }
+                        },
+                        // ponytail: only the first page of GET /bookings (20, newest created) arrives,
+                        // so older sessions drop off; fetch every page if a student outgrows it.
+                        learningHistory = if (isTutor) emptyList() else bookings.toLearningHistory(),
+                        lessonsTaught = if (isTutor) 0 else bookings.count { it.status == "COMPLETED" }
                     )
                 }
             }.onFailure { reportLoadError(it) }

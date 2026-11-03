@@ -8,6 +8,7 @@ import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.network.effectivelyOnline
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -156,11 +157,9 @@ data class TutorBridgeUiState(
     val deleteConfirmChecked: Boolean = false,
     val deleteConfirmText: String = "",
 
-    // ===== Not backed by the API yet: no collections exist for these =====
-    val studentHealthIndexPercent: Int = 80,
+    // Learning history: the student's COMPLETED bookings
     val lessonsTaught: Int = 0,
-    val targetGrade: String = "A-",
-    val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory
+    val learningHistory: List<LearningHistoryEntryUi> = emptyList()
 ) {
     /** Things done offline that are still waiting to be sent. */
     val pendingSyncCount: Int
@@ -193,21 +192,18 @@ data class TutorBridgeUiState(
     /** Every weekday being booked, in week order: the chosen date's own and any extras. */
     val bookedDays: List<DayOfWeek>
         get() = (repeatDays + listOfNotNull(firstDay)).sorted()
+    /** What the home screens list as coming up; finished sessions belong to the learning history. */
+    val upcomingEvents: List<CalendarEventUi>
+        get() = upcomingOf(calendarEvents)
 }
 
-// ==================== LEARNING HISTORY (no backend collection) ====================
+/**
+ * Sessions not yet over, soonest first. A session counts until its end time, so one
+ * under way still shows; one that has ended drops off even before the server marks it COMPLETED.
+ */
+fun upcomingOf(events: List<CalendarEventUi>, now: Instant = Instant.now()): List<CalendarEventUi> =
+    events
+        .filter { it.status == EventStatus.CONFIRMED && (parseIso(it.endIso) ?: parseIso(it.startIso))?.isAfter(now) == true }
+        .sortedBy { parseIso(it.startIso) }
 
-val sampleLearningHistory = listOf(
-    LearningHistoryEntryUi(
-        id = "lh1",
-        title = "Lesson 4: Organic Chemistry Mechanisms",
-        date = "Oct 2, 2026",
-        summary = "Mastered electrophilic addition mechanisms. Quiz score: 92%."
-    ),
-    LearningHistoryEntryUi(
-        id = "lh2",
-        title = "Lesson 3: Acids, Bases & Buffers",
-        date = "Sep 25, 2026",
-        summary = "Worked through the Henderson-Hasselbalch equation and titration curves."
-    )
-)
+private fun parseIso(iso: String): Instant? = runCatching { Instant.parse(iso) }.getOrNull()

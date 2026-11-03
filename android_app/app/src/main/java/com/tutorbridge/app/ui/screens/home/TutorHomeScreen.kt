@@ -204,7 +204,7 @@ fun TutorHomeScreen(
             Text(stringResource(R.string.tutor_home_upcoming_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
-        items(uiState.calendarEvents.take(3)) { event ->
+        items(uiState.upcomingEvents.take(3)) { event ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(14.dp),

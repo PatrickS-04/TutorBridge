@@ -8,6 +8,7 @@
     <string name="student_home_find_tutor">Vind \'n Tutor</string>
     <string name="student_home_calendar">Kalendar</string>
     <string name="student_home_my_requests">My Versoeke</string>
+    <string name="student_home_history">Geskiedenis</string>
     <string name="tutor_home_accept_sync">Aanvaar &amp; sinkroniseer</string>
     <string name="tutor_home_active">Aktief</string>
     <string name="tutor_home_choose_the_days_students_can">Kies die dae waarop studente jou kan bespreek →</string>

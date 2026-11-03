@@ -1,14 +1,24 @@
 <resources>
     <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
     <string name="history_past_completed_sessions">Izifundo Ezidlule Eziqediwe</string>
-    <string name="history_student_health_index">Inkomba Yempilo Yomfundi</string>
     <string name="history_title">Umlando Wokufunda ka-%1$s</string>
     <string name="history_default_name">Umfundi</string>
-    <string name="history_percent_high">%1$d%% phezulu</string>
     <plurals name="history_lessons_taught">
         <item quantity="one">Isifundo esi-%d sifundisiwe</item>
         <item quantity="other">Izifundo ezi-%d zifundisiwe</item>
     </plurals>
-    <string name="history_target_grade">Izinga eliqondiwe: %1$s</string>
-    <string name="history_active_since">Umfundi osebenzayo kusukela ngoSepthemba 2026 • %1$d%% ukuqonda</string>
+    <string name="history_active_since">Umfundi osebenzayo kusukela ngo-%1$s</string>
+
+    <!-- Learning history PDF export -->
+    <string name="history_pdf_title">Umlando Wokufunda</string>
+    <string name="history_pdf_student">Umfundi: %1$s</string>
+    <string name="history_pdf_institution">Isikhungo: %1$s</string>
+    <string name="history_pdf_generated">Kwenziwe ngo-%1$s</string>
+    <plurals name="history_pdf_sessions">
+        <item quantity="one">Isifundo esi-%d esiqediwe</item>
+        <item quantity="other">Izifundo ezi-%d eziqediwe</item>
+    </plurals>
+    <string name="history_pdf_empty">Azikho izifundo eziqediwe okwamanje.</string>
+    <string name="history_pdf_share">Thumela umlando wokufunda</string>
+    <string name="history_pdf_error">Ayikwazanga ukwenza i-PDF: %1$s</string>
 </resources>
