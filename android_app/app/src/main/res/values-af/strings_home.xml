@@ -8,6 +8,7 @@
     <string name="student_home_find_tutor">Vind \'n Tutor</string>
     <string name="student_home_calendar">Kalendar</string>
     <string name="student_home_my_requests">My Versoeke</string>
+    <string name="student_home_history">Geskiedenis</string>
     <string name="tutor_home_accept_sync">Aanvaar &amp; sinkroniseer</string>
     <string name="tutor_home_active">Aktief</string>
     <string name="tutor_home_choose_the_days_students_can">Kies die dae waarop studente jou kan bespreek →</string>
@@ -36,4 +37,7 @@
     <string name="student_home_tutors_on_campus">Tutors op kampus</string>
     <string name="student_home_verified">✓ Geverifieer</string>
     <string name="student_home_next_session">Volgende sessie • %1$s</string>
+    <string name="tutor_home_decline_series">Weier reeks</string>
+    <string name="tutor_home_accept_series">Aanvaar reeks</string>
+    <string name="tutor_home_series_pattern">%1$s vanaf %2$s • %3$d sessies wag</string>
 </resources>

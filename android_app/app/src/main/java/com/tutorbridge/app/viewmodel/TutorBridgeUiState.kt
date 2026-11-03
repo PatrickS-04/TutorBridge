@@ -7,6 +7,8 @@ import com.tutorbridge.app.data.local.pendingMessagesFor
 import com.tutorbridge.app.data.local.pendingRequestCards
 import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.network.effectivelyOnline
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 
 /** Claim history: how much is fetched first, how much each "Load earlier" adds, and the API's ceiling. */
@@ -97,6 +99,15 @@ data class TutorBridgeUiState(
     val selectedSlot: String = "",
     val selectedLocation: String = "",
     val selectedBookingDate: String = LocalDate.now().plusDays(1).toString(),
+    /** Repeat weekly: when on, [repeatCount] is how many weeks (a month is 4); when off, the chosen days run for one week. */
+    val repeatWeekly: Boolean = false,
+    val repeatCount: Int = SERIES_DEFAULT,
+    /** Weekdays booked as well as the weekday of the chosen date, which is always booked. */
+    val repeatDays: Set<DayOfWeek> = emptySet(),
+    /** True when the session being booked is one the student already agreed with a tutor: it cannot repeat. */
+    val bookingFromApplication: Boolean = false,
+    /** Sessions in the series just requested, or 0 when it was a single session. */
+    val lastSeriesCount: Int = 0,
 
     // Student Requests (student view) / Requests board (tutor view)
     val myRequests: List<StudentRequestUi> = emptyList(),
@@ -146,11 +157,9 @@ data class TutorBridgeUiState(
     val deleteConfirmChecked: Boolean = false,
     val deleteConfirmText: String = "",
 
-    // ===== Not backed by the API yet: no collections exist for these =====
-    val studentHealthIndexPercent: Int = 80,
+    // Learning history: the student's COMPLETED bookings
     val lessonsTaught: Int = 0,
-    val targetGrade: String = "A-",
-    val learningHistory: List<LearningHistoryEntryUi> = sampleLearningHistory,
+    val learningHistory: List<LearningHistoryEntryUi> = emptyList(),
 
     // Check-in
     val checkInCode: CheckInCodeUi? = null,
@@ -179,21 +188,26 @@ data class TutorBridgeUiState(
     /** The session the prep screen is showing, derived so it cannot go stale. */
     val selectedSession: CalendarEventUi?
         get() = calendarEvents.firstOrNull { it.id == selectedSessionId }
+
+    /** The weekday of the date being booked, which is always one of the days booked; null if the date cannot be read. */
+    val firstDay: DayOfWeek?
+        get() = runCatching { LocalDate.parse(selectedBookingDate).dayOfWeek }.getOrNull()
+
+    /** Every weekday being booked, in week order: the chosen date's own and any extras. */
+    val bookedDays: List<DayOfWeek>
+        get() = (repeatDays + listOfNotNull(firstDay)).sorted()
+    /** What the home screens list as coming up; finished sessions belong to the learning history. */
+    val upcomingEvents: List<CalendarEventUi>
+        get() = upcomingOf(calendarEvents)
 }
 
-// ==================== LEARNING HISTORY (no backend collection) ====================
+/**
+ * Sessions not yet over, soonest first. A session counts until its end time, so one
+ * under way still shows; one that has ended drops off even before the server marks it COMPLETED.
+ */
+fun upcomingOf(events: List<CalendarEventUi>, now: Instant = Instant.now()): List<CalendarEventUi> =
+    events
+        .filter { it.status == EventStatus.CONFIRMED && (parseIso(it.endIso) ?: parseIso(it.startIso))?.isAfter(now) == true }
+        .sortedBy { parseIso(it.startIso) }
 
-val sampleLearningHistory = listOf(
-    LearningHistoryEntryUi(
-        id = "lh1",
-        title = "Lesson 4: Organic Chemistry Mechanisms",
-        date = "Oct 2, 2026",
-        summary = "Mastered electrophilic addition mechanisms. Quiz score: 92%."
-    ),
-    LearningHistoryEntryUi(
-        id = "lh2",
-        title = "Lesson 3: Acids, Bases & Buffers",
-        date = "Sep 25, 2026",
-        summary = "Worked through the Henderson-Hasselbalch equation and titration curves."
-    )
-)
+private fun parseIso(iso: String): Instant? = runCatching { Instant.parse(iso) }.getOrNull()

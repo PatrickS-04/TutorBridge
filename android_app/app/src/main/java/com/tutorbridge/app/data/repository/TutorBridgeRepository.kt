@@ -129,6 +129,11 @@ class TutorBridgeRepository(
     suspend fun cancelBooking(id: String, reason: String?): Result<BookingAckDto> =
         call { api.cancelBooking(id, CancelRequest(reason)) }
 
+    suspend fun confirmSeries(seriesId: String): Result<SeriesActionDto> = call { api.confirmSeries(seriesId) }
+
+    suspend fun cancelSeries(seriesId: String, reason: String?, fromBookingId: String? = null): Result<SeriesActionDto> =
+        call { api.cancelSeries(seriesId, CancelSeriesRequest(reason, fromBookingId)) }
+
     suspend fun rescheduleBooking(id: String, body: RescheduleRequest): Result<RescheduleAckDto> =
         call { api.rescheduleBooking(id, body) }
 
@@ -220,7 +225,7 @@ class TutorBridgeRepository(
             Result.success(body)
         } else {
             val detail = parseApiErrorDetail(response)
-            Result.failure(ApiException(response.code(), detail?.message ?: "Something went wrong (${response.code()})", detail?.code))
+            Result.failure(ApiException(response.code(), detail?.message ?: "Something went wrong (${response.code()})", detail?.code, detail?.dates.orEmpty()))
         }
     } catch (exception: Exception) {
         Result.failure(exception)
@@ -260,7 +265,13 @@ class TutorBridgeRepository(
 }
 
 /** The server answered, but with an error. Distinct from an IOException, which means it never did. */
-class ApiException(val code: Int, message: String, val errorCode: String? = null) : IllegalStateException(message)
+class ApiException(
+    val code: Int,
+    message: String,
+    val errorCode: String? = null,
+    /** The start times (ISO-8601) a series error is about; empty for any other error. */
+    val dates: List<String> = emptyList()
+) : IllegalStateException(message)
 
 // ==================== MAPPERS ====================
 
@@ -373,7 +384,10 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         startIso = startTime,
         endIso = endTime,
         isConfirmed = status == "CONFIRMED",
-        checkedInTime = parseInstant(attendance?.checkedInAt)?.format(displayTime).orEmpty()
+        checkedInTime = parseInstant(attendance?.checkedInAt)?.format(displayTime).orEmpty(),
+        seriesId = seriesId,
+        seriesIndex = seriesIndex ?: 0,
+        seriesCount = seriesCount ?: 0
     )
 }
 
@@ -421,9 +435,37 @@ fun BookingDto.toPendingBookingUi(): PendingBookingUi? {
         initials = initialsOf(studentId?.fullName),
         subjectName = subjectName,
         whenLabel = "${start.toLocalDate()} • ${start.format(displayTime)}",
-        location = location.orEmpty()
+        location = location.orEmpty(),
+        seriesId = seriesId,
+        seriesIndex = seriesIndex ?: 0,
+        seriesCount = seriesCount ?: 0,
+        dayOfWeek = start.dayOfWeek
     )
 }
+
+private val historyDate get() = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+
+/**
+ * The student's finished sessions, newest first, as the learning history lists them.
+ * The summary is tutor, time and venue only - no words, so it reads the same in every language.
+ */
+fun List<BookingDto>.toLearningHistory(): List<LearningHistoryEntryUi> =
+    filter { it.status == "COMPLETED" }
+        .mapNotNull { booking -> parseInstant(booking.startTime)?.let { booking to it } }
+        .sortedByDescending { (_, start) -> start }
+        .map { (booking, start) ->
+            val end = parseInstant(booking.endTime)
+            LearningHistoryEntryUi(
+                id = booking._id,
+                title = booking.subjectName,
+                date = start.format(historyDate),
+                summary = listOfNotNull(
+                    booking.tutorId?.fullName?.ifBlank { null },
+                    end?.let { "${start.format(displayTime)} – ${it.format(displayTime)}" },
+                    booking.location?.ifBlank { null }
+                ).joinToString(" • ")
+            )
+        }
 
 fun NotificationEventDto.toNotificationUi(): NotificationUi = NotificationUi(
     id = _id,

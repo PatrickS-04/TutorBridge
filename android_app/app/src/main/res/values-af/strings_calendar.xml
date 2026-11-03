@@ -30,4 +30,17 @@
     <string name="calendar_filter_lessons">Een-tot-een-lesse</string>
     <string name="calendar_filter_office_hours">Kantoorure</string>
     <string name="calendar_filter_exam_prep">Eksamenvoorbereiding</string>
+    <string name="series_badge">Reeks %1$d van %2$d</string>
+    <string name="calendar_series_cancel">Kanselleer hierdie en volgende</string>
+    <string name="calendar_series_cancel_title">Kanselleer die res van hierdie reeks?</string>
+    <string name="calendar_series_cancel_confirm">Kanselleer sessies</string>
+    <string name="calendar_series_cancel_keep">Hou hulle</string>
+    <plurals name="calendar_series_cancel_body">
+        <item quantity="one">%d sessie, wat by hierdie een begin, sal gekanselleer word. Die ander persoon sal in kennis gestel word.</item>
+        <item quantity="other">%d sessies, wat by hierdie een begin, sal gekanselleer word. Die ander persoon sal in kennis gestel word.</item>
+    </plurals>
+    <plurals name="calendar_series_cancelled">
+        <item quantity="one">%d sessie gekanselleer</item>
+        <item quantity="other">%d sessies gekanselleer</item>
+    </plurals>
 </resources>

@@ -7,6 +7,7 @@
     <string name="student_home_find_tutor">Find Tutor</string>
     <string name="student_home_calendar">Calendar</string>
     <string name="student_home_my_requests">My Requests</string>
+    <string name="student_home_history">History</string>
     <string name="tutor_home_accept_sync">Accept &amp; Sync</string>
     <string name="tutor_home_active">Active</string>
     <string name="tutor_home_choose_the_days_students_can">Choose the days students can book you →</string>
@@ -35,4 +36,7 @@
     <string name="student_home_tutors_on_campus">Tutors on Campus</string>
     <string name="student_home_verified">✓ Verified</string>
     <string name="student_home_next_session">Next Session • %1$s</string>
+    <string name="tutor_home_decline_series">Decline series</string>
+    <string name="tutor_home_accept_series">Accept series</string>
+    <string name="tutor_home_series_pattern">%1$s from %2$s • %3$d sessions waiting</string>
 </resources>

@@ -44,4 +44,6 @@
     <string name="api_error_unverified">Slegs geverifieerde tutors mag aansoek doen</string>
     <string name="api_error_not_required">Daar is geen tydelike wagwoord om te vervang nie</string>
     <string name="error_server">Iets het aan ons kant verkeerd gegaan. Probeer asseblief weer.</string>
+    <string name="api_error_series_conflict">\'n Bevestigde sessie is reeds bespreek op: %1$s. Kies \'n ander tyd.</string>
+    <string name="api_error_outside_availability">Die tutor is nie elke week op hierdie tyd beskikbaar nie. Weke wat nie pas nie: %1$s. Kies \'n ander tyd.</string>
 </resources>

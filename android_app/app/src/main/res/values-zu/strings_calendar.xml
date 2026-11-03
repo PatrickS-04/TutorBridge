@@ -30,4 +30,17 @@
     <string name="calendar_filter_lessons">Izifundo Zomuntu Ngamunye</string>
     <string name="calendar_filter_office_hours">Amahora Ehhovisi</string>
     <string name="calendar_filter_exam_prep">Ukulungiselela Ukuhlolwa</string>
+    <string name="series_badge">Uchungechunge %1$d kwezi-%2$d</string>
+    <string name="calendar_series_cancel">Khansela lesi nalezo ezilandelayo</string>
+    <string name="calendar_series_cancel_title">Khansela okusele kulolu uchungechunge?</string>
+    <string name="calendar_series_cancel_confirm">Khansela izifundo</string>
+    <string name="calendar_series_cancel_keep">Zigcine</string>
+    <plurals name="calendar_series_cancel_body">
+        <item quantity="one">Isifundo esi-%d, kuqala ngalesi, sizokhanselwa. Omunye umuntu uzokwaziswa.</item>
+        <item quantity="other">Izifundo ezi-%d, kuqala ngalesi, zizokhanselwa. Omunye umuntu uzokwaziswa.</item>
+    </plurals>
+    <plurals name="calendar_series_cancelled">
+        <item quantity="one">Isifundo esi-%d sikhanseliwe</item>
+        <item quantity="other">Izifundo ezi-%d zikhanseliwe</item>
+    </plurals>
 </resources>

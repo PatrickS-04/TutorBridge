@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Types } from "mongoose";
 import {
   Booking,
   Application,
@@ -26,6 +27,7 @@ import {
     checkInCodeMatches,
     checkInQrPayload
 } from "../utils/attendance";
+import { parseRepeat, sessionWindows, campusParts, fitsAvailability } from "../utils/series";
 
 const router = Router();
 router.use(authenticate);
@@ -138,7 +140,7 @@ router.post(
 router.post(
   "/direct",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { tutorId, subjectId, startTime, endTime, mode, location } = req.body;
+    const { tutorId, subjectId, startTime, endTime, mode, location, repeat } = req.body;
     if (!tutorId || !startTime || !endTime) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "tutorId, startTime, and endTime are required"));
     }
@@ -159,6 +161,60 @@ router.post(
     }).populate("subjectIds");
     if (!tutor) return res.status(404).json(apiError("NOT_FOUND", "Bookable tutor not found"));
 
+    //A weekly series: the first session and the same time on each following week.
+    //Everything about it is checked before anything is written, so a series is
+    //either booked whole or not at all.
+    let windows = [{ start, end }];
+    if (repeat !== undefined) {
+      const parsed = parseRepeat(repeat);
+      if ("error" in parsed) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", parsed.error, parsed.field));
+      }
+      if (start <= new Date()) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", "The first session of a series must be in the future", "startTime"));
+      }
+      //Without days it repeats the weekday of the first session; with them, each chosen weekday.
+      const startDay = campusParts(start).day;
+      const days = parsed.repeat.days ?? [startDay];
+      if (!days.includes(startDay)) {
+        return res
+          .status(400)
+          .json(apiError("VALIDATION_ERROR", "repeat.days must include the weekday of the first session", "repeat.days"));
+      }
+      windows = sessionWindows(start, end, days, parsed.repeat.weeks);
+
+      //The app only offers slots inside the tutor's weekly hours; a series has to keep to them too.
+      const outside = windows.filter((w) => !fitsAvailability(tutor.availability, w.start, w.end));
+      if (outside.length > 0) {
+        return res.status(400).json({
+          error: {
+            code: "OUTSIDE_AVAILABILITY",
+            message: "The tutor is not available at this time on every week of the series",
+            field: "startTime",
+            dates: outside.map((w) => w.start.toISOString()),
+          },
+        });
+      }
+
+      const taken = await Booking.find({
+        tutorId: tutor._id,
+        status: BookingStatus.CONFIRMED,
+        $or: windows.map((w) => ({ startTime: { $lt: w.end }, endTime: { $gt: w.start } })),
+      });
+      const clashing = windows.filter((w) => taken.some((b) => b.startTime < w.end && b.endTime > w.start));
+      if (clashing.length > 0) {
+        return res.status(409).json({
+          error: {
+            code: "SERIES_CONFLICT",
+            message: "The tutor already has a confirmed session on some of these dates",
+            field: "startTime",
+            dates: clashing.map((w) => w.start.toISOString()),
+          },
+        });
+      }
+    }
+    const isSeries = windows.length > 1;
+
     const clash = await Booking.findOne({
       tutorId: tutor._id,
       status: BookingStatus.CONFIRMED,
@@ -175,18 +231,24 @@ router.post(
     const subjectName =
       subject?.name ?? (tutor.subjectIds as any[])[0]?.name ?? "Tuition session";
 
-    const booking = await Booking.create({
-      institutionId: req.auth!.institutionId,
-      tutorId: tutor._id,
-      studentId: req.auth!.userId,
-      subjectName,
-      startTime: start,
-      endTime: end,
-      mode: mode ?? LessonMode.IN_PERSON,
-      location,
-      status: BookingStatus.REQUESTED,
-      agreedRatePerHour: tutor.hourlyRate ?? 0,
-    });
+    //The sessions of a series are ordinary bookings that share a seriesId.
+    const seriesId = isSeries ? new Types.ObjectId() : undefined;
+    const created = await Booking.create(
+      windows.map((w, i) => ({
+        institutionId: req.auth!.institutionId,
+        tutorId: tutor._id,
+        studentId: req.auth!.userId,
+        subjectName,
+        startTime: w.start,
+        endTime: w.end,
+        mode: mode ?? LessonMode.IN_PERSON,
+        location,
+        status: BookingStatus.REQUESTED,
+        agreedRatePerHour: tutor.hourlyRate ?? 0,
+        ...(isSeries ? { seriesId, seriesIndex: i + 1, seriesCount: windows.length } : {}),
+      }))
+    );
+    const booking = created[0];
 
     //So the tutor can ask the student about the session before confirming it.
     await ensureThread(req.auth!.institutionId, req.auth!.userId, String(tutor._id), { bookingId: booking._id });
@@ -195,17 +257,31 @@ router.post(
       req.auth!.institutionId,
       String(tutor._id),
       NotificationCategory.BOOKING,
-      "booking.new",
-      { subject: subjectName, when: start.toISOString().slice(0, 10) },
+      isSeries ? "booking.seriesNew" : "booking.new",
+      isSeries
+        ? { subject: subjectName, when: start.toISOString().slice(0, 10), count: String(windows.length) }
+        : { subject: subjectName, when: start.toISOString().slice(0, 10) },
       `tutorbridge://bookings/${booking._id}`
     );
 
-    res.status(201).json({
-      id: booking._id,
-      status: booking.status,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
+    const summary = (b: (typeof created)[number]) => ({
+      id: b._id,
+      status: b.status,
+      startTime: b.startTime,
+      endTime: b.endTime,
     });
+
+    //A single session answers as it always has. A series also names itself and lists
+    //every session in it, so the app can show the whole run without a second call.
+    if (isSeries) {
+      return res.status(201).json({
+        ...summary(booking),
+        seriesId,
+        seriesCount: created.length,
+        bookings: created.map((b) => ({ ...summary(b), seriesIndex: b.seriesIndex })),
+      });
+    }
+    res.status(201).json(summary(booking));
   })
 );
 
@@ -604,6 +680,157 @@ router.post(
 
      res.status(200).json({ bookingId: booking._id, checkedInAt, method });
  })
+);
+
+/**
+ * Confirm a whole weekly series in one go.
+ *
+ * Only the tutor it was booked with may. Every session still waiting and not yet
+ * started is checked again against the tutor's confirmed sessions, since the diary may
+ * have filled since the student asked; one clash and none are confirmed, so a series
+ * is never left half-agreed (the tutor can still confirm the free dates one by one).
+ * The student is told once, not once a week.
+ */
+router.put(
+  "/series/:seriesId/confirm",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const sessions = await Booking.find({
+      seriesId: req.params.seriesId,
+      institutionId: req.auth!.institutionId,
+      tutorId: req.auth!.userId,
+    }).sort({ startTime: 1 });
+    if (sessions.length === 0) return res.status(404).json(apiError("NOT_FOUND", "Series not found"));
+
+    const now = new Date();
+    const waiting = sessions.filter((b) => b.status === BookingStatus.REQUESTED && b.startTime > now);
+    if (waiting.length === 0) {
+      return res.status(409).json(apiError("INVALID_STATE", "This series has no sessions waiting to be confirmed"));
+    }
+
+    const taken = await Booking.find({
+      _id: { $nin: waiting.map((b) => b._id) },
+      tutorId: req.auth!.userId,
+      status: BookingStatus.CONFIRMED,
+      $or: waiting.map((b) => ({ startTime: { $lt: b.endTime }, endTime: { $gt: b.startTime } })),
+    });
+    const clashing = waiting.filter((w) => taken.some((b) => b.startTime < w.endTime && b.endTime > w.startTime));
+    if (clashing.length > 0) {
+      return res.status(409).json({
+        error: {
+          code: "SERIES_CONFLICT",
+          message: "You already have a confirmed session on some of these dates",
+          field: "startTime",
+          dates: clashing.map((b) => b.startTime.toISOString()),
+        },
+      });
+    }
+
+    for (const booking of waiting) {
+      booking.status = BookingStatus.CONFIRMED;
+      booking.confirmedAt = new Date();
+      booking.addressDisclosed = true;
+      await booking.save();
+      syncBookingCreated(booking);
+    }
+
+    notify(
+      req.auth!.institutionId,
+      String(waiting[0].studentId),
+      NotificationCategory.BOOKING,
+      "booking.seriesConfirmed",
+      {
+        subject: waiting[0].subjectName,
+        when: waiting[0].startTime.toISOString().slice(0, 10),
+        count: String(waiting.length),
+      },
+      `tutorbridge://bookings/${waiting[0]._id}`
+    );
+
+    res.status(200).json({
+      seriesId: req.params.seriesId,
+      confirmed: waiting.length,
+      bookings: waiting.map((b) => ({
+        id: b._id,
+        status: b.status,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        seriesIndex: b.seriesIndex,
+      })),
+    });
+  })
+);
+
+/**
+ * Cancel the rest of a weekly series.
+ *
+ * Either party may. By default every session that has not started and is still on is
+ * cancelled; send `fromBookingId` to cancel only that session and the ones after it,
+ * which is "this and all following". Sessions already held or already cancelled are
+ * left alone, and a single session can still be cancelled on its own. The other party
+ * is told once, not once a week.
+ */
+router.put(
+  "/series/:seriesId/cancel",
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { reason, fromBookingId } = req.body;
+    const sessions = await Booking.find({
+      seriesId: req.params.seriesId,
+      institutionId: req.auth!.institutionId,
+      $or: [{ tutorId: req.auth!.userId }, { studentId: req.auth!.userId }],
+    }).sort({ startTime: 1 });
+    if (sessions.length === 0) return res.status(404).json(apiError("NOT_FOUND", "Series not found"));
+
+    let from = new Date();
+    if (fromBookingId !== undefined) {
+      const first = sessions.find((b) => String(b._id) === String(fromBookingId));
+      if (!first) {
+        return res.status(400).json(apiError("VALIDATION_ERROR", "fromBookingId is not part of this series", "fromBookingId"));
+      }
+      if (first.startTime > from) from = first.startTime;
+    }
+
+    const open = [BookingStatus.REQUESTED, BookingStatus.CONFIRMED, BookingStatus.TRIAL_RUNNING, BookingStatus.ACTIVE];
+    const toCancel = sessions.filter(
+      (b) => open.includes(b.status) && b.startTime >= from && b.startTime > new Date()
+    );
+    if (toCancel.length === 0) {
+      return res.status(409).json(apiError("INVALID_STATE", "This series has no upcoming sessions left to cancel"));
+    }
+
+    for (const booking of toCancel) {
+      booking.status = BookingStatus.CANCELLED;
+      booking.cancelledBy = req.auth!.userId as any;
+      booking.cancellationReason = reason;
+      await booking.save();
+      syncBookingCancelled(booking);
+    }
+
+    // Whoever did not press cancel is the one who needs telling.
+    const otherParty =
+      String(toCancel[0].tutorId) === req.auth!.userId ? toCancel[0].studentId : toCancel[0].tutorId;
+    notify(
+      req.auth!.institutionId,
+      String(otherParty),
+      NotificationCategory.BOOKING,
+      reason ? "booking.seriesCancelledWithReason" : "booking.seriesCancelled",
+      { subject: toCancel[0].subjectName, reason: reason ?? "", count: String(toCancel.length) },
+      `tutorbridge://bookings/${toCancel[0]._id}`
+    );
+
+    res.status(200).json({
+      seriesId: req.params.seriesId,
+      cancelled: toCancel.length,
+      cancelledBy: req.auth!.userId,
+      reason: reason ?? null,
+      bookings: toCancel.map((b) => ({
+        id: b._id,
+        status: b.status,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        seriesIndex: b.seriesIndex,
+      })),
+    });
+  })
 );
 
 router.get(

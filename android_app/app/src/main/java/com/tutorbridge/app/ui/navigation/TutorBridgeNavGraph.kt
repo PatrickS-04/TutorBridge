@@ -198,7 +198,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) },
                     onAcceptBooking = { bookingId -> viewModel.acceptTutorBooking(bookingId) },
-                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) }
+                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) },
+                    onAcceptSeries = { seriesId -> viewModel.acceptTutorSeries(seriesId) },
+                    onDeclineSeries = { seriesId -> viewModel.declineTutorSeries(seriesId) }
                 )
                 "find_tutors" -> FindTutorsScreen(
                     uiState = uiState,
@@ -223,11 +225,15 @@ fun TutorBridgeNavGraph(
                 "review_booking" -> ReviewBookingScreen(
                     uiState = uiState,
                     onConfirm = { viewModel.sendBookingRequest() },
-                    onBack = { viewModel.navigateTo("booking_flow") }
+                    onBack = { viewModel.navigateTo("booking_flow") },
+                    onRepeatChange = viewModel::setRepeatWeekly,
+                    onRepeatCountChange = viewModel::setRepeatCount,
+                    onToggleDay = viewModel::toggleRepeatDay
                 )
                 "booking_sent" -> BookingRequestSentScreen(
                     onCheckStatus = { viewModel.checkBookingStatus() },
-                    onViewCalendar = { viewModel.navigateTo("calendar") }
+                    onViewCalendar = { viewModel.navigateTo("calendar") },
+                    seriesCount = uiState.lastSeriesCount
                 )
                 "booking_confirmed" -> BookingConfirmationScreen(
                     uiState = uiState,
@@ -250,7 +256,8 @@ fun TutorBridgeNavGraph(
                     onDismissCheckInCode = { viewModel.dismissCheckInCode() },
                     onScannedCheckIn = { session, raw -> viewModel.checkInFromScan(session, raw) },
                     onTypedCheckIn = { session, code -> viewModel.checkIn(session, code, "CODE") },
-                    onScannerUnavailable = { viewModel.scannerUnavailable() }
+                    onScannerUnavailable = { viewModel.scannerUnavailable() },
+                    onCancelSeries = { session -> viewModel.cancelSeriesFrom(session) }
                 )
 
                 "sync_status" -> SyncStatusScreen(

@@ -47,6 +47,14 @@ export interface IBooking extends Document {
   status: BookingStatus;
   isTrial: boolean;
   addressDisclosed: boolean;
+  /** Set on every session of a weekly series a student booked in one go. The sessions
+   * are ordinary bookings that share this id, so calendar sync, claims, cancelling and
+   * rescheduling all keep working one session at a time. Unset for a single session. */
+  seriesId?: Types.ObjectId;
+  /** This session's place in its series, counting from 1. */
+  seriesIndex?: number;
+  /** How many sessions the series was booked with. */
+  seriesCount?: number;
   cancelledBy?: Types.ObjectId;
   cancellationReason?: string;
   agreedRatePerHour: number;
@@ -105,6 +113,9 @@ const BookingSchema = new Schema<IBooking>(
     status: { type: String, enum: Object.values(BookingStatus), default: BookingStatus.REQUESTED },
     isTrial: { type: Boolean, default: false },
     addressDisclosed: { type: Boolean, default: false },
+    seriesId: { type: Schema.Types.ObjectId, index: true },
+    seriesIndex: { type: Number, min: 1 },
+    seriesCount: { type: Number, min: 2 },
     cancelledBy: { type: Schema.Types.ObjectId, ref: "User" },
     cancellationReason: { type: String },
     agreedRatePerHour: { type: Number, required: true },
