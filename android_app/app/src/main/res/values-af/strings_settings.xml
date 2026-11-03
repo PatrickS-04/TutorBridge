@@ -36,4 +36,6 @@
     <string name="calendar_connected_as">Gekoppel as %1$s</string>
     <string name="settings_last_synced">Laas gesinkroniseer %1$s</string>
     <string name="settings_not_synced_yet">Nog nie gesinkroniseer nie</string>
+    <string name="settings_default_area">Verstek Kampusarea</string>
+    <string name="settings_no_default_area">Geen</string>
 </resources>

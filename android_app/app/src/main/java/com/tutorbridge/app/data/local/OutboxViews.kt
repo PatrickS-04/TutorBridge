@@ -87,6 +87,7 @@ fun List<OutboxEntity>.pendingSettings(): UpdateSettingsRequest? {
             language = next.language ?: merged.language,
             notifications = next.notifications ?: merged.notifications,
             biometricEntry = next.biometricEntry ?: merged.biometricEntry,
+            defaultAreaId = next.defaultAreaId ?: merged.defaultAreaId,
             theme = next.theme ?: merged.theme
         )
     }
@@ -99,6 +100,7 @@ fun UserSettingsDto.withPending(pending: UpdateSettingsRequest?): UserSettingsDt
         language = pending.language ?: language,
         notifications = pending.notifications ?: notifications,
         biometricEntry = pending.biometricEntry ?: biometricEntry,
+        defaultAreaId = pending.defaultAreaId ?: defaultAreaId,
         theme = pending.theme ?: theme
     )
 }

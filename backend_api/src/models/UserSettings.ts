@@ -9,6 +9,7 @@ export interface IUserSettings extends Document {
   language: Locale;
   notifications: INotificationPreferences;
   biometricEntry: boolean;
+  defaultAreaId: string;
   theme: Theme;
   updatedAt: Date;
 }
@@ -19,6 +20,8 @@ const UserSettingsSchema = new Schema<IUserSettings>(
     language: { type: String, enum: Object.values(Locale), default: Locale.EN },
     notifications: { type: NotificationPreferencesSchema, default: () => ({}) },
     biometricEntry: { type: Boolean, default: true },
+    // Pre-fills the area on a student's new tuition request. Empty means no default.
+    defaultAreaId: { type: String, default: "" },
     theme: { type: String, enum: Object.values(Theme), default: Theme.SYSTEM },
   },
   { timestamps: { createdAt: false, updatedAt: true } }

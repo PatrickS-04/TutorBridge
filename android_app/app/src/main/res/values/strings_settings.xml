@@ -36,4 +36,6 @@
     <string name="delete_account_confirm_word" translatable="false">DELETE</string>
     <string name="settings_last_synced">Last synced %1$s</string>
     <string name="settings_not_synced_yet">Not synced yet</string>
+    <string name="settings_default_area">Default Campus Area</string>
+    <string name="settings_no_default_area">None</string>
 </resources>

@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.NamedIdDto
+import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.data.repository.initialsOf
 import com.tutorbridge.app.ui.components.savedAtLabel
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -43,11 +45,13 @@ fun SettingsScreen(
     onUnlinkCalendar: () -> Unit = {},
     onChangePassword: ((String) -> Unit) -> Unit = {},
     onOpenSyncStatus: () -> Unit = {},
-    onSyncNow: () -> Unit = {}
+    onSyncNow: () -> Unit = {},
+    onSelectDefaultArea: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var showLanguageDialog by remember {mutableStateOf(false) }
+    var showAreaDialog by remember { mutableStateOf(false) }
 
     var showSignOutWarning by remember { mutableStateOf(false) }
     // Work done offline and not yet sent lives on this phone, per account; signing out
@@ -95,6 +99,38 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
+            }
+        )
+    }
+
+    if (showAreaDialog) {
+        val noDefault = NamedIdDto("", stringResource(R.string.settings_no_default_area))
+        AlertDialog(
+            onDismissRequest = { showAreaDialog = false },
+            title = { Text(stringResource(R.string.settings_default_area)) },
+            text = {
+                LazyColumn {
+                    items((listOf(noDefault) + uiState.areaOptions).size) { index ->
+                        val area = (listOf(noDefault) + uiState.areaOptions)[index]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAreaDialog = false
+                                    onSelectDefaultArea(area.id)
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = uiState.defaultAreaId == area.id, onClick = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(area.name)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAreaDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         )
     }
@@ -179,6 +215,18 @@ fun SettingsScreen(
                         onClick = { showLanguageDialog = true }
                     )
                     Divider()
+                    // Only students post tuition requests, which is what this fills in.
+                    if (uiState.role != UserRole.TUTOR) {
+                        val defaultArea = uiState.areaOptions.firstOrNull { it.id == uiState.defaultAreaId }?.name
+                            ?: stringResource(R.string.settings_no_default_area)
+                        SettingsRow(
+                            icon = Icons.Default.Place,
+                            label = stringResource(R.string.settings_default_area),
+                            trailing = { Text("$defaultArea ›", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp) },
+                            onClick = { showAreaDialog = true }
+                        )
+                        Divider()
+                    }
                     SettingsCheckRow(
                         icon = Icons.Default.Notifications,
                         label = stringResource(R.string.booking_updates_label),

@@ -87,6 +87,7 @@ data class TutorBridgeUiState(
     // Reference data (subjects and campus areas), for the new-request wizard
     val subjectOptions: List<NamedIdDto> = emptyList(),
     val areaOptions: List<NamedIdDto> = emptyList(),
+    val defaultAreaId: String = "",
 
     // Calendar
     val selectedCalendarDate: LocalDate = LocalDate.now(),

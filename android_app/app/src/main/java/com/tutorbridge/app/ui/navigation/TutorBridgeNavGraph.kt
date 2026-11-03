@@ -429,7 +429,8 @@ fun TutorBridgeNavGraph(
                         onUnlinkCalendar = { viewModel.unlinkCalendar() },
                         onChangePassword = { viewModel.sendPasswordReset(it) },
                         onOpenSyncStatus = { viewModel.navigateTo("sync_status") },
-                        onSyncNow = { viewModel.syncNow() }
+                        onSyncNow = { viewModel.syncNow() },
+                        onSelectDefaultArea = { viewModel.setDefaultArea(it) }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(

@@ -1603,6 +1603,7 @@ export const openapiSpec = {
             },
           },
           biometricEntry: { type: "boolean" },
+          defaultAreaId: { type: "string" },
           theme: enumOf(Theme),
         },
       },

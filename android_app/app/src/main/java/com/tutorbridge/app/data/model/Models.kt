@@ -182,6 +182,12 @@ data class NotificationUi(
     val unread: Boolean
 )
 
+/** A new request starts on the student's default campus area, if that area still exists. */
+fun newRequestDraft(defaultAreaId: String, areas: List<NamedIdDto>): RequestDraft {
+    val area = areas.firstOrNull { it.id == defaultAreaId } ?: return RequestDraft()
+    return RequestDraft(areaId = area.id, preferredVenue = area.name)
+}
+
 data class RequestDraft(
     val step: Int = 1,
     val subject: String = "",

@@ -85,6 +85,7 @@ data class UserSettingsDto(
     val language: String = "EN",
     val notifications: NotificationPreferencesDto = NotificationPreferencesDto(),
     val biometricEntry: Boolean = true,
+    val defaultAreaId: String = "",
     val theme: String = "SYSTEM"
 )
 
@@ -100,6 +101,7 @@ data class UpdateSettingsRequest(
     val language: String? = null,
     val notifications: NotificationPreferencesDto? = null,
     val biometricEntry: Boolean? = null,
+    val defaultAreaId: String? = null,
     val theme: String? = null
 )
 

@@ -36,4 +36,6 @@
     <string name="calendar_connected_as">Uxhumeke njenge-%1$s</string>
     <string name="settings_last_synced">Kugcine ukuvumelanisa ngo-%1$s</string>
     <string name="settings_not_synced_yet">Akukavunyelaniswa okwamanje</string>
+    <string name="settings_default_area">Indawo Yekhampasi Ezenzakalelayo</string>
+    <string name="settings_no_default_area">Akukho</string>
 </resources>

@@ -137,6 +137,14 @@ class OutboxViewsTest {
     }
 
     @Test
+    fun `a default area not sent yet survives a reload, and clearing it counts as a change`() {
+        val fromServer = UserSettingsDto(defaultAreaId = "old")
+        assertEquals("new", fromServer.withPending(UpdateSettingsRequest(defaultAreaId = "new")).defaultAreaId)
+        assertEquals("", fromServer.withPending(UpdateSettingsRequest(defaultAreaId = "")).defaultAreaId)
+        assertEquals("old", fromServer.withPending(UpdateSettingsRequest(theme = "DARK")).defaultAreaId)
+    }
+
+    @Test
     fun `a queued bubble says waiting, not sending`() {
         val bubble = listOf(item(OutboxType.SEND_MESSAGE, MessagePayload("t1", "hi", "c-1"))).pendingMessagesFor("t1").single()
         assertTrue(bubble.pending && bubble.queued)

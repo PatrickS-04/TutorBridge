@@ -664,6 +664,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     it.copy(
                         selectedLanguage = (plan.applyOnThisPhone ?: effectiveLanguage()).displayName,
                         isDarkTheme = settings.theme == "DARK",
+                        defaultAreaId = settings.defaultAreaId,
                         bookingUpdatesEnabled = settings.notifications.booking,
                         messageNotificationsEnabled = settings.notifications.message
                     )
@@ -1123,9 +1124,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(requestDraft = it.requestDraft.copy(step = step)) }
     }
 
-    /** The "New" button: always a blank wizard, even if an edit was abandoned half way. */
+    /** The "New" button: a fresh wizard, even if an edit was abandoned half way, with only the default area filled in. */
     fun startNewRequest() {
-        _uiState.update { it.copy(requestDraft = RequestDraft(), currentRoute = "new_request") }
+        _uiState.update { it.copy(requestDraft = newRequestDraft(it.defaultAreaId, it.areaOptions), currentRoute = "new_request") }
     }
 
     /** Leaves the wizard, dropping whatever was typed - new request or edit alike. */
@@ -1850,6 +1851,12 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         AppPreferences(getApplication()).enableMessageNotificationsSaved(enabled)
         _uiState.update { it.copy(messageNotificationsEnabled = enabled) }
         saveNotificationPreferences()
+    }
+
+    /** An empty id means no default. */
+    fun setDefaultArea(id: String) {
+        _uiState.update { it.copy(defaultAreaId = id) }
+        saveSettings(UpdateSettingsRequest(defaultAreaId = id))
     }
 
     /** Answered the "turn on fingerprint unlock?" question, or the phone cannot do it, so it is not asked again. */

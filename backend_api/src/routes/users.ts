@@ -159,10 +159,10 @@ router.get(
 router.put(
   "/me/settings",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { language, notifications, biometricEntry, theme } = req.body;
+    const { language, notifications, biometricEntry, theme, defaultAreaId } = req.body;
     const settings = await UserSettings.findOneAndUpdate(
       { userId: req.auth!.userId },
-      { $set: { language, notifications, biometricEntry, theme } },
+      { $set: { language, notifications, biometricEntry, theme, defaultAreaId } },
       { new: true, upsert: true, runValidators: true }
     );
     res.status(200).json(settings);
