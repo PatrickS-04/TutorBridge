@@ -13,7 +13,6 @@
     <string name="claims_pdf_voucher">PDF-bewys</string>
     <string name="claims_rate">Tarief</string>
     <string name="claims_submit_to_admin">Dien in by administrateur</string>
-    <string name="claims_verified_with_student_attendance">Geverifieer met studente-bywoningsinteken</string>
     <string name="claims_faculty_staff">%1$s • Personeel #%2$s</string>
     <string name="claims_rate_per_hour">R%1$d/uur</string>
     <string name="claims_hours_value">%1$s uur</string>

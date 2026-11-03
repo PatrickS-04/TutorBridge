@@ -12,7 +12,6 @@
     <string name="claims_pdf_voucher">PDF Voucher</string>
     <string name="claims_rate">Rate</string>
     <string name="claims_submit_to_admin">Submit to Admin</string>
-    <string name="claims_verified_with_student_attendance">Verified with student attendance check-in</string>
     <string name="claims_faculty_staff">%1$s • Staff #%2$s</string>
     <string name="claims_rate_per_hour">R%1$d/hr</string>
     <string name="claims_hours_value">%1$s hrs</string>

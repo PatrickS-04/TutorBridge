@@ -13,7 +13,6 @@
     <string name="claims_pdf_voucher">Ivawusha ye-PDF</string>
     <string name="claims_rate">Isilinganiso</string>
     <string name="claims_submit_to_admin">Thumela kumlawuli</string>
-    <string name="claims_verified_with_student_attendance">Kuqinisekiswe ngokubhalisa kokuba khona komfundi</string>
     <string name="claims_faculty_staff">%1$s • Isisebenzi #%2$s</string>
     <string name="claims_rate_per_hour">R%1$d/ihora</string>
     <string name="claims_hours_value">amahora angu-%1$s</string>
