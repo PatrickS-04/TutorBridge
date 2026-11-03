@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkin_show_code">Wys inteken-kode</string>
+    <string name="checkin_show_code_title">Student-inteken</string>
+    <string name="checkin_show_code_hint">Vra jou student om hierdie kode in TutorBridge te skandeer, of die 6 syfers in te tik.</string>
+    <string name="checkin_qr_description">Inteken-QR-kode</string>
+    <string name="checkin_code_expires_in">Verval oor %1$d:%2$02d</string>
+    <string name="checkin_code_expired">Kode het verval - tik Nuwe kode</string>
+    <string name="checkin_new_code">Nuwe kode</string>
+    <string name="checkin_close">Maak toe</string>
+    <string name="checkin_scan">Skandeer om in te teken</string>
+    <string name="checkin_enter_code">Tik kode in</string>
+    <string name="checkin_enter_code_title">Tik inteken-kode in</string>
+    <string name="checkin_code_label">6-syfer-kode</string>
+    <string name="checkin_check_in">Teken in</string>
+    <string name="checkin_checked_in_at">Ingeteken om %1$s</string>
+    <string name="checkin_you_are_checked_in">Jy is ingeteken. Geniet die sessie!</string>
+    <string name="checkin_student_checked_in">Jou student het ingeteken.</string>
+    <string name="checkin_not_a_tutorbridge_code">Dit is nie \'n TutorBridge-inteken-kode nie.</string>
+    <string name="checkin_wrong_session">Daardie kode is vir \'n ander sessie.</string>
+    <string name="checkin_scanner_unavailable">Die skandeerder is nie beskikbaar nie - tik eerder die kode in.</string>
+    <string name="api_error_wrong_code">Daardie kode is verkeerd - kyk weer en probeer weer.</string>
+    <string name="api_error_code_expired">Daardie kode het verval - vra jou tutor vir \'n nuwe een.</string>
+    <string name="api_error_too_many_attempts">Te veel verkeerde kodes - vra jou tutor vir \'n nuwe een.</string>
+    <string name="api_error_check_in_closed">Inteken begin 15 minute voor die sessie en sluit wanneer dit eindig.</string>
+    <string name="api_error_already_checked_in">Die student het reeds ingeteken.</string>
+    <string name="claims_verified_count">%1$d van %2$d sessies geverifieer met studente-bywoningsinteken</string>
+    <string name="claims_session_checked_in">✓ Student het ingeteken</string>
+    <string name="claims_session_not_checked_in">Geen inteken aangeteken nie</string>
+</resources>
