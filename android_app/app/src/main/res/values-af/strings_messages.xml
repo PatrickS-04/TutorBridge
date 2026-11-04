@@ -7,4 +7,8 @@
     <string name="messages_a_chat_opens_when_you">\'n Gesprek maak oop wanneer jy \'n tutor se aanbod aanvaar of \'n tutor bespreek, sodat julle tye en plekke kan reël.</string>
     <string name="messages_no_conversations_yet">Nog geen gesprekke nie</string>
     <string name="messages_say_hello">Sê hallo</string>
+    <plurals name="messages_unread">
+        <item quantity="one">Boodskappe, %1$d ongelees</item>
+        <item quantity="other">Boodskappe, %1$d ongelees</item>
+    </plurals>
 </resources>

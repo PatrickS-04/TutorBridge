@@ -1,6 +1,7 @@
 package com.tutorbridge.app.ui.screens.home
 
 import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.MessagesButton
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
@@ -62,12 +63,7 @@ fun TutorHomeScreen(
                     Text(uiState.userName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val unread = uiState.threads.sumOf { it.unread }
-                    IconButton(onClick = { onNavigate("messages") }) {
-                        BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
-                            Icon(Icons.Default.Chat, contentDescription = stringResource(R.string.common_messages))
-                        }
-                    }
+                    MessagesButton(unread = uiState.threads.sumOf { it.unread }, onClick = { onNavigate("messages") })
                     IconButton(onClick = { onNavigate("notifications") }) {
                         Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
                     }

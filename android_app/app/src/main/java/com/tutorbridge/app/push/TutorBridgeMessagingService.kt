@@ -20,7 +20,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+
+/** Tells an open app that a push came in, so what is on screen, like the unread count, can catch up. */
+object PushEvents {
+    private val _arrived = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val arrived: SharedFlow<Unit> = _arrived.asSharedFlow()
+
+    fun notifyArrived() {
+        _arrived.tryEmit(Unit)
+    }
+}
 
 // Reference: Firebase. 2026. Get started with Firebase Cloud Messaging in Android apps. [Online].
 //   Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026].
@@ -35,6 +49,7 @@ class TutorBridgeMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        PushEvents.notifyArrived()
         val data = message.data
         val title = data["title"] ?: return
         val body = data["body"].orEmpty()

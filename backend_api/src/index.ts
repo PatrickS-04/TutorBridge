@@ -6,6 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import { registerRoutes } from "./routes";
 import { openapiSpec } from "./openapi";
 import { errorHandler } from "./middleware/errors";
+import { translateErrors } from "./utils/errorMessages";
 import { purgeScheduledDeletions } from "./utils/purgeScheduledDeletions";
 import { completePastSessions } from "./utils/completePastSessions";
 
@@ -28,6 +29,7 @@ async function main() {
   // Reference: Express.js. 2026. cors (Version 2.8.6). [Computer program].
   //   Available at: https://github.com/expressjs/cors [Accessed 21 September 2026].
   app.use(cors());
+  app.use(translateErrors);
   app.use(express.json());
 
   // Browsable docs, plus the raw spec for client generators.

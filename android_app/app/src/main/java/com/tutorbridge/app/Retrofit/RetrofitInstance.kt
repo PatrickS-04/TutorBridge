@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 // References:
@@ -34,6 +35,10 @@ object RetrofitInstance {
         OkHttpClient.Builder()
             // First, so a forced-offline request is refused before anything else runs for it.
             .addInterceptor(OfflineGateInterceptor())
+            // So the server words its errors in the app's language. Read per request: a language switch does not restart the process.
+            .addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("Accept-Language", Locale.getDefault().language).build())
+            }
             .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthInterceptor())
             // Long enough for a free host to wake from sleep.

@@ -35,7 +35,8 @@ fun authErrorRes(error: Exception): Int = when (error) {
  *
  * NOT_FOUND, VALIDATION_ERROR, INVALID_STATE and FORBIDDEN are left out on purpose:
  * each stands for many different problems, so the server's message is the only text
- * that says which one it was.
+ * that says which one it was. The server words those in the app's language itself,
+ * from the Accept-Language header RetrofitInstance sends.
  */
 @StringRes
 fun errorMessageRes(code: String?): Int? = when (code) {

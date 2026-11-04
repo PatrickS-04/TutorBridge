@@ -41,7 +41,7 @@ students with proper and chosen resources with the option out and off campus tut
 ## Features/Scope
 | Feature | Status | What it does |
 |---|---|---|
-| Biometric unlock | Done | Turned on in Settings, it keeps you signed in and asks for a biometric scan (or the phone's screen lock) each time the app starts |
+| Biometric unlock | Done | Offered after sign-in and switched in Settings, it asks for a biometric scan (or the phone's screen lock) each time the app starts. Without it you simply stay signed in |
 | Single sign-on | Done | Sign in with a Google account, or with email and password (Firebase Authentication). "Forgot password?" on the sign-in screen emails a reset link |
 | Payroll claim export | Done | Tutors see their hours and earnings for each monthly claim period (up to 24 months back, loaded in steps), built from completed sessions, and export it as a PDF voucher or as the API's CSV |
 | Reschedule a session | Done | Either person can move an upcoming session instead of cancelling it. A tutor's move stands; a student's move of a confirmed session goes back to the tutor to confirm. The other person is notified and the Google Calendar event follows |

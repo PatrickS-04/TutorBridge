@@ -63,6 +63,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // A message may have come in while the app was in the background, with its notifications switched off.
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadThreads()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

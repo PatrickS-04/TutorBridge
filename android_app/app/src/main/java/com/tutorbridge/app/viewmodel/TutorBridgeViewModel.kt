@@ -9,6 +9,7 @@ import com.tutorbridge.app.data.repository.ApiException
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.tutorbridge.app.R
+import com.tutorbridge.app.push.PushEvents
 import com.tutorbridge.app.Retrofit.SessionEvents
 import com.tutorbridge.app.TutorBridgeApp
 import com.tutorbridge.app.data.local.LocalCache
@@ -117,13 +118,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(role = lastRole, biometricEnabled = true,
                 messageNotificationsEnabled = enabledMessageNotifications, bookingUpdatesEnabled = enabledBookingUpdates, currentRoute = "biometric_lock") }
         } else {
-            if (Firebase.auth.currentUser != null) {
-                Firebase.auth.signOut()
-                // Signed out without the user asking (no biometric lock to resume
-                // from), so what was saved for them goes too.
-                viewModelScope.launch { localCache.clear() }
-            }
-            _uiState.update { it.copy(biometricEnabled = enabledBiometric,
+            // Someone signed in with no lock on goes straight back in; see the init at the end of the class.
+            val role = if (Firebase.auth.currentUser != null) preferences.getLastRole() ?: UserRole.STUDENT else null
+            _uiState.update { it.copy(role = role, biometricEnabled = enabledBiometric,
                 messageNotificationsEnabled = enabledMessageNotifications, bookingUpdatesEnabled = enabledBookingUpdates) }
         }
         // The picker should open on the language the app is really in, not on English.
@@ -135,6 +132,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         // A free host may be asleep; this starts it waking before the first real call.
         viewModelScope.launch { authRepository.wakeServer() }
         viewModelScope.launch { SessionEvents.expired.collect { onSessionExpired() } }
+        viewModelScope.launch { PushEvents.arrived.collect { loadThreads() } }
 
         // The phone's connection, for the offline banner and for refreshing when it comes back.
         viewModelScope.launch { networkMonitor.isOnline.collect { onNetworkChanged(it) } }
@@ -247,7 +245,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             }
             is AuthResult.Failure -> {
                 Firebase.auth.signOut()
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message ?: text(R.string.error_unreachable)) }
             }
         }
     }
@@ -2007,6 +2005,20 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun signedOutState(): TutorBridgeUiState {
         OfflineMode.forced = false
         return TutorBridgeUiState(networkAvailable = _uiState.value.networkAvailable)
+    }
+
+    // Last in the class: this reaches most of the ViewModel, so every property has to be set up first.
+    init {
+        if (Firebase.auth.currentUser != null && !_uiState.value.biometricEnabled) {
+            completeAuth()
+            // A tutor who closed the app on the new-password screen still has to replace the temporary one.
+            viewModelScope.launch {
+                val result = authRepository.bootstrapProfile(null, null)
+                if (result is AuthResult.Success && result.profile.mustChangePassword) {
+                    _uiState.update { it.copy(currentRoute = "new_password") }
+                }
+            }
+        }
     }
 
     private companion object {

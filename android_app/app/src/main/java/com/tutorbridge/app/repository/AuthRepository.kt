@@ -5,7 +5,8 @@ import com.tutorbridge.app.data.model.*
 
 sealed class AuthResult {
     data class Success(val profile: ProfileResponse) : AuthResult()
-    data class Failure(val message: String) : AuthResult()
+    /** [message] is the server's own; null means it could not be reached. */
+    data class Failure(val message: String?) : AuthResult()
 }
 
 /**
@@ -30,7 +31,7 @@ class AuthRepository(private val authApi: AuthApi) {
                 AuthResult.Failure(parseApiError(response))
             }
         } catch (e: Exception) {
-            AuthResult.Failure(e.message ?: "Could not reach the server")
+            AuthResult.Failure(null)
         }
     }
 

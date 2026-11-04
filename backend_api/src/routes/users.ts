@@ -14,6 +14,7 @@ import {
 } from "../models";
 import { scoreTutor, signalsFromRequests } from "../utils/matchScore";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
+import { cancelSessionsOnDeletion } from "../utils/cancelSessionsOnDeletion";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
@@ -224,6 +225,7 @@ router.delete(
   "/me",
   asyncHandler(async (req: AuthRequest, res) => {
     const scheduledFor = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14-day grace period
+    await cancelSessionsOnDeletion(req.auth!.institutionId, req.auth!.userId);
     await User.findByIdAndUpdate(req.auth!.userId, { $set: { deletionScheduledFor: scheduledFor } });
     res.status(202).json({ message: "Account deletion scheduled", scheduledFor });
   })

@@ -6,4 +6,8 @@
     <string name="messages_a_chat_opens_when_you">A chat opens when you accept a tutor\'s offer or book a tutor, so you can sort out times and venues.</string>
     <string name="messages_no_conversations_yet">No conversations yet</string>
     <string name="messages_say_hello">Say hello</string>
+    <plurals name="messages_unread">
+        <item quantity="one">Messages, %1$d unread</item>
+        <item quantity="other">Messages, %1$d unread</item>
+    </plurals>
 </resources>
