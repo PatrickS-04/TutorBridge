@@ -419,7 +419,8 @@ fun MessageDto.toMessageUi(selfId: String): MessageUi = MessageUi(
     id = _id,
     body = body,
     mine = senderId == selfId,
-    time = chatTime(sentAt),
+    // The chat's day headers carry the date, so the bubble only needs the time.
+    time = parseInstant(sentAt)?.format(chatToday).orEmpty(),
     sentAt = sentAt,
     // Gson leaves a field the JSON lacks as null whatever default Kotlin declares, and a
     // message saved by an older app version, or sent by an older server, has no clientMessageId.
