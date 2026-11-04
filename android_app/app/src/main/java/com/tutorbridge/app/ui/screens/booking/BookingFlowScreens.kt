@@ -367,7 +367,7 @@ private fun RepeatCard(
             if (DayOfWeek.values().any { it != uiState.firstDay && it !in open }) {
                 Text(
                     stringResource(R.string.booking_days_unavailable),
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

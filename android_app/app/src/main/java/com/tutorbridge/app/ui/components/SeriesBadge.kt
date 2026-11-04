@@ -27,7 +27,7 @@ fun SeriesBadge(index: Int, count: Int, modifier: Modifier = Modifier, onDark: B
         text = stringResource(R.string.series_badge, index, count),
         color = if (onDark) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.Bold,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(if (onDark) MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.15f) else CrimsonTint)
