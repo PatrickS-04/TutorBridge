@@ -179,13 +179,13 @@ TutorBridge/
 <img width="1760" height="968" alt="image" src="https://github.com/user-attachments/assets/e1ac94b2-4733-4815-852b-9ffbb6387b94" />
 
 Looking at the above diagram the architectural choices made for this project centers around the android application, the project
-custom APIs, a database and external APIs with the android application being our device, custom APIs being a Node.js API run locally,
+custom APIs, a database and external APIs with the android application being our device, custom APIs being a Node.js API hosted on Azure App Service,
 the database being a MongoDB atlas database and our external APIs being Firebase services as well as google workspace services. These choices
 showcase the application needs as well as the group's best choices to make them.
 
 The system has four parts:
 * **Android app:** the client that students and tutors use.
-* **TutorBridge API:** a Node.js/Express REST API run locally on port 5000, with interactive docs at `/docs`. It was hosted on Azure App Service during the project and has since been taken down to save cost.
+* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the free tier, so the first request after an idle spell is slow.
 * **Database:** MongoDB Atlas, which only the API talks to.
 * **External services:** Firebase Authentication (sign-in), Firebase Cloud Messaging (push notifications) and the Google Calendar API.
 
@@ -269,11 +269,12 @@ The API runs at http://localhost:5000, and its interactive docs are at http://lo
 
 ### Run the Android app
 1. Open the **`android_app/`** folder (not the repo root) in Android Studio and let Gradle sync.
-2. Make sure the API is running (see above). There's nothing to change: out of the box the app calls `http://127.0.0.1:5000/`, and each build runs `adb reverse`, so an emulator or a USB-connected phone reaches the API on your computer. Rebuild if you reconnect the phone.
-   To use a different address, set `API_BASE_URL` in `android_app/local.properties` (this file isn't committed), for example the emulator's alias for your computer:
+2. There's nothing to change to try the app: out of the box it calls the API hosted on Azure, on an emulator or a phone.
+   To develop against the API running on your own computer instead, set `API_BASE_URL` in `android_app/local.properties` (this file isn't committed):
    ```properties
-   API_BASE_URL=http://10.0.2.2:5000/
+   API_BASE_URL=http://127.0.0.1:5000/
    ```
+   Each build then runs `adb reverse`, so an emulator or a USB-connected phone reaches your computer. Rebuild if you reconnect the phone. On an emulator you can use its alias for your computer instead, `http://10.0.2.2:5000/`.
 3. Select the **app** run configuration and press **Run**.
 
 > **Google sign-in** only works on builds whose signing key is registered in the Firebase project. On your own machine, sign in with email and password, or add the SHA-1 from `./gradlew signingReport` in Firebase console → Project settings → Your apps.
@@ -377,6 +378,9 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - GitHub. n.d. *Building and testing Java with Gradle*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
 - GitHub. n.d. *Building and testing Node.js*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs [Accessed 21 September 2026].
 - GitHub. n.d. *Store and share data with workflow artifacts*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
+- Microsoft. 2025. *Deploy by using GitHub Actions*. [Online]. Available at: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions [Accessed 21 September 2026].
+- Microsoft. 2025. *Quickstart: create a Node.js web app*. [Online]. Available at: https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs [Accessed 21 September 2026].
+- Microsoft. 2026. *azure/webapps-deploy* (Version 3). [Computer program]. Available at: https://github.com/Azure/webapps-deploy [Accessed 21 September 2026].
 
 ### README and version control
 - GitHub. n.d. *Basic writing and formatting syntax*. [Online]. Available at: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax [Accessed 21 September 2026].
