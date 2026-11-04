@@ -12,6 +12,7 @@ fun routeForDeepLink(link: String?, role: UserRole?): String? {
         "bookings" -> if (role == UserRole.TUTOR) "tutor_home" else "calendar" // tutor_home lists pending bookings
         "applications" -> "tutor_requests"   // notify() sends these to the tutor
         "requests" -> "my_requests"          // ...and these to the student
+        "threads" -> "messages"              // a new chat message, for whoever it was sent to
         else -> null
     }
 }

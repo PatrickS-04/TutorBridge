@@ -1,5 +1,9 @@
 package com.tutorbridge.app.ui.screens.home
 
+import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.MessagesButton
+import com.tutorbridge.app.ui.components.PendingBadge
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,13 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -29,7 +30,7 @@ fun StudentHomeScreen(
     uiState: TutorBridgeUiState,
     onNavigate: (String) -> Unit
 ) {
-    val firstName = uiState.userName.split(" ").firstOrNull()?.uppercase() ?: "STUDENT"
+    val firstName = uiState.userName.split(" ").firstOrNull()?.uppercase() ?: stringResource(R.string.history_default_name)
 
     LazyColumn(
         modifier = Modifier
@@ -45,18 +46,21 @@ fun StudentHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("HELLO, $firstName", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Let's learn today", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.student_home_hello, firstName), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.student_home_let_s_learn_today), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { onNavigate("notifications") }) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    MessagesButton(unread = uiState.threads.sumOf { it.unread }, onClick = { onNavigate("messages") })
+                    IconButton(onClick = { onNavigate("notifications") }) {
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
+                    }
                 }
             }
         }
 
         // Next session card
         item {
-            val nextEvent = uiState.calendarEvents.firstOrNull()
+            val nextEvent = uiState.upcomingEvents.firstOrNull()
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -64,7 +68,7 @@ fun StudentHomeScreen(
                     // the student's card opens the schedule and venue instead.
                     .clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -72,48 +76,52 @@ fun StudentHomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Badge(containerColor = CrimsonPrimary) {
+                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
                             Text(
-                                nextEvent?.let { "Next Session • ${it.startTime}" } ?: "No sessions booked",
-                                color = Color.White,
+                                nextEvent?.let { stringResource(R.string.student_home_next_session, it.startTime) } ?: stringResource(R.string.student_home_no_sessions_booked),
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.5.sp
+                                fontSize = 12.sp
                             )
                         }
-                        Text("Schedule & Room →", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.student_home_schedule_room), color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(
-                            modifier = Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)),
+                            modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 nextEvent?.participantName.orEmpty().split(" ").mapNotNull { part ->
                                     part.firstOrNull()?.uppercase()
                                 }.take(2).joinToString(""),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
                         }
                         Column {
                             Text(
-                                nextEvent?.participantName ?: "Book your first session",
-                                color = Color.White,
+                                nextEvent?.participantName ?: stringResource(R.string.student_home_book_your_first_session),
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
                             Text(
                                 nextEvent?.subject.orEmpty(),
-                                color = Color.White.copy(alpha = 0.85f),
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.85f),
                                 fontSize = 12.sp
                             )
                             Text(
                                 nextEvent?.location.orEmpty(),
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 11.sp
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                                fontSize = 12.sp
                             )
+                            if (nextEvent?.isPending == true) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                PendingBadge(onDark = true)
+                            }
                         }
                     }
                 }
@@ -123,21 +131,28 @@ fun StudentHomeScreen(
         // Quick actions row
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickAction(Icons.Default.Search, "Find Tutor", Modifier.weight(1f)) { onNavigate("find_tutors") }
-                QuickAction(Icons.Default.CalendarMonth, "Calendar", Modifier.weight(1f)) { onNavigate("calendar") }
-                QuickAction(Icons.Default.List, "My Requests", Modifier.weight(1f)) { onNavigate("my_requests") }
+                QuickAction(Icons.Default.Search, stringResource(R.string.student_home_find_tutor), Modifier.weight(1f)) { onNavigate("find_tutors") }
+                QuickAction(Icons.Default.CalendarMonth, stringResource(R.string.student_home_calendar), Modifier.weight(1f)) { onNavigate("calendar") }
+                QuickAction(Icons.Default.List, stringResource(R.string.student_home_my_requests), Modifier.weight(1f)) { onNavigate("my_requests") }
+                QuickAction(Icons.Default.History, stringResource(R.string.student_home_history), Modifier.weight(1f)) { onNavigate("learning_history") }
             }
         }
 
         // Upcoming on Your Calendar
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Upcoming on Your Calendar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("Full Calendar →", color = CrimsonPrimary, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.student_home_upcoming_on_your_calendar), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    stringResource(R.string.student_home_full_calendar),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigate("calendar") }
+                )
             }
         }
 
-        items(uiState.calendarEvents.take(2)) { event ->
+        items(uiState.upcomingEvents.take(2)) { event ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(14.dp),
@@ -150,24 +165,39 @@ fun StudentHomeScreen(
                 ) {
                     Column {
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
-                        Text("${event.date} • ${event.startTime}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${event.date} • ${event.startTime}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (event.isPending) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            PendingBadge()
+                        }
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text(event.location.split("—").firstOrNull()?.trim() ?: "Campus", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(event.location.split("—").firstOrNull()?.trim() ?: stringResource(R.string.student_home_campus), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // Top Tutors For You
+        // "For You" is only claimed when the ranking is real: the server scores a
+        // tutor against the student's own requests, and a student with none (or
+        // no tutor that fits) gets a plain list instead of a made-up match.
+        val personalised = uiState.tutors.any { it.matchPercent > 0 }
+        val shownTutors = if (personalised) uiState.tutors.filter { it.matchPercent > 0 } else uiState.tutors
+
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Top Tutors For You", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("See All", color = CrimsonPrimary, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                Text(if (personalised) stringResource(R.string.student_home_top_tutors_for_you) else stringResource(R.string.student_home_tutors_on_campus), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    stringResource(R.string.student_home_see_all),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigate("find_tutors") }
+                )
             }
         }
 
-        items(uiState.tutors.take(3)) { tutor ->
+        items(shownTutors.take(3)) { tutor ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("find_tutors") },
                 shape = RoundedCornerShape(18.dp),
@@ -187,18 +217,18 @@ fun StudentHomeScreen(
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text("${tutor.matchPercent}% match", color = CrimsonPrimary, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 11.5.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(
                             listOfNotNull(
-                                if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else null,
+                                if (tutor.activeNow) stringResource(R.string.common_active_now) else if (tutor.activeToday) stringResource(R.string.common_active_today) else null,
                                 if (tutor.reviewsCount > 0) "★ ${tutor.rating}" else null,
-                                if (tutor.verified) "✓ Verified" else null
+                                if (tutor.verified) stringResource(R.string.student_home_verified) else null
                             ).joinToString(" • "),
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -219,9 +249,9 @@ private fun QuickAction(icon: androidx.compose.ui.graphics.vector.ImageVector, l
             modifier = Modifier.padding(vertical = 14.dp).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(icon, contentDescription = label, tint = NavySecondary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(label, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }

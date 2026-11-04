@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The system splash, through core-splashscreen so it looks the same on every Android version. -->
+    <style name="Theme.TutorBridge.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1F2E45</item>
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme.TutorBridge</item>
+    </style>
+</resources>

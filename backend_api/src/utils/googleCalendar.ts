@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { CalendarLink, User, IBooking, LessonMode } from "../models";
+import { Booking, BookingStatus, CalendarLink, User, IBooking, LessonMode } from "../models";
 
 //Writes confirmed bookings into the tutor's Google Calendar. The tutor links
 //their account once (POST /calendar/link) and we keep the refresh token; every
@@ -149,6 +149,24 @@ export function syncBookingCreated(booking: IBooking) {
 }
 
 /**
+ * Catch a newly linked calendar up on sessions confirmed before the link. Only
+ * upcoming ones without an event: a past session is no use on a calendar, and
+ * one that already has an event is on someone's calendar already. One at a time,
+ * and one bad session must not cost the user the rest.
+ */
+export async function syncUpcomingBookings(userId: string) {
+  const bookings = await Booking.find({
+    $or: [{ tutorId: userId }, { studentId: userId }],
+    status: BookingStatus.CONFIRMED,
+    startTime: { $gt: new Date() },
+    googleCalendarEventId: { $exists: false },
+  });
+  for (const booking of bookings) {
+    await createEvent(booking).catch((error) => console.error("calendar sync failed:", error));
+  }
+}
+
+/**
  * The tutor's calendar owns the event when they have linked one, because they
  * are the party with a whole timetable of these; the student's is the fallback
  * so one linked account is enough for the session to land somewhere. Whoever
@@ -190,6 +208,43 @@ async function createEvent(booking: IBooking) {
     //The owner is recorded so a later cancellation knows whose calendar to
     //delete from - it is no longer always the tutor's.
     await booking.updateOne({ $set: { googleCalendarEventId: created.id, googleCalendarUserId: link.userId } });
+    await link.updateOne({ $set: { lastSyncedAt: new Date() }, $unset: { lastSyncError: "" } });
+  } catch (error) {
+    await link.updateOne({ $set: { lastSyncError: String(error) } });
+    throw error;
+  }
+}
+
+/**
+ * Move the event when a session is rescheduled. A booking that never reached
+ * a calendar (neither party had linked one then) has no event to move, so it is
+ * written fresh instead - the reschedule may be the first time it can be.
+ */
+export function syncBookingRescheduled(booking: IBooking) {
+  const sync = booking.googleCalendarEventId ? updateEvent(booking) : createEvent(booking);
+  sync.catch((error) => console.error("calendar reschedule failed:", error));
+}
+
+// Reference: Google for Developers. 2026. Events: patch. [Online].
+//   Available at: https://developers.google.com/workspace/calendar/api/v3/reference/events/patch [Accessed 7 October 2026].
+async function updateEvent(booking: IBooking) {
+  const link = await CalendarLink.findOne({ userId: booking.googleCalendarUserId ?? booking.tutorId }).select(
+    "+refreshTokenEnc"
+  );
+  if (!link) return;
+
+  try {
+    const accessToken = await accessTokenFor(decryptToken(link.refreshTokenEnc));
+    const { start, end, location } = buildEvent(booking, "");
+    const response = await fetch(`${eventsUrl(link.calendarId, booking.googleCalendarEventId!)}?sendUpdates=all`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end, ...(location ? { location } : {}) }),
+    });
+    if (!response.ok) {
+      const failure: any = await response.json().catch(() => ({}));
+      throw new Error(failure.error?.message ?? `Calendar API ${response.status}`);
+    }
     await link.updateOne({ $set: { lastSyncedAt: new Date() }, $unset: { lastSyncError: "" } });
   } catch (error) {
     await link.updateOne({ $set: { lastSyncError: String(error) } });

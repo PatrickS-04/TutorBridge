@@ -1,0 +1,43 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="student_home_full_calendar">Volle kalender →</string>
+    <string name="student_home_let_s_learn_today">Kom ons leer vandag</string>
+    <string name="student_home_schedule_room">Skedule &amp; lokaal →</string>
+    <string name="student_home_see_all">Sien alles</string>
+    <string name="student_home_upcoming_on_your_calendar">Kom binnekort op jou kalender</string>
+    <string name="student_home_find_tutor">Vind \'n Tutor</string>
+    <string name="student_home_calendar">Kalendar</string>
+    <string name="student_home_my_requests">My Versoeke</string>
+    <string name="student_home_history">Geskiedenis</string>
+    <string name="tutor_home_accept_sync">Aanvaar &amp; sinkroniseer</string>
+    <string name="tutor_home_active">Aktief</string>
+    <string name="tutor_home_choose_the_days_students_can">Kies die dae waarop studente jou kan bespreek →</string>
+    <string name="tutor_home_claim_amount">Eisbedrag</string>
+    <string name="tutor_home_claimable">EISBAAR</string>
+    <string name="tutor_home_decline">Weier</string>
+    <string name="tutor_home_export_submit_claim_to_faculty">Voer uit &amp; dien eis by fakulteit in →</string>
+    <string name="tutor_home_faculty_tutor_portal">FAKULTEITSTUTORPORTAAL</string>
+    <string name="tutor_home_logged_hours">Aangetekende ure</string>
+    <string name="tutor_home_no_bookings_are_waiting_for">Geen besprekings wag vir \'n besluit nie.</string>
+    <string name="tutor_home_open">Maak oop</string>
+    <string name="tutor_home_upcoming_sessions">Komende sessies</string>
+    <string name="tutor_home_weekly_availability">Weeklikse beskikbaarheid</string>
+    <string name="tutor_home_pay_period">%1$s betaalperiode</string>
+    <string name="tutor_home_this_month">Hierdie maand</string>
+    <string name="student_home_hello">HALLO, %1$s</string>
+    <string name="tutor_home_appointed">Dept.-aangestelde tutor</string>
+    <string name="tutor_home_staff_appointed">Personeel #%1$s • Dept.-aangestelde tutor</string>
+    <string name="tutor_home_hours_value">%1$s uur</string>
+    <string name="tutor_home_money_value">R%1$d</string>
+    <string name="tutor_home_new_bookings">Nuwe studentebesprekings (%1$d)</string>
+    <string name="student_home_book_your_first_session">Bespreek jou eerste sessie</string>
+    <string name="student_home_campus">Kampus</string>
+    <string name="student_home_no_sessions_booked">Geen sessies bespreek nie</string>
+    <string name="student_home_top_tutors_for_you">Top-tutors vir jou</string>
+    <string name="student_home_tutors_on_campus">Tutors op kampus</string>
+    <string name="student_home_verified">✓ Geverifieer</string>
+    <string name="student_home_next_session">Volgende sessie • %1$s</string>
+    <string name="tutor_home_decline_series">Weier reeks</string>
+    <string name="tutor_home_accept_series">Aanvaar reeks</string>
+    <string name="tutor_home_series_pattern">%1$s vanaf %2$s • %3$d sessies wag</string>
+</resources>

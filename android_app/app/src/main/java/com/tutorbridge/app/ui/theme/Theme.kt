@@ -89,8 +89,9 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Color.White,
     primaryContainer = Color(0xFF3F1918),
     onPrimaryContainer = CrimsonTint,
-    secondary = NavyTint,
-    onSecondary = NavySecondary,
+    // Navy fills (buttons, hero cards) need to stand out from the dark navy page and keep white text.
+    secondary = NavyLight,
+    onSecondary = Color.White,
     secondaryContainer = DarkSurface,
     onSecondaryContainer = DarkText,
     tertiary = AmberAccent,

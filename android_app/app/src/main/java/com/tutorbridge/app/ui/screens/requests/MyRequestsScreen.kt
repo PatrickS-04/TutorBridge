@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,18 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavyTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -44,9 +43,9 @@ fun MyRequestsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Column {
-            Text("My Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.my_requests_my_requests), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(
-                "Track requests you've submitted and review mentor applicants.",
+                stringResource(R.string.my_requests_track_requests_you_ve_submitted),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -54,19 +53,20 @@ fun MyRequestsScreen(
             Button(
                 onClick = onNewRequest,
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("New", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.my_requests_new), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            items(uiState.myRequests) { req ->
+            items(uiState.visibleMyRequests) { req ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onSelectRequest(req) },
+                    // Posted offline and not sent yet: there is nothing on the server to open.
+                    modifier = Modifier.fillMaxWidth().clickable(enabled = !req.pendingSync) { onSelectRequest(req) },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -82,16 +82,22 @@ fun MyRequestsScreen(
                                 fontSize = 14.5.sp,
                                 modifier = Modifier.weight(1f)
                             )
-                            StatusBadge(req.status)
+                            if (req.pendingSync) {
+                                Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                                    Text(stringResource(R.string.waiting_to_sync), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            } else {
+                                StatusBadge(req.status)
+                            }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "${req.level} • ${req.timeWindow}",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (req.preferredVenue.isNotBlank()) {
-                            Text("📍 ${req.preferredVenue}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("📍 ${req.preferredVenue}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         when (req.status) {
@@ -101,16 +107,16 @@ fun MyRequestsScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(NavyTint)
+                                            .background(MaterialTheme.colorScheme.secondaryContainer)
                                             .padding(10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Icon(Icons.Default.Group, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.Group, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
                                         Text(
-                                            "${req.applicantCount} tutor applicants — Tap to review & match",
+                                            pluralStringResource(R.plurals.my_requests_applicants, req.applicantCount, req.applicantCount),
                                             fontSize = 12.sp,
-                                            color = NavySecondary
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
@@ -124,7 +130,7 @@ fun MyRequestsScreen(
                                         .padding(10.dp)
                                 ) {
                                     Text(
-                                        if (req.matchedTutorName.isBlank()) "Matched" else "Matched with ${req.matchedTutorName}",
+                                        if (req.matchedTutorName.isBlank()) stringResource(R.string.common_matched) else stringResource(R.string.my_requests_matched_with, req.matchedTutorName),
                                         fontSize = 12.sp,
                                         color = EmeraldSuccess,
                                         fontWeight = FontWeight.Bold
@@ -143,13 +149,14 @@ fun MyRequestsScreen(
 @Composable
 private fun StatusBadge(status: RequestStatus) {
     val (label, bg, fg) = when (status) {
-        RequestStatus.OPEN -> Triple("Open Request", MaterialTheme.colorScheme.primaryContainer, CrimsonPrimary)
-        RequestStatus.MATCHED -> Triple("✓ Matched", EmeraldTint, EmeraldSuccess)
-        RequestStatus.OFFERED -> Triple("Offered", EmeraldTint, EmeraldSuccess)
-        RequestStatus.COMPLETED -> Triple("Completed", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+        RequestStatus.OPEN -> Triple(stringResource(R.string.my_requests_open_request), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary)
+        RequestStatus.MATCHED -> Triple(stringResource(R.string.my_requests_matched), EmeraldTint, EmeraldSuccess)
+        RequestStatus.OFFERED -> Triple(stringResource(R.string.request_board_offered), EmeraldTint, EmeraldSuccess)
+        RequestStatus.COMPLETED -> Triple(stringResource(R.string.common_closed), MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+        RequestStatus.WITHDRAWN -> Triple(stringResource(R.string.common_withdrawn), MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Badge(containerColor = bg) {
-        Text(label, color = fg, fontWeight = FontWeight.Bold, fontSize = 10.5.sp)
+        Text(label, color = fg, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 

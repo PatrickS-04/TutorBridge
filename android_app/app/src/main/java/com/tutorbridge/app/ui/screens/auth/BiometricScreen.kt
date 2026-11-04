@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.auth
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,10 +16,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun BiometricScreen(
+    message: String? = null,
     onUnlockClick: () -> Unit,
     onSignInDifferently: () -> Unit
 ) {
@@ -26,16 +30,20 @@ fun BiometricScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Welcome Back", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.biometric_welcome_back), style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Confirm it's you to continue", style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.biometric_confirm_it_s_you_to), style = MaterialTheme.typography.bodyMedium)
+        message?.let {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+        }
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = onUnlockClick, modifier = Modifier.fillMaxWidth(0.8f)) {
-            Text("Unlock")
+            Text(stringResource(R.string.biometric_unlock))
         }
         Spacer(modifier = Modifier.height(12.dp))
         TextButton(onClick = onSignInDifferently) {
-            Text("Sign in with a different account")
+            Text(stringResource(R.string.biometric_sign_in_with_a_different))
         }
     }
 }

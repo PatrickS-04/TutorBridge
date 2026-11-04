@@ -1,5 +1,10 @@
 package com.tutorbridge.app.ui.screens.home
 
+import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.MessagesButton
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
+import com.tutorbridge.app.ui.components.PendingBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,16 +19,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import com.tutorbridge.app.data.model.PendingBookingUi
+import com.tutorbridge.app.data.model.PendingItem
+import com.tutorbridge.app.data.model.groupPending
 import com.tutorbridge.app.ui.components.VenueLink
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -32,7 +37,9 @@ fun TutorHomeScreen(
     uiState: TutorBridgeUiState,
     onNavigate: (String) -> Unit,
     onAcceptBooking: (String) -> Unit = {},
-    onDeclineBooking: (String) -> Unit = {}
+    onDeclineBooking: (String) -> Unit = {},
+    onAcceptSeries: (String) -> Unit = {},
+    onDeclineSeries: (String) -> Unit = {}
 ) {
     val institution = uiState.institutions.find { it.id == uiState.selectedInstitutionId }
         ?: uiState.institutions.firstOrNull()
@@ -53,11 +60,14 @@ fun TutorHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("FACULTY TUTOR PORTAL", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.tutor_home_faculty_tutor_portal), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                     Text(uiState.userName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { onNavigate("notifications") }) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    MessagesButton(unread = uiState.threads.sumOf { it.unread }, onClick = { onNavigate("messages") })
+                    IconButton(onClick = { onNavigate("notifications") }) {
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
+                    }
                 }
             }
         }
@@ -67,12 +77,12 @@ fun TutorHomeScreen(
                 Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(EmeraldSuccess))
                 val staffId = uiState.userStaffId.ifBlank { institution?.staffId.orEmpty() }
                 Text(
-                    if (staffId.isBlank()) "Dept. Appointed Tutor" else "Staff #$staffId • Dept. Appointed Tutor",
+                    if (staffId.isBlank()) stringResource(R.string.tutor_home_appointed) else stringResource(R.string.tutor_home_staff_appointed, staffId),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Active", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.tutor_home_active), color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
 
@@ -83,7 +93,7 @@ fun TutorHomeScreen(
                     .fillMaxWidth()
                     .clickable { onNavigate("claims_export") },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -92,26 +102,26 @@ fun TutorHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("TIMESHEETS & CLAIMS", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Text("${activePeriod?.label ?: "This month"} Pay Period", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(stringResource(R.string.common_timesheets_claims), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.tutor_home_pay_period, activePeriod?.label ?: stringResource(R.string.tutor_home_this_month)), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
-                        Badge(containerColor = CrimsonPrimary) {
-                            Text("CLAIMABLE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                            Text(stringResource(R.string.tutor_home_claimable), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            Text("Logged Hours", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-                            Text("${activePeriod?.totalHours ?: 0.0} hrs", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_logged_hours), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_hours_value, (activePeriod?.totalHours ?: 0.0).toString()), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                         Column {
-                            Text("Claim Amount", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-                            Text("R${(activePeriod?.claimValue ?: 0.0).toInt()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_claim_amount), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_money_value, (activePeriod?.claimValue ?: 0.0).toInt()), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("Export & Submit Claim to Faculty →", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text(stringResource(R.string.tutor_home_export_submit_claim_to_faculty), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                 }
             }
         }
@@ -132,11 +142,11 @@ fun TutorHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Weekly Availability", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("Choose the days students can book you →", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.tutor_home_weekly_availability), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.tutor_home_choose_the_days_students_can), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text("Open", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text(stringResource(R.string.tutor_home_open), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -149,7 +159,7 @@ fun TutorHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "New Student Bookings (${uiState.pendingBookings.size})",
+                    stringResource(R.string.tutor_home_new_bookings, uiState.pendingBookings.size),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -159,61 +169,36 @@ fun TutorHomeScreen(
         if (uiState.pendingBookings.isEmpty()) {
             item {
                 Text(
-                    "No bookings are waiting for a decision.",
+                    stringResource(R.string.tutor_home_no_bookings_are_waiting_for),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        items(uiState.pendingBookings) { booking ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(
-                            modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
-                        Column {
-                            Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
-                            Text(
-                                listOf(booking.subjectName, booking.whenLabel)
-                                    .filter { it.isNotBlank() }
-                                    .joinToString(" • "),
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            VenueLink(booking.location, fontSize = 11.sp)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(
-                            onClick = { onDeclineBooking(booking.id) },
-                            modifier = Modifier.weight(1f).height(44.dp),
-                            shape = RoundedCornerShape(22.dp)
-                        ) { Text("Decline", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
-                        Button(
-                            onClick = { onAcceptBooking(booking.id) },
-                            modifier = Modifier.weight(1f).height(44.dp),
-                            shape = RoundedCornerShape(22.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
-                        ) { Text("Accept & Sync", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
-                    }
-                }
+        items(groupPending(uiState.pendingBookings)) { item ->
+            when (item) {
+                is PendingItem.Single -> PendingBookingCard(
+                    booking = item.booking,
+                    isOnline = uiState.isOnline,
+                    onAccept = onAcceptBooking,
+                    onDecline = onDeclineBooking
+                )
+                is PendingItem.Series -> PendingSeriesCard(
+                    series = item,
+                    isOnline = uiState.isOnline,
+                    onAccept = onAcceptSeries,
+                    onDecline = onDeclineSeries
+                )
             }
         }
 
         // Upcoming sessions, straight off the calendar
         item {
-            Text("Upcoming Sessions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.tutor_home_upcoming_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
-        items(uiState.calendarEvents.take(3)) { event ->
+        items(uiState.upcomingEvents.take(3)) { event ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(14.dp),
@@ -223,11 +208,129 @@ fun TutorHomeScreen(
                     Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                     Text(
                         "${event.date} • ${event.startTime}",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (event.isPending) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        PendingBadge()
+                    }
                 }
             }
+        }
+    }
+}
+
+/** One waiting session, with the tutor's choice of taking it or not. */
+@Composable
+private fun PendingBookingCard(
+    booking: PendingBookingUi,
+    isOnline: Boolean,
+    onAccept: (String) -> Unit,
+    onDecline: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                Column {
+                    Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                    Text(
+                        listOf(booking.subjectName, booking.whenLabel)
+                            .filter { it.isNotBlank() }
+                            .joinToString(" • "),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    VenueLink(booking.location, fontSize = 12.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = { onDecline(booking.id) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp)
+                ) { Text(stringResource(R.string.tutor_home_decline), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                Button(
+                    onClick = { onAccept(booking.id) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSecondary) }
+            }
+            NeedsConnectionHint(isOnline)
+        }
+    }
+}
+
+/** A whole weekly series waiting on the tutor: one decision for every session in it. */
+@Composable
+private fun PendingSeriesCard(
+    series: PendingItem.Series,
+    isOnline: Boolean,
+    onAccept: (String) -> Unit,
+    onDecline: (String) -> Unit
+) {
+    val booking = series.first
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) { Text(booking.initials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                Column {
+                    Text(booking.studentName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                    Text(
+                        booking.subjectName,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        stringResource(
+                            R.string.tutor_home_series_pattern,
+                            series.days.joinToString(", ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) },
+                            booking.whenLabel,
+                            series.waiting
+                        ),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    VenueLink(booking.location, fontSize = 12.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = { onDecline(series.seriesId) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp)
+                ) { Text(stringResource(R.string.tutor_home_decline_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                Button(
+                    onClick = { onAccept(series.seriesId) },
+                    enabled = isOnline,
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSecondary) }
+            }
+            NeedsConnectionHint(isOnline)
         }
     }
 }

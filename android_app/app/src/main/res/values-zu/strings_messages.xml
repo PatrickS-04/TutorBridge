@@ -1,0 +1,16 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="chat_load_earlier_messages">Layisha imilayezo yangaphambilini</string>
+    <string name="chat_message">Umlayezo</string>
+    <string name="chat_no_messages_yet_say_hello">Akukho milayezo okwamanje - sho sawubona.</string>
+    <string name="chat_send">Thumela</string>
+    <string name="chat_today">Namuhla</string>
+    <string name="chat_yesterday">Izolo</string>
+    <string name="messages_a_chat_opens_when_you">Ingxoxo iyavuleka uma wamukela isipho sikathisha noma ubhukha uthisha, ukuze nihlele izikhathi nezindawo.</string>
+    <string name="messages_no_conversations_yet">Azikho izingxoxo okwamanje</string>
+    <string name="messages_say_hello">Sho sawubona</string>
+    <plurals name="messages_unread">
+        <item quantity="one">Imilayezo, %1$d engafundiwe</item>
+        <item quantity="other">Imilayezo, %1$d engafundiwe</item>
+    </plurals>
+</resources>

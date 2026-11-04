@@ -1,7 +1,20 @@
 import { Router } from "express";
 import multer from "multer";
-import { Booking, BookingStatus, User, UserRole, UserSettings, VerificationDocument, VerificationStatus, DocumentType } from "../models";
+import {
+  Booking,
+  BookingStatus,
+  TuitionRequest,
+  TuitionRequestStatus,
+  User,
+  UserRole,
+  UserSettings,
+  VerificationDocument,
+  VerificationStatus,
+  DocumentType,
+} from "../models";
+import { scoreTutor, signalsFromRequests } from "../utils/matchScore";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
+import { cancelSessionsOnDeletion } from "../utils/cancelSessionsOnDeletion";
 import { paginate } from "../utils/paginate";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
@@ -41,13 +54,36 @@ router.get(
     ]);
     const countByTutor = new Map(completed.map((row) => [String(row._id), row.count]));
 
-    res.status(200).json({
-      ...result,
-      data: result.data.map((tutor) => ({
-        ...tutor.toObject(),
-        completedSessions: countByTutor.get(String(tutor._id)) ?? 0,
-      })),
-    });
+    // What the student has asked for is what "match" means; see utils/matchScore.ts.
+    const signals = signalsFromRequests(
+      await TuitionRequest.find({
+        studentId: req.auth!.userId,
+        institutionId: req.auth!.institutionId,
+        status: { $ne: TuitionRequestStatus.CANCELLED },
+      }).select("subjectId areaId status")
+    );
+
+    const data = result.data
+      .map((tutor) => {
+        const plain: any = tutor.toObject();
+        const completedSessions = countByTutor.get(String(tutor._id)) ?? 0;
+        return {
+          ...plain,
+          completedSessions,
+          matchScore: scoreTutor(
+            {
+              subjectIds: (plain.subjectIds ?? []).map((subject: any) => String(subject?._id ?? subject)),
+              areaId: plain.areaId ? String(plain.areaId._id ?? plain.areaId) : undefined,
+              completedSessions,
+            },
+            signals
+          ),
+        };
+      })
+      // Best fit first; ties keep the page's own (name) order.
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    res.status(200).json({ ...result, data });
   })
 );
 
@@ -124,10 +160,10 @@ router.get(
 router.put(
   "/me/settings",
   asyncHandler(async (req: AuthRequest, res) => {
-    const { language, notifications, smsFallback, biometricEntry, theme } = req.body;
+    const { language, notifications, biometricEntry, theme, defaultAreaId } = req.body;
     const settings = await UserSettings.findOneAndUpdate(
       { userId: req.auth!.userId },
-      { $set: { language, notifications, smsFallback, biometricEntry, theme } },
+      { $set: { language, notifications, biometricEntry, theme, defaultAreaId } },
       { new: true, upsert: true, runValidators: true }
     );
     res.status(200).json(settings);
@@ -189,6 +225,7 @@ router.delete(
   "/me",
   asyncHandler(async (req: AuthRequest, res) => {
     const scheduledFor = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14-day grace period
+    await cancelSessionsOnDeletion(req.auth!.institutionId, req.auth!.userId);
     await User.findByIdAndUpdate(req.auth!.userId, { $set: { deletionScheduledFor: scheduledFor } });
     res.status(202).json({ message: "Account deletion scheduled", scheduledFor });
   })

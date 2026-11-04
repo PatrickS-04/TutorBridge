@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.ksp) apply false
     //Firebase
     // Reference: Firebase. 2026. Add Firebase to your Android project. [Online].
     //   Available at: https://firebase.google.com/docs/android/setup [Accessed 21 September 2026].

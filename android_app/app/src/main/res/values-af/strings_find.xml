@@ -1,0 +1,19 @@
+<resources>
+    <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="find_active_on_campus_now">Nou aktief op kampus</string>
+    <string name="find_explore_appointed_faculty_tutors">Verken aangestelde fakulteitstutors en voorgraadse onderrigassistente.</string>
+    <string name="find_find_a_campus_tutor">Soek \'n kampustutor</string>
+    <string name="find_search">Soek</string>
+    <string name="find_search_course_code_or_subject">Soek kursuskode of vak (bv. MAM)</string>
+    <string name="find_top_rated_4_9">★ Topgegradeer (4.9+)</string>
+    <string name="tutor_profile_select_choose_time_slot">Kies &amp; kies tydgleuf</string>
+    <string name="tutor_profile_tutor_profile">Tutorprofiel</string>
+    <string name="tutor_profile_about">Oor %1$s</string>
+    <string name="find_subject_with_code">%1$s\n(%2$s)</string>
+    <string name="tutor_profile_consultation_venue">Konsultasieplek</string>
+    <string name="tutor_profile_department">Departement</string>
+    <string name="tutor_profile_languages">Tale</string>
+    <string name="tutor_profile_total_consultations">Totale konsultasies</string>
+    <string name="tutor_profile_rating">★ %1$s gradering</string>
+    <string name="tutor_profile_sessions_count">%1$d+ sessies</string>
+</resources>

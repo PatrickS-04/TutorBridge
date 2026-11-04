@@ -1,0 +1,17 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="time_just_now">Khona manje</string>
+    <string name="time_yesterday">Izolo</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">umzuzu o-%d odlule</item>
+        <item quantity="other">imizuzu e-%d edlule</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">ihora eli-%d eledlule</item>
+        <item quantity="other">amahora ama-%d edlule</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">usuku olu-%d olwedlule</item>
+        <item quantity="other">izinsuku ezi-%d ezedlule</item>
+    </plurals>
+</resources>

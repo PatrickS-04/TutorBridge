@@ -23,3 +23,17 @@ fun routeForRole(route: String, role: UserRole?): String = when {
     role != UserRole.TUTOR && route in tutorOnly -> "student_home"
     else -> route
 }
+
+/**
+ * The trail the phone's back gesture walks, after moving to [route]. Home and the
+ * sign-in gates start it over, so Back can't return to a signed-out or locked page.
+ * The "done" pages forget the flow behind them, so Back can't resend a booking or offer.
+ * Going to a page already in the trail cuts back to it, so nothing loops.
+ */
+fun nextRouteHistory(history: List<String>, route: String): List<String> = when (route) {
+    "student_home", "tutor_home", "biometric_lock", "new_password" -> listOf(route)
+    "auth" -> history.takeWhile { it == "splash" } + route
+    "booking_sent", "booking_confirmed", "booking_declined", "session_offer_sent" -> history.take(1) + route
+    in history -> history.take(history.indexOf(route) + 1)
+    else -> history + route
+}

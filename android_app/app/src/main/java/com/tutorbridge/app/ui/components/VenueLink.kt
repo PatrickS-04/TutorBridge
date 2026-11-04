@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.components
 
+import com.tutorbridge.app.R
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -30,7 +31,7 @@ fun VenueLink(venue: String, modifier: Modifier = Modifier, fontSize: TextUnit =
             //   Available at: https://developer.android.com/guide/components/google-maps-intents [Accessed 21 September 2026].
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=${Uri.encode(venue)}"))
             runCatching { context.startActivity(intent) }
-                .onFailure { Toast.makeText(context, "No maps app available", Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(context, context.getString(R.string.common_no_maps_app), Toast.LENGTH_SHORT).show() }
         },
         fontSize = fontSize,
         fontWeight = FontWeight.Medium,

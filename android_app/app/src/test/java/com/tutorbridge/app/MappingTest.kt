@@ -4,7 +4,10 @@ import com.tutorbridge.app.data.model.*
 import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.data.repository.toCalendarEvent
 import com.tutorbridge.app.data.repository.toRequestUi
+import com.tutorbridge.app.data.repository.toInstitutionUi
+import com.tutorbridge.app.data.repository.toLearningHistory
 import com.tutorbridge.app.data.repository.toTutorUi
+import com.tutorbridge.app.ui.screens.calendar.rescheduleHoursOn
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,6 +21,10 @@ import java.time.LocalDate
  * crashing.
  */
 class MappingTest {
+
+    // Day and month names follow the app's language; pin it so the expected text does not depend on the machine running the test.
+    @org.junit.Before
+    fun useEnglish() = java.util.Locale.setDefault(java.util.Locale.ENGLISH)
 
     private val monday = LocalDate.of(2026, 9, 21) // a Monday
 
@@ -55,8 +62,28 @@ class MappingTest {
         val tutor = tutorDto.toTutorUi()
 
         // 09:00-12:00 is three whole hours, and none of them spill past the window.
-        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday))
-        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1)))
+        val beforeTheDay = monday.minusDays(1).atStartOfDay()
+        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday, beforeTheDay))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1), beforeTheDay))
+    }
+
+    @Test
+    fun `booking today only offers the slots that have not started`() {
+        val tutor = tutorDto.toTutorUi()
+
+        assertEquals(listOf("10:00 AM", "11:00 AM"), tutor.slotsOn(monday, monday.atTime(9, 30)))
+        // A slot starting this very minute has already begun.
+        assertEquals(listOf("11:00 AM"), tutor.slotsOn(monday, monday.atTime(10, 0)))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday, monday.atTime(11, 30)))
+    }
+
+    @Test
+    fun `a session can be moved to later today but not to an hour already gone`() {
+        val evening = monday.atTime(18, 30)
+
+        assertEquals(listOf(19, 20), rescheduleHoursOn(monday, evening).map { it.hour })
+        assertEquals(emptyList<Int>(), rescheduleHoursOn(monday, monday.atTime(20, 0)).map { it.hour })
+        assertEquals((7..20).toList(), rescheduleHoursOn(monday.plusDays(1), evening).map { it.hour })
     }
 
     @Test
@@ -82,6 +109,22 @@ class MappingTest {
 
         // A booking with an unreadable time is dropped, not rendered blank.
         assertEquals(null, booking.copy(startTime = "").toCalendarEvent(selfIsTutor = false))
+    }
+
+    @Test
+    fun `only a requested booking is pending`() {
+        val booking = BookingDto(
+            _id = "b1",
+            subjectName = "Mathematics",
+            startTime = "2026-09-21T08:30:00.000Z",
+            endTime = "2026-09-21T09:30:00.000Z",
+            status = "REQUESTED"
+        )
+
+        assertTrue(booking.toCalendarEvent(selfIsTutor = false)!!.isPending)
+        listOf("CONFIRMED", "TRIAL_RUNNING", "ACTIVE", "COMPLETED", "CANCELLED").forEach { status ->
+            assertTrue(!booking.copy(status = status).toCalendarEvent(selfIsTutor = false)!!.isPending)
+        }
     }
 
     @Test
@@ -139,5 +182,63 @@ class MappingTest {
         assertEquals("Thabo Mokoena", request.matchedTutorName)
         assertEquals(2, request.applicantCount)
         assertEquals("Wed 14:00–17:00", request.timeWindow)
+    }
+
+    @Test
+    fun `a request keeps the ids and hours the edit form is prefilled from`() {
+        val request = TuitionRequestDto(
+            _id = "r1",
+            subjectId = SubjectDto("s1", "Mathematics"),
+            areaId = AreaDto("a1", "Upper Campus"),
+            availability = listOf(AvailabilityDto("WEDNESDAY", "14:00", "17:00"))
+        ).toRequestUi()
+
+        assertEquals("s1", request.subjectId)
+        assertEquals("a1", request.areaId)
+        assertEquals("14:00", request.availability.first().startTime)
+    }
+
+    @Test
+    fun `a cancelled request reads as withdrawn, a closed one as closed`() {
+        assertEquals(RequestStatus.WITHDRAWN, TuitionRequestDto(_id = "r1", status = "CANCELLED").toRequestUi().status)
+        assertEquals(RequestStatus.COMPLETED, TuitionRequestDto(_id = "r2", status = "CLOSED").toRequestUi().status)
+        assertEquals(RequestStatus.OPEN, TuitionRequestDto(_id = "r3", status = "OPEN").toRequestUi().status)
+    }
+
+    @Test
+    fun `claim history drops months with nothing to claim but keeps the current draft`() {
+        val claims = TimesheetPeriodsDto(
+            periods = listOf(
+                TimesheetPeriodDto(id = "2026-10", month = "2026-10", isCurrent = true, sessionCount = 0),
+                TimesheetPeriodDto(id = "2026-09", month = "2026-09", sessionCount = 4),
+                TimesheetPeriodDto(id = "2026-08", month = "2026-08", sessionCount = 0),
+                TimesheetPeriodDto(id = "2026-07", month = "2026-07", sessionCount = 2)
+            )
+        ).toInstitutionUi("Test University")
+
+        assertEquals(listOf("2026-10", "2026-09", "2026-07"), claims.claimPeriods.map { it.id })
+    }
+
+    @Test
+    fun `learning history keeps only completed sessions, newest first`() {
+        val tutor = UserBriefDto(_id = "t1", fullName = "Thabo Mokoena")
+        // Midday UTC, so the date is the same in any time zone the test runs in.
+        fun booking(id: String, day: String, status: String) = BookingDto(
+            _id = id, tutorId = tutor, subjectName = "Chemistry", status = status,
+            startTime = "${day}T12:00:00Z", endTime = "${day}T13:00:00Z", location = "Upper Campus"
+        )
+
+        val history = listOf(
+            booking("old", "2026-09-25", "COMPLETED"),
+            booking("upcoming", "2026-11-20", "CONFIRMED"),
+            booking("new", "2026-10-02", "COMPLETED"),
+            booking("dropped", "2026-10-05", "CANCELLED")
+        ).toLearningHistory()
+
+        assertEquals(listOf("new", "old"), history.map { it.id })
+        assertEquals("Chemistry", history.first().title)
+        assertEquals("2 Oct 2026", history.first().date)
+        assertTrue(history.first().summary.startsWith("Thabo Mokoena • "))
+        assertTrue(history.first().summary.endsWith(" • Upper Campus"))
     }
 }

@@ -1,13 +1,35 @@
 package com.tutorbridge.app.Retrofit
 
+import android.util.Log
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.io.IOException
 
 // Reference: Square, Inc. 2023. OkHttp (Version 4.12.0). [Computer program].
 //   Available at: https://lysine.dev/okhttp/ [Accessed 21 September 2026].
+
+/** What asking for the signed-in user's Firebase ID token came to. */
+sealed class TokenResult {
+    data class Token(val value: String) : TokenResult()
+
+    /** Nobody is signed in: public endpoints go through without a token. */
+    object NoUser : TokenResult()
+
+    /** Someone is signed in but the token could not be fetched because the network is down. */
+    object NetworkFailure : TokenResult()
+
+    /** Someone is signed in and the token could not be fetched for another reason (account removed, session revoked). */
+    object Failed : TokenResult()
+}
+
 /**
  * Attaches the signed-in user's Firebase ID token as the bearer, which is
  * what backend_api's `authenticate` middleware verifies.
@@ -16,23 +38,58 @@ import okhttp3.Response
  * Firebase SDK caches the ID token and mints a fresh one when it is close to
  * expiry, which is what getIdToken(false) returns here. Requests made while
  * signed out go through unauthenticated and the backend answers 401.
+ *
+ * Offline, the SDK cannot mint a fresh token once the cached one has expired.
+ * Sending the request anyway, without one, would turn "no connection" into a
+ * 401 - which the app reads as "sign in again" and the sync engine as "stop
+ * until the user signs in". So when the token is missing for lack of a network,
+ * the request fails the way any request would on a dead connection (an
+ * IOException), and the cache and the outbox treat it as exactly that.
  */
-class AuthInterceptor : Interceptor {
+class AuthInterceptor(
+    private val onRejected: () -> Unit = SessionEvents::notifyExpired,
+    private val tokens: () -> TokenResult = ::firebaseToken
+) : Interceptor {
+
     override fun intercept(chain: Interceptor.Chain): Response {
-        val user = Firebase.auth.currentUser ?: return chain.proceed(chain.request())
-
-        // Interceptors run off the main thread, so blocking here is fine.
-        val token = try {
-            Tasks.await(user.getIdToken(false))?.token
-        } catch (exception: Exception) {
-            null
+        val request = chain.request()
+        return when (val result = tokens()) {
+            TokenResult.NoUser -> chain.proceed(request)
+            is TokenResult.Token -> chain.proceed(request.newBuilder().header("Authorization", "Bearer ${result.value}").build()).reportRejection()
+            TokenResult.NetworkFailure -> throw IOException("Could not refresh your sign-in without a connection")
+            // Not a connectivity problem: let the server say what it thinks (a 401), which
+            // is the signal that the user really does have to sign in again.
+            TokenResult.Failed -> chain.proceed(request).reportRejection()
         }
+    }
 
-        val request = if (token != null) {
-            chain.request().newBuilder().header("Authorization", "Bearer $token").build()
+    /** Someone signed in was told 401: their session is no longer good, whichever call found out. */
+    private fun Response.reportRejection(): Response = also { if (it.code == 401) onRejected() }
+}
+
+/** Tells the ViewModel the server refused the signed-in user's token. Every call goes through the interceptor, so this is the one place that sees all of them. */
+object SessionEvents {
+    private val _expired = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val expired: SharedFlow<Unit> = _expired.asSharedFlow()
+
+    fun notifyExpired() {
+        _expired.tryEmit(Unit)
+    }
+}
+
+private const val TAG = "AuthInterceptor"
+
+/** The real token source. Interceptors run off the main thread, so blocking on the task is fine. */
+internal fun firebaseToken(): TokenResult {
+    val user = Firebase.auth.currentUser ?: return TokenResult.NoUser
+    return try {
+        Tasks.await(user.getIdToken(false))?.token?.let { TokenResult.Token(it) } ?: TokenResult.Failed
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not get an ID token", exception)
+        if (generateSequence<Throwable>(exception) { it.cause }.any { it is FirebaseNetworkException || it is IOException }) {
+            TokenResult.NetworkFailure
         } else {
-            chain.request()
+            TokenResult.Failed
         }
-        return chain.proceed(request)
     }
 }

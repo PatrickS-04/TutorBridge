@@ -10,6 +10,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -21,6 +22,8 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
 import com.tutorbridge.app.R
+import androidx.credentials.exceptions.ClearCredentialException
+import kotlinx.coroutines.withTimeoutOrNull
 
 object GoogleAuthentication {
     // Reference: Android Developers. 2026. About Sign in with Google. [Online].
@@ -47,6 +50,15 @@ object GoogleAuthentication {
         }
 
 
+    }
+
+    /** Forgets the Google account chosen at sign-in, so the next sign-in offers the choice again. Never blocks signing out. */
+    suspend fun clearCredentials(context: Context) {
+        try {
+            withTimeoutOrNull(3_000) { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
+        } catch (error: ClearCredentialException) {
+            Log.w(TAG, "Could not clear the credential state", error)
+        }
     }
 
     /** Signing in only proves who the user is - writing their calendar is a
@@ -85,7 +97,7 @@ object GoogleAuthentication {
                     .serverAuthCode
             }.getOrNull()
 
-            if (code != null) onAuthCode(code) else onError("Calendar access was not granted")
+            if (code != null) onAuthCode(code) else onError(context.getString(R.string.calendar_not_granted))
         }
 
         // Reference: Android Developers. 2025. Authorize access to Google user data. [Online].
@@ -112,12 +124,12 @@ object GoogleAuthentication {
                         consent.launch(IntentSenderRequest.Builder(pendingIntent).build())
                     } else {
                         val code = result.serverAuthCode
-                        if (code != null) onAuthCode(code) else onError("Google returned no authorisation code")
+                        if (code != null) onAuthCode(code) else onError(context.getString(R.string.calendar_no_code))
                     }
                 }
                 .addOnFailureListener { error ->
                     Log.w(TAG, "Calendar authorisation failed", error)
-                    onError(error.message ?: "Could not reach Google")
+                    onError(context.getString(R.string.calendar_unreachable))
                 }
             Unit
         }
@@ -129,7 +141,7 @@ object GoogleAuthentication {
             //The chooser offers "Add account" when the one they want is not on
             //the phone yet, so coming back empty is a real cancel.
             if (name != null) authorize(Account(name, "com.google"))
-            else onError("No Google account chosen")
+            else onError(context.getString(R.string.calendar_no_account))
         }
 
         return {

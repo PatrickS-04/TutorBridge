@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 27+ copy of values/themes.xml: a style replaces, not extends, the one with the same name
+     in the base folder, so every item has to be repeated here. -->
+<resources>
+    <style name="Theme.TutorBridge" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#F4EFE6</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#F4EFE6</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

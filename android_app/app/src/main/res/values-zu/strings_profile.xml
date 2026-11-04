@@ -1,0 +1,15 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="edit_profile_bio">Impilo emfushane</string>
+    <string name="edit_profile_department_faculty">Umnyango / Ubuchwepheshe</string>
+    <string name="edit_profile_edit_profile">Hlela iphrofayili</string>
+    <string name="edit_profile_email">I-imeyili</string>
+    <string name="edit_profile_hourly_rate_r">Isilinganiso Seholo (R)</string>
+    <string name="edit_profile_save_changes">Gcina izinguquko</string>
+    <string name="edit_tutor_add_languages_spoken_to_reach">• Engeza izilimi ozikhulumayo ukuze ufinyelele ku-100%</string>
+    <string name="edit_tutor_designated_campus_consultation_r">Ikamelo Lokubonisana Elimisiwe Ekhampasi</string>
+    <string name="edit_tutor_edit_tutor_profile">Hlela Iphrofayili Kathisha</string>
+    <string name="edit_tutor_languages_spoken">Izilimi Ezikhulunywayo</string>
+    <string name="edit_tutor_profile_completeness">Ukuphelela Kwephrofayili</string>
+    <string name="edit_tutor_save_profile">Gcina iphrofayili</string>
+</resources>

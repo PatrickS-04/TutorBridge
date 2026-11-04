@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.requests
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,10 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -40,9 +41,9 @@ fun TutorRequestsBoardScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Student Requests", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.request_board_student_requests), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "Browse tuition requests posted by campus students.",
+            stringResource(R.string.request_board_browse_tuition_requests_posted_b),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -55,8 +56,8 @@ fun TutorRequestsBoardScreen(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(4.dp)
         ) {
-            SegTab("Open Requests (${uiState.openRequests.size})", tab == 0, Modifier.weight(1f)) { tab = 0 }
-            SegTab("My Applications (${uiState.myApplications.size})", tab == 1, Modifier.weight(1f)) { tab = 1 }
+            SegTab(stringResource(R.string.tutor_board_open_requests, uiState.openRequests.size), tab == 0, Modifier.weight(1f)) { tab = 0 }
+            SegTab(stringResource(R.string.tutor_board_my_applications, uiState.myApplications.size), tab == 1, Modifier.weight(1f)) { tab = 1 }
         }
 
         val listToShow = if (tab == 0) uiState.openRequests else uiState.myApplications
@@ -64,7 +65,7 @@ fun TutorRequestsBoardScreen(
         LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             items(listToShow) { req ->
                 if (tab == 0) {
-                    OpenRequestCard(req, onAcceptAndOffer)
+                    OpenRequestCard(req, uiState.isOnline, onAcceptAndOffer)
                 } else {
                     MyApplicationCard(req)
                 }
@@ -86,14 +87,14 @@ private fun SegTab(label: String, selected: Boolean, modifier: Modifier, onClick
         Text(
             label,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) NavySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp
         )
     }
 }
 
 @Composable
-private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) -> Unit) {
+private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndOffer: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -107,10 +108,10 @@ private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) ->
                 ) { Text(req.studentInitials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                 Column {
                     Text(req.studentName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(req.subject, color = CrimsonPrimary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    Text(req.subject, color = MaterialTheme.colorScheme.primary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Text("🕐 ${req.timeWindow} • 📍 ${req.preferredVenue}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("🕐 ${req.timeWindow} • 📍 ${req.preferredVenue}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 "\"${req.topic}\"",
                 fontSize = 12.5.sp,
@@ -123,12 +124,14 @@ private fun OpenRequestCard(req: StudentRequestUi, onAcceptAndOffer: (String) ->
             )
             Button(
                 onClick = { onAcceptAndOffer(req.id) },
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                enabled = online,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(23.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Accept & Offer Session (Department Rate: R220/hr)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.request_board_accept_offer_session_department), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
+            NeedsConnectionHint(online)
         }
     }
 }
@@ -147,10 +150,10 @@ private fun MyApplicationCard(req: StudentRequestUi) {
         ) {
             Column {
                 Text(req.subject, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("Student: ${req.studentName}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.request_board_student, req.studentName), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Badge(containerColor = EmeraldTint) {
-                Text("Offered", color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                Text(stringResource(R.string.request_board_offered), color = EmeraldSuccess, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

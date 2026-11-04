@@ -60,7 +60,9 @@ data class UserDto(
     val profileCompleteness: Int = 0,
     val locale: String = "EN",
     /** Completed sessions, added by GET /users/tutors only. */
-    val completedSessions: Int = 0
+    val completedSessions: Int = 0,
+    /** 0-100 fit with the caller's own requests, added by GET /users/tutors only. */
+    val matchScore: Int = 0
 )
 
 /** A populated `tutorId` / `studentId` reference - the same document, fewer fields read. */
@@ -82,8 +84,8 @@ data class NotificationPreferencesDto(
 data class UserSettingsDto(
     val language: String = "EN",
     val notifications: NotificationPreferencesDto = NotificationPreferencesDto(),
-    val smsFallback: Boolean = true,
     val biometricEntry: Boolean = true,
+    val defaultAreaId: String = "",
     val theme: String = "SYSTEM"
 )
 
@@ -98,8 +100,8 @@ data class UpdateProfileRequest(
 data class UpdateSettingsRequest(
     val language: String? = null,
     val notifications: NotificationPreferencesDto? = null,
-    val smsFallback: Boolean? = null,
     val biometricEntry: Boolean? = null,
+    val defaultAreaId: String? = null,
     val theme: String? = null
 )
 
@@ -129,7 +131,18 @@ data class CreateTuitionRequest(
     val gradeLevel: String? = null,
     val mode: String = "IN_PERSON",
     val description: String? = null,
-    val availability: List<AvailabilityDto> = emptyList()
+    val availability: List<AvailabilityDto> = emptyList(),
+    /** Made when the student taps Post and sent unchanged on any retry, so the server can tell a repeat from a new request. */
+    val clientRequestId: String? = null
+)
+
+/** PUT /tuition-requests/:id - only the fields that are set are changed. */
+data class UpdateTuitionRequest(
+    val subjectId: String? = null,
+    val areaId: String? = null,
+    val gradeLevel: String? = null,
+    val description: String? = null,
+    val availability: List<AvailabilityDto>? = null
 )
 
 /** GET /tuition-requests/:id/applications - `tutorId` is populated here. */
@@ -172,8 +185,23 @@ data class BookingDto(
     val agreedRatePerHour: Double = 0.0,
     /** Only ever set for the tutor teaching the session - the server leaves it
      *  out of the student's own booking list. */
-    val tutorNotes: TutorNotesDto? = null
+    val tutorNotes: TutorNotesDto? = null,
+    val attendance: AttendanceDto? = null,
+    /** Shared by every session of a weekly series; null for a single session. */
+    val seriesId: String? = null,
+    /** This session's place in its series, from 1. */
+    val seriesIndex: Int? = null,
+    /** How many sessions the series was booked with. */
+    val seriesCount: Int? = null
 )
+
+data class AttendanceDto(val checkedInAt: String? = null, val method: String? = null)
+
+data class CheckInCodeDto(val bookingId: String, val code: String, val expiresAt: String, val qrPayload: String)
+
+data class CheckInRequest(val code: String, val method: String)
+
+data class CheckInAckDto(val bookingId: String, val checkedInAt: String, val method: String)
 
 /** The tutor's private prep notes for one session. Also the PUT body. */
 data class TutorNotesDto(
@@ -197,13 +225,95 @@ data class DirectBookingRequest(
     val startTime: String, // ISO-8601 instant
     val endTime: String,
     val mode: String = "IN_PERSON",
+    val location: String? = null,
+    /** Left null for a single session; Gson leaves a null out of the body. */
+    val repeat: RepeatDto? = null
+)
+
+/**
+ * Book the same time on a recurring basis; `startTime` is the first session. Two shapes, and Gson leaves out
+ * whichever fields are null:
+ *  - the original, [count] only: the weekday of the first session, one session a week for [count] weeks;
+ *  - a pattern, [days] and [weeks]: the same time on each of those weekdays (MONDAY ... SUNDAY), for [weeks] weeks.
+ */
+data class RepeatDto(
+    val frequency: String = "WEEKLY",
+    val count: Int? = null,
+    val weeks: Int? = null,
+    val days: List<String>? = null
+)
+
+/**
+ * POST /bookings and /bookings/direct answer with `id`, not the whole document. A weekly series
+ * also names itself and lists its sessions. The series fields are nullable because Gson leaves a
+ * field the server did not send as null, whatever default the class declares.
+ */
+data class BookingAckDto(
+    val id: String,
+    val status: String,
+    val seriesId: String? = null,
+    val seriesCount: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
+
+/** One session in a series just booked, in order. */
+data class SeriesBookingDto(
+    val id: String,
+    val status: String,
+    val startTime: String? = null,
+    val endTime: String? = null,
+    val seriesIndex: Int? = null
+)
+
+data class CancelRequest(val reason: String?)
+
+/** PUT /bookings/series/:id/cancel - [fromBookingId] cancels from that session onward; null cancels every upcoming one. */
+data class CancelSeriesRequest(val reason: String?, val fromBookingId: String? = null)
+
+/**
+ * The answer to confirming or cancelling a series: how many sessions it touched, and which.
+ * Everything is nullable because Gson leaves what the server did not send as null.
+ */
+data class SeriesActionDto(
+    val seriesId: String? = null,
+    val confirmed: Int? = null,
+    val cancelled: Int? = null,
+    val bookings: List<SeriesBookingDto>? = null
+)
+
+/** PUT /bookings/:id/reschedule - the new window, as ISO-8601 instants. */
+data class RescheduleRequest(
+    val startTime: String,
+    val endTime: String,
     val location: String? = null
 )
 
-/** POST /bookings and /bookings/direct answer with `id`, not the whole document. */
-data class BookingAckDto(val id: String, val status: String)
+/** The moved booking; [status] tells whether it still stands or now waits on the tutor. */
+data class RescheduleAckDto(val id: String, val status: String)
 
-data class CancelRequest(val reason: String?)
+// ==================== MESSAGING ====================
+
+/** GET /threads - `participants` carry only a name, and `unread` is the caller's own count. */
+data class ThreadDto(
+    val _id: String,
+    val participants: List<UserBriefDto> = emptyList(),
+    val lastMessagePreview: String? = null,
+    val lastMessageAt: String? = null,
+    val unread: Int = 0
+)
+
+/** `senderId` is a bare id here - messages are not populated. */
+data class MessageDto(
+    val _id: String,
+    val senderId: String = "",
+    val body: String = "",
+    val sentAt: String = "",
+    val status: String = "SENT",
+    val clientMessageId: String = ""
+)
+
+/** [clientMessageId] makes a retried send safe: the server returns the stored message instead of a duplicate. */
+data class SendMessageRequest(val body: String, val clientMessageId: String)
 
 // ==================== NOTIFICATIONS ====================
 
@@ -228,7 +338,8 @@ data class TimesheetSessionDto(
     val studentName: String = "",
     val location: String = "",
     val hours: Double = 0.0,
-    val amount: Double = 0.0
+    val amount: Double = 0.0,
+    val checkedIn: Boolean = false
 )
 
 data class TimesheetPeriodDto(
@@ -238,7 +349,8 @@ data class TimesheetPeriodDto(
     val totalHours: Double = 0.0,
     val claimValue: Double = 0.0,
     val sessionCount: Int = 0,
-    val sessions: List<TimesheetSessionDto> = emptyList()
+    val verifiedCount: Int = 0,
+    val sessions: List<TimesheetSessionDto> = emptyList(),
 )
 
 data class TimesheetPeriodsDto(

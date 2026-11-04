@@ -1,0 +1,19 @@
+<resources>
+    <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
+    <string name="find_active_on_campus_now">Abakhona ekhampasi manje</string>
+    <string name="find_explore_appointed_faculty_tutors">Hlola othisha bomnyango abaqokiwe nabasizi bokufundisa abangakaphothuli.</string>
+    <string name="find_find_a_campus_tutor">Funa Uthisha Wasekhampasi</string>
+    <string name="find_search">Sesha</string>
+    <string name="find_search_course_code_or_subject">Sesha ikhodi yesifundo noma isihloko (isb. MAM)</string>
+    <string name="find_top_rated_4_9">★ Abahlonishwe Kakhulu (4.9+)</string>
+    <string name="tutor_profile_select_choose_time_slot">Khetha &amp; Khetha Isikhathi</string>
+    <string name="tutor_profile_tutor_profile">Iphrofayili Kathisha</string>
+    <string name="tutor_profile_about">Mayelana no-%1$s</string>
+    <string name="find_subject_with_code">%1$s\n(%2$s)</string>
+    <string name="tutor_profile_consultation_venue">Indawo Yokubonisana</string>
+    <string name="tutor_profile_department">Umnyango</string>
+    <string name="tutor_profile_languages">Izilimi</string>
+    <string name="tutor_profile_total_consultations">Inani Lokubonisana</string>
+    <string name="tutor_profile_rating">★ Isilinganiso esingu-%1$s</string>
+    <string name="tutor_profile_sessions_count">izifundo ezingu-%1$d+</string>
+</resources>

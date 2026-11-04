@@ -86,7 +86,8 @@ const noContent = { description: "Deleted. No body." };
  */
 function crudPaths(resource: string, schema: string) {
   const tags = ["Admin reference data"];
-  const adminOnly = "Institution admins only.";
+  const adminOnly =
+    "Platform admins only: these lists are shared by every institution, so an institution admin cannot change them.";
   const noun = schema.toLowerCase();
   const a = /^[aeiou]/.test(noun) ? "an" : "a";
   return {
@@ -123,9 +124,9 @@ function crudPaths(resource: string, schema: string) {
       delete: {
         tags,
         summary: `Delete ${a} ${noun}`,
-        description: adminOnly,
+        description: `${adminOnly} A record that existing users, requests or areas still use answers 409.`,
         parameters: [pathId("id", `${schema} id.`)],
-        responses: { 204: noContent, ...authErrors, 404: res.notFound },
+        responses: { 204: noContent, ...authErrors, 404: res.notFound, 409: res.conflict },
       },
     },
   };
@@ -285,15 +286,28 @@ export const openapiSpec = {
       get: {
         tags: ["Users"],
         summary: "List bookable tutors at the caller's institution",
-        description: "Verified tutors not pending deletion - what the Find a Tutor screen lists.",
+        description: [
+          "Verified tutors not pending deletion - what the Find a Tutor screen lists.",
+          "",
+          "Each tutor carries a `matchScore` for the caller, worked out from the",
+          "caller's own tuition requests: a shared subject (live requests count",
+          "most), a shared campus area, and the tutor's completed sessions. A tutor",
+          "who shares neither a subject nor an area scores 0. Best fit comes first.",
+        ].join("\n"),
         parameters: [pageParam],
         responses: {
           200: ok(
-            "A page of tutors, each with the number of sessions actually taught.",
+            "A page of tutors, each with sessions actually taught and a match score.",
             pageOf({
               allOf: [
                 ref("User"),
-                { type: "object", properties: { completedSessions: { type: "integer", example: 12 } } },
+                {
+                  type: "object",
+                  properties: {
+                    completedSessions: { type: "integer", example: 12 },
+                    matchScore: { type: "integer", minimum: 0, maximum: 100, example: 80 },
+                  },
+                },
               ],
             })
           ),
@@ -381,6 +395,9 @@ export const openapiSpec = {
       put: {
         tags: ["Users"],
         summary: "Update app settings",
+        description:
+          "Safe to repeat: the same body twice leaves the same settings, which is what lets the app " +
+          "replay changes made offline. When edits to one setting are replayed in order, the last one wins.",
         requestBody: { required: true, ...json(ref("UserSettings")) },
         responses: { 200: ok("The updated settings.", ref("UserSettings")), ...authErrors },
       },
@@ -573,7 +590,14 @@ export const openapiSpec = {
       post: {
         tags: ["Tuition requests"],
         summary: "Post a tuition request",
-        description: "Students and guardians only.",
+        description: [
+          "Students and guardians only.",
+          "",
+          "`clientRequestId` makes this safe to retry: posting the same one again",
+          "(the app does this after a lost reply, and when it replays requests made",
+          "offline) answers `200` with the request already made instead of creating",
+          "a second. It is unique per student.",
+        ].join("\n"),
         requestBody: {
           required: true,
           ...json({
@@ -587,10 +611,24 @@ export const openapiSpec = {
               description: { type: "string", maxLength: 1000 },
               preferredRateBand: ref("RateBand"),
               availability: { type: "array", items: ref("AvailabilitySlot") },
+              clientRequestId: {
+                type: "string",
+                maxLength: 100,
+                description: "Client-generated id, unique per student.",
+              },
             },
           }),
         },
         responses: {
+          200: ok("A request with this `clientRequestId` already existed; here it is.", {
+            type: "object",
+            properties: {
+              id: objectId("Request id."),
+              status: enumOf(TuitionRequestStatus),
+              matchScore: { type: "number", nullable: true },
+              createdAt: dateTime("When it was posted."),
+            },
+          }),
           201: ok("The new request.", {
             type: "object",
             properties: {
@@ -650,14 +688,21 @@ export const openapiSpec = {
       put: {
         tags: ["Tuition requests"],
         summary: "Edit your own request",
+        description:
+          "Only while the request is still `OPEN`; once a tutor is matched it answers 409. Tutors who already applied are notified.",
         parameters: [pathId("id", "Request id.")],
         requestBody: {
           required: true,
           ...json({
             type: "object",
             properties: {
+              subjectId: objectId("Subject being requested."),
+              areaId: objectId("Area the session should happen in."),
+              gradeLevel: { type: "string", example: "Grade 11" },
+              mode: enumOf(LessonMode),
               description: { type: "string", maxLength: 1000 },
               preferredRateBand: ref("RateBand"),
+              availability: { type: "array", items: ref("AvailabilitySlot") },
             },
           }),
         },
@@ -666,6 +711,43 @@ export const openapiSpec = {
           400: res.badRequest,
           ...authErrors,
           404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/tuition-requests/{id}/close": {
+      put: {
+        tags: ["Tuition requests"],
+        summary: "Close your own request",
+        description:
+          "For a request that is sorted. Open or matched requests only; pending applications are declined and their tutors told.",
+        parameters: [pathId("id", "Request id.")],
+        responses: {
+          200: ok("The request's new status.", {
+            type: "object",
+            properties: { id: objectId("Request id."), status: enumOf(TuitionRequestStatus) },
+          }),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/tuition-requests/{id}/withdraw": {
+      put: {
+        tags: ["Tuition requests"],
+        summary: "Withdraw your own request",
+        description:
+          "For a request that is no longer wanted; leaves it `CANCELLED`. Open or matched requests only; pending applications are declined and their tutors told.",
+        parameters: [pathId("id", "Request id.")],
+        responses: {
+          200: ok("The request's new status.", {
+            type: "object",
+            properties: { id: objectId("Request id."), status: enumOf(TuitionRequestStatus) },
+          }),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
         },
       },
     },
@@ -793,8 +875,19 @@ export const openapiSpec = {
       post: {
         tags: ["Bookings"],
         summary: "Book a tutor straight from their profile",
-        description:
+        description: [
           "The Find a Tutor path, with no application behind it. Starts REQUESTED for the tutor to confirm.",
+          "",
+          "Send `repeat` to book a recurring series. With only `count` it is the same weekday and time every week,",
+          "2 to 8 sessions. With `days` and `weeks` it is the same time on each chosen weekday for that many weeks",
+          "(for example Monday, Tuesday and Wednesday for 4 weeks is 12 sessions): 1 to 7 different weekdays, 1 to 8",
+          "weeks, and at most 24 sessions in all. The weeks are rolling blocks of seven days counted from `startTime`,",
+          "which is the first session and must fall on one of the chosen days; each other day is its next occurrence",
+          "after it. The series is checked whole before anything is written: the first session must be in the",
+          "future, every session must sit inside the tutor's weekly availability for its day (otherwise 400",
+          "`OUTSIDE_AVAILABILITY`) and clear the tutor's confirmed sessions (otherwise 409 `SERIES_CONFLICT`). Both",
+          "errors list the offending start times in `error.dates`, and nothing is booked.",
+        ].join("\n"),
         requestBody: {
           required: true,
           ...json({
@@ -811,12 +904,126 @@ export const openapiSpec = {
                 maxLength: 120,
                 description: "Where to meet: a campus venue, or a place the student named themselves such as a coffee shop.",
               },
+              repeat: {
+                type: "object",
+                description: "Book a recurring series. Leave out for a single session.",
+                required: ["frequency"],
+                properties: {
+                  frequency: { type: "string", enum: ["WEEKLY"] },
+                  days: {
+                    type: "array",
+                    minItems: 1,
+                    maxItems: 7,
+                    uniqueItems: true,
+                    items: enumOf(DayOfWeek),
+                    example: ["MONDAY", "TUESDAY", "WEDNESDAY"],
+                    description: "The weekdays to book, at the same time of day. Must include the weekday of `startTime`. Leave out to repeat only that weekday.",
+                  },
+                  weeks: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 8,
+                    example: 4,
+                    description: "With `days`: how many weeks the pattern runs for.",
+                  },
+                  count: {
+                    type: "integer",
+                    minimum: 2,
+                    maximum: 8,
+                    example: 4,
+                    description: "Without `days`: sessions in the series, one a week, 4 being a month. With `days`, read as `weeks` if `weeks` is left out.",
+                  },
+                },
+              },
             },
           }),
         },
         responses: {
-          201: ok("The booking.", ref("BookingSummary")),
+          201: ok(
+            "The booking; for a series, the first session plus every session in it.",
+            { oneOf: [ref("BookingSummary"), ref("BookingSeriesSummary")] }
+          ),
           400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/bookings/series/{seriesId}/cancel": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Cancel the rest of a weekly series",
+        description: [
+          "Either party may. Every session that has not started and is still on is cancelled, or, with",
+          "`fromBookingId`, only that session and the ones after it (\"this and all following\"). Sessions",
+          "already held or cancelled are left alone, and a single session can still be cancelled on its own.",
+          "The other party gets one notification.",
+        ].join("\n"),
+        parameters: [pathId("seriesId", "Series id, as returned when the series was booked.")],
+        requestBody: {
+          ...json({
+            type: "object",
+            properties: {
+              reason: { type: "string", example: "Clash with a lecture" },
+              fromBookingId: objectId("Cancel from this session onward; leave out to cancel every upcoming session."),
+            },
+          }),
+        },
+        responses: {
+          200: ok("The sessions that were cancelled.", {
+            type: "object",
+            properties: {
+              seriesId: objectId("Series id."),
+              cancelled: { type: "integer", example: 3 },
+              cancelledBy: objectId("Who cancelled."),
+              reason: { type: "string", nullable: true },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 2 } } },
+                  ],
+                },
+              },
+            },
+          }),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/bookings/series/{seriesId}/confirm": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Confirm a whole weekly series",
+        description: [
+          "The tutor accepts every session of the series that is still requested and not yet started.",
+          "Each is rechecked against the tutor's confirmed sessions; if any clash, 409 `SERIES_CONFLICT`",
+          "lists the dates and nothing is confirmed. Each confirmed session is written to Google",
+          "Calendar if one is linked, and the student gets a single notification.",
+        ].join("\n"),
+        parameters: [pathId("seriesId", "Series id, as returned when the series was booked.")],
+        responses: {
+          200: ok("The sessions that were confirmed.", {
+            type: "object",
+            properties: {
+              seriesId: objectId("Series id."),
+              confirmed: { type: "integer", example: 4 },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 1 } } },
+                  ],
+                },
+              },
+            },
+          }),
           ...authErrors,
           404: res.notFound,
           409: res.conflict,
@@ -866,6 +1073,95 @@ export const openapiSpec = {
         },
       },
     },
+    "/bookings/{id}/reschedule": {
+      put: {
+        tags: ["Bookings"],
+        summary: "Move a session to a new time",
+        description: [
+          "Either party may ask, for a session that is still requested or confirmed",
+          "and not yet started. A tutor moving a session keeps it confirmed (and a",
+          "requested one becomes confirmed); a student moving a confirmed session",
+          "sends it back to `REQUESTED` for the tutor to confirm. The other party is",
+          "notified and the Google Calendar event follows. A time the tutor already",
+          "has a confirmed session in answers 409 `SLOT_CONFLICT`.",
+        ].join("\n"),
+        parameters: [pathId("id", "Booking id.")],
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["startTime", "endTime"],
+            properties: {
+              startTime: dateTime("New start."),
+              endTime: dateTime("New end, after the start."),
+              location: { type: "string", maxLength: 120 },
+            },
+          }),
+        },
+        responses: {
+          200: ok("The moved booking.", {
+            type: "object",
+            properties: {
+              id: objectId("Booking id."),
+              status: enumOf(BookingStatus),
+              startTime: dateTime("New start."),
+              endTime: dateTime("New end."),
+            },
+          }),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+        },
+      },
+    },
+    "/bookings/{id}/check-in-code": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Issue a check-in code for a session",
+        description:
+          "The tutor of a confirmed session gets a fresh 6-digit code to show the student, as text and " +
+          "as a QR code (qrPayload). It works from 15 minutes before the start until the end, lasts 5 " +
+          "minutes, and replaces any earlier code. Only a hash of it is stored.",
+        parameters: [pathId("id", "Booking id.")],
+        responses: {
+          201: ok("The code to show the student.", ref("CheckInCode")),
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict
+        },
+      },
+    },
+    "/bookings/{id}/check-in": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Check in to a session",
+        description:
+          "The student of the session sends the code from the tutor's screen. Five wrong codes lock " +
+          "check-in until the tutor issues a new code. Checking in again returns the first check-in. " +
+          "The tutor is notified.",
+        paramaters: [pathId("id", "Booking id.")],
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["code"],
+            properties: {
+              code: { type: "string", pattern: "^\\d{6}$", example: "042917" },
+              method: { type: "string", enum: ["QR", "CODE"], description: "How the code was entered." }
+            },
+          }),
+        },
+        responses: {
+          200: ok("The check-in.", ref("Attendance")),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+          409: res.conflict,
+          429: { description: "Too many wrong codes - the tutor has to issue a new one." }
+        },
+      },
+    },
     "/bookings/{id}/notes": {
       put: {
         tags: ["Bookings"],
@@ -873,7 +1169,8 @@ export const openapiSpec = {
         description:
           "The tutor's own checklist and side notes about the student or guardian. Private to " +
           "the tutor who wrote them: they are returned with GET /bookings for that tutor and " +
-          "never for the student. The whole set is replaced on every save.",
+          "never for the student. The whole set is replaced on every save, so saving the same notes " +
+          "twice changes nothing and, when notes edited offline are replayed, the last save wins.",
         parameters: [pathId("id", "Booking id.")],
         requestBody: { required: true, ...json(ref("TutorNotes")) },
         responses: {
@@ -889,14 +1186,31 @@ export const openapiSpec = {
       get: {
         tags: ["Threads"],
         summary: "List your conversations",
+        description: [
+          "Most recently active first. Conversations are opened by the API when",
+          "a student accepts a tutor's offer or books a tutor directly, one per",
+          "student-tutor pair. Participants carry only `fullName` and `role`.",
+        ].join("\n"),
         parameters: [pageParam],
-        responses: { 200: ok("A page of threads.", pageOf(ref("Thread"))), ...authErrors },
+        responses: {
+          200: ok(
+            "A page of threads, each with the caller's unread count.",
+            pageOf({
+              allOf: [
+                ref("Thread"),
+                { type: "object", properties: { unread: { type: "integer", example: 2 } } },
+              ],
+            })
+          ),
+          ...authErrors,
+        },
       },
     },
     "/threads/{id}/messages": {
       get: {
         tags: ["Threads"],
         summary: "Read a thread",
+        description: "Opening a thread marks the other person's messages as read and clears the caller's unread count.",
         parameters: [pathId("id", "Thread id."), pageParam],
         responses: {
           200: ok("A page of messages, newest first.", pageOf(ref("Message"))),
@@ -1003,7 +1317,8 @@ export const openapiSpec = {
         tags: ["Calendar"],
         summary: "Link a Google Calendar",
         description:
-          "Exchanges the one-time auth code from the app's Google sign-in for a refresh token, stored encrypted.",
+          "Exchanges the one-time auth code from the app's Google sign-in for a refresh token, stored encrypted. " +
+          "Upcoming confirmed sessions with no calendar event yet are then added in the background.",
         requestBody: {
           required: true,
           ...json({
@@ -1075,10 +1390,10 @@ export const openapiSpec = {
           "month is the working draft and every earlier one is closed.",
         ].join("\n"),
         parameters: [
-          query("count", "How many months back, 1-12.", {
+          query("count", "How many months back, 1-24.", {
             type: "integer",
             minimum: 1,
-            maximum: 12,
+            maximum: 24,
             default: 3,
           }),
           query("tutorId", "Required for non-tutors; tutors always get their own."),
@@ -1288,8 +1603,8 @@ export const openapiSpec = {
               verification: { type: "boolean" },
             },
           },
-          smsFallback: { type: "boolean" },
           biometricEntry: { type: "boolean" },
+          defaultAreaId: { type: "string" },
           theme: enumOf(Theme),
         },
       },
@@ -1347,6 +1662,7 @@ export const openapiSpec = {
           status: enumOf(TuitionRequestStatus),
           applicationCount: { type: "integer" },
           matchScore: { type: "number", minimum: 0, maximum: 100, nullable: true },
+          clientRequestId: { type: "string", description: "The app's retry-safety id, if it sent one." },
           createdAt: dateTime("When it was posted."),
         },
       },
@@ -1385,6 +1701,9 @@ export const openapiSpec = {
           status: enumOf(BookingStatus),
           isTrial: { type: "boolean" },
           addressDisclosed: { type: "boolean" },
+          seriesId: { ...objectId("Shared by every session of a weekly series; unset for a single session."), nullable: true },
+          seriesIndex: { type: "integer", minimum: 1, nullable: true, description: "This session's place in its series, from 1." },
+          seriesCount: { type: "integer", minimum: 2, nullable: true, description: "How many sessions the series has." },
           cancelledBy: { ...objectId("Who cancelled."), nullable: true },
           cancellationReason: { type: "string", nullable: true },
           agreedRatePerHour: { type: "number", description: "ZAR per hour." },
@@ -1394,6 +1713,15 @@ export const openapiSpec = {
           tutorNotes: {
             ...ref("TutorNotes"),
             description: "Only present for the tutor teaching the session.",
+          },
+          attendance: {
+            type: "object",
+            nullable: true,
+            description: "Set once the student has checked in.",
+            properties: {
+              checkedInAt: dateTime("When the student checked in."),
+              method: { type: "string", enum: ["QR", "CODE"] }
+            },
           },
         },
       },
@@ -1420,6 +1748,23 @@ export const openapiSpec = {
           },
         },
       },
+      CheckInCode: {
+        type: "object",
+        properties: {
+          bookingId: objectId("Booking id."),
+          code: { type: "string", example: "042917" },
+          expiresAt: dateTime("When the code stops working."),
+          qrPayload: { type: "string", example: "tutorbridge://checkin?booking=665f...&code=042917" }
+        },
+      },
+      Attendance: {
+        type: "object",
+        properties: {
+          bookingId: objectId("Booking id."),
+          checkedInAt: dateTime("When the student checked in."),
+          method: { type: "string", enum: ["QR", "CODE"] }
+        },
+      },
       BookingSummary: {
         type: "object",
         description: "What the write endpoints return; the app refetches the list for the rest.",
@@ -1429,6 +1774,29 @@ export const openapiSpec = {
           startTime: dateTime("Session start."),
           endTime: dateTime("Session end."),
         },
+      },
+      BookingSeriesSummary: {
+        type: "object",
+        description: "A weekly series as just booked: the first session, and every session in order.",
+        allOf: [
+          ref("BookingSummary"),
+          {
+            type: "object",
+            properties: {
+              seriesId: objectId("Shared by every session of the series."),
+              seriesCount: { type: "integer", example: 4 },
+              bookings: {
+                type: "array",
+                items: {
+                  allOf: [
+                    ref("BookingSummary"),
+                    { type: "object", properties: { seriesIndex: { type: "integer", example: 1 } } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
       },
       Thread: {
         type: "object",

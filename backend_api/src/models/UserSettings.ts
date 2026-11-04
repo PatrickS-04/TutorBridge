@@ -8,8 +8,8 @@ export interface IUserSettings extends Document {
   userId: Types.ObjectId;
   language: Locale;
   notifications: INotificationPreferences;
-  smsFallback: boolean;
   biometricEntry: boolean;
+  defaultAreaId: string;
   theme: Theme;
   updatedAt: Date;
 }
@@ -19,8 +19,9 @@ const UserSettingsSchema = new Schema<IUserSettings>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     language: { type: String, enum: Object.values(Locale), default: Locale.EN },
     notifications: { type: NotificationPreferencesSchema, default: () => ({}) },
-    smsFallback: { type: Boolean, default: true },
     biometricEntry: { type: Boolean, default: true },
+    // Pre-fills the area on a student's new tuition request. Empty means no default.
+    defaultAreaId: { type: String, default: "" },
     theme: { type: String, enum: Object.values(Theme), default: Theme.SYSTEM },
   },
   { timestamps: { createdAt: false, updatedAt: true } }

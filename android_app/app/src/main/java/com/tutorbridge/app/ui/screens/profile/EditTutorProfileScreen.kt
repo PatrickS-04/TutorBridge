@@ -1,5 +1,7 @@
 package com.tutorbridge.app.ui.screens.profile
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,8 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -35,9 +35,9 @@ fun EditTutorProfileScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Edit Tutor Profile", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.edit_tutor_edit_tutor_profile), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Card(
@@ -51,25 +51,25 @@ fun EditTutorProfileScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Profile Completeness", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("${uiState.tutorProfileCompleteness}%", color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.edit_tutor_profile_completeness), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("${uiState.tutorProfileCompleteness}%", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 LinearProgressIndicator(
                     progress = uiState.tutorProfileCompleteness / 100f,
                     modifier = Modifier.fillMaxWidth().height(6.dp),
-                    color = NavySecondary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 if (uiState.tutorProfileCompleteness < 100) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("• Add languages spoken to reach 100%", fontSize = 11.5.sp, color = CrimsonPrimary)
+                    Text(stringResource(R.string.edit_tutor_add_languages_spoken_to_reach), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Languages Spoken", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.edit_tutor_languages_spoken), fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = uiState.tutorLanguagesSpoken,
                 onValueChange = onLanguagesChange,
@@ -79,7 +79,7 @@ fun EditTutorProfileScreen(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Designated Campus Consultation Room", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.edit_tutor_designated_campus_consultation_r), fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = uiState.tutorConsultationRoom,
                 onValueChange = onRoomChange,
@@ -90,11 +90,11 @@ fun EditTutorProfileScreen(
 
         Button(
             onClick = onSave,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
-            Text("Save Profile", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.edit_tutor_save_profile), fontWeight = FontWeight.Bold)
         }
     }
 }

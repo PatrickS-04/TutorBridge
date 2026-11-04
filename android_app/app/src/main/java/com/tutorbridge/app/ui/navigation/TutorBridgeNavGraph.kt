@@ -1,21 +1,32 @@
 package com.tutorbridge.app.ui.navigation
 
-import android.hardware.biometrics.BiometricManager
+import android.os.SystemClock
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.R
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
+import com.tutorbridge.app.data.model.BiometricStatus
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
+import com.tutorbridge.app.ui.components.OfflineBanner
 import com.tutorbridge.app.ui.screens.auth.AuthScreen
 import com.tutorbridge.app.ui.screens.auth.BiometricScreen
 import com.tutorbridge.app.ui.screens.auth.NewPasswordScreen
@@ -30,6 +41,8 @@ import com.tutorbridge.app.ui.screens.claims.TutorExportClaimsScreen
 import com.tutorbridge.app.ui.screens.find.FindTutorsScreen
 import com.tutorbridge.app.ui.screens.find.TutorProfileScreen
 import com.tutorbridge.app.ui.screens.history.LearningHistoryScreen
+import com.tutorbridge.app.ui.screens.messages.ChatScreen
+import com.tutorbridge.app.ui.screens.messages.MessagesScreen
 import com.tutorbridge.app.ui.screens.home.StudentHomeScreen
 import com.tutorbridge.app.ui.screens.home.TutorHomeScreen
 import com.tutorbridge.app.ui.screens.notifications.NotificationsScreen
@@ -45,16 +58,17 @@ import com.tutorbridge.app.ui.screens.settings.DeleteAccountScreen
 import com.tutorbridge.app.ui.screens.settings.EditProfileScreen
 import com.tutorbridge.app.ui.screens.settings.SettingsScreen
 import com.tutorbridge.app.ui.screens.splash.SplashScreen
+import com.tutorbridge.app.ui.screens.sync.SyncStatusScreen
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.viewmodel.TutorBridgeViewModel
 
-sealed class NavItem(val route: String, val title: String, val icon: ImageVector) {
-    object Home : NavItem("home", "Home", Icons.Default.Home)
-    object Find : NavItem("find", "Find", Icons.Default.Search)
-    object Claims : NavItem("claims", "Claims", Icons.Default.Receipt)
-    object Calendar : NavItem("calendar", "Calendar", Icons.Default.CalendarMonth)
-    object Requests : NavItem("requests", "Requests", Icons.Default.Assignment)
-    object Settings : NavItem("settings", "Settings", Icons.Default.Settings)
+sealed class NavItem(val route: String, val titleRes: Int, val icon: ImageVector) {
+    object Home : NavItem("home", R.string.nav_home, Icons.Default.Home)
+    object Find : NavItem("find", R.string.nav_find, Icons.Default.Search)
+    object Claims : NavItem("claims", R.string.nav_claims, Icons.Default.Receipt)
+    object Calendar : NavItem("calendar", R.string.nav_calendar, Icons.Default.CalendarMonth)
+    object Requests : NavItem("requests", R.string.nav_requests, Icons.Default.Assignment)
+    object Settings : NavItem("settings", R.string.nav_settings, Icons.Default.Settings)
 }
 
 private val studentRoutesWithBottomBar = listOf(
@@ -78,11 +92,57 @@ fun TutorBridgeNavGraph(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Back walks to the previous page. With none left, it warns once, and a second
+    // press within the toast's 2 seconds closes the app. Screens with their own
+    // BackHandler (unsaved notes, wizard steps) are composed later, so they go first.
+    val backActivity = LocalContext.current as FragmentActivity
+    var lastBackAt by remember { mutableLongStateOf(0L) }
+    BackHandler {
+        if (!viewModel.goBack()) {
+            val now = SystemClock.uptimeMillis()
+            if (lastBackAt != 0L && now - lastBackAt < 2_000L) {
+                backActivity.finish()
+            } else {
+                lastBackAt = now
+                Toast.makeText(backActivity, R.string.common_back_again_to_exit, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // Anything the server refused or could not answer.
     LaunchedEffect(uiState.dataErrorMessage) {
         uiState.dataErrorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.dismissDataError()
+        }
+    }
+
+    LaunchedEffect(uiState.noticeMessage) {
+        uiState.noticeMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissNotice()
+        }
+    }
+
+    if (uiState.showBiometricOffer) {
+        val activity = LocalContext.current as FragmentActivity
+        if (BiometricAuthentication(activity).status() == BiometricStatus.AVAILABLE) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissBiometricOffer() },
+                title = { Text(stringResource(R.string.biometric_offer_title)) },
+                text = { Text(stringResource(R.string.biometric_offer_body)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.toggleBiometric(true)
+                        viewModel.dismissBiometricOffer()
+                    }) { Text(stringResource(R.string.biometric_offer_yes)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissBiometricOffer() }) { Text(stringResource(R.string.biometric_offer_no)) }
+                }
+            )
+        } else {
+            LaunchedEffect(Unit) { viewModel.dismissBiometricOffer() }
         }
     }
 
@@ -104,8 +164,8 @@ fun TutorBridgeNavGraph(
                             NavItem.Settings -> uiState.currentRoute == "settings"
                         }
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(item.titleRes)) },
+                            label = { Text(stringResource(item.titleRes)) },
                             selected = isSelected,
                             onClick = {
                                 val target = when (item) {
@@ -129,7 +189,9 @@ fun TutorBridgeNavGraph(
             }
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
+        Column(modifier = Modifier.padding(innerPadding)) {
+        OfflineBanner(uiState, onClick = { viewModel.navigateTo("sync_status") })
+        Surface(modifier = Modifier.weight(1f)) {
             when (uiState.currentRoute) {
                 "splash" -> SplashScreen(
                     onGetStarted = { viewModel.navigateTo("auth") }
@@ -142,6 +204,7 @@ fun TutorBridgeNavGraph(
                     onSignUp = { fullName, email, password -> viewModel.signUp(fullName, email, password) },
                     onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
                     onGoogleSignInError = { message -> viewModel.setAuthError(message) },
+                    onForgotPassword = { email -> viewModel.sendPasswordResetTo(email) },
                     onToggleAuthMode = {viewModel.setAuthMode(
                         if (uiState.authMode == AuthMode.SIGN_IN) {
                             AuthMode.SIGN_UP
@@ -158,18 +221,27 @@ fun TutorBridgeNavGraph(
                 )
                 "biometric_lock" -> {
                     val activity = LocalContext.current as FragmentActivity
+                    var message by remember { mutableStateOf<String?>(null) }
+                    val unlock = {
+                        val biometric = BiometricAuthentication(activity)
+                        val status = biometric.status()
+                        if (status == BiometricStatus.AVAILABLE) {
+                            message = null
+                            biometric.authenticate(
+                                onSuccess = { viewModel.completeAuth() },
+                                onFailure = { message = it }
+                            )
+                        } else {
+                            // Never let them through because the lock cannot be shown:
+                            // signing in again is the way out.
+                            message = activity.getString(status.messageRes)
+                        }
+                    }
+                    // The prompt comes up by itself, before any of the user's data.
+                    LaunchedEffect(Unit) { unlock() }
                     BiometricScreen(
-                        onUnlockClick = {
-                            val biometricManager = BiometricAuthentication(activity)
-                            if (biometricManager.canAuthenticate()) {
-                                biometricManager.authenticate(
-                                    onSuccess = { viewModel.completeAuth() },
-                                    onFailure = {}
-                                )
-                            } else {
-                                viewModel.completeAuth()
-                            }
-                        },
+                        message = message,
+                        onUnlockClick = unlock,
                         onSignInDifferently = { viewModel.signOut() }
                     )
                 }
@@ -181,7 +253,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onNavigate = { viewModel.navigateTo(it) },
                     onAcceptBooking = { bookingId -> viewModel.acceptTutorBooking(bookingId) },
-                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) }
+                    onDeclineBooking = { bookingId -> viewModel.declineTutorBooking(bookingId) },
+                    onAcceptSeries = { seriesId -> viewModel.acceptTutorSeries(seriesId) },
+                    onDeclineSeries = { seriesId -> viewModel.declineTutorSeries(seriesId) }
                 )
                 "find_tutors" -> FindTutorsScreen(
                     uiState = uiState,
@@ -206,11 +280,15 @@ fun TutorBridgeNavGraph(
                 "review_booking" -> ReviewBookingScreen(
                     uiState = uiState,
                     onConfirm = { viewModel.sendBookingRequest() },
-                    onBack = { viewModel.navigateTo("booking_flow") }
+                    onBack = { viewModel.navigateTo("booking_flow") },
+                    onRepeatChange = viewModel::setRepeatWeekly,
+                    onRepeatCountChange = viewModel::setRepeatCount,
+                    onToggleDay = viewModel::toggleRepeatDay
                 )
                 "booking_sent" -> BookingRequestSentScreen(
                     onCheckStatus = { viewModel.checkBookingStatus() },
-                    onViewCalendar = { viewModel.navigateTo("calendar") }
+                    onViewCalendar = { viewModel.navigateTo("calendar") },
+                    seriesCount = uiState.lastSeriesCount
                 )
                 "booking_confirmed" -> BookingConfirmationScreen(
                     uiState = uiState,
@@ -227,18 +305,47 @@ fun TutorBridgeNavGraph(
                     onSelectDate = { viewModel.selectCalendarDate(it) },
                     onFilterChange = { viewModel.setCalendarFilter(it) },
                     onOpenSessionNotes = { session -> viewModel.openSessionNotes(session) },
-                    onAddEvent = { viewModel.navigateTo("find_tutors") }
+                    onAddEvent = { viewModel.navigateTo("find_tutors") },
+                    onReschedule = { session, date, time -> viewModel.rescheduleSession(session, date, time) },
+                    onShowCheckInCode = { session -> viewModel.showCheckInCode(session) },
+                    onDismissCheckInCode = { viewModel.dismissCheckInCode() },
+                    onScannedCheckIn = { session, raw -> viewModel.checkInFromScan(session, raw) },
+                    onTypedCheckIn = { session, code -> viewModel.checkIn(session, code, "CODE") },
+                    onScannerUnavailable = { viewModel.scannerUnavailable() },
+                    onCancelSeries = { session -> viewModel.cancelSeriesFrom(session) }
+                )
+
+                "sync_status" -> SyncStatusScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") },
+                    onSyncNow = { viewModel.syncNow() },
+                    onRetryFailed = { viewModel.retryFailedSync() },
+                    onDiscard = { viewModel.discardOutboxItem(it) }
+                )
+
+                // ===== Messaging =====
+                "messages" -> MessagesScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") },
+                    onOpenThread = { viewModel.openThread(it) }
+                )
+                "chat" -> ChatScreen(
+                    uiState = uiState,
+                    onBack = { viewModel.navigateTo("messages") },
+                    onDraftChange = { viewModel.setChatDraft(it) },
+                    onSend = { viewModel.sendChatMessage() },
+                    onLoadEarlier = { viewModel.loadEarlierMessages() }
                 )
 
                 // ===== Student requests flow =====
                 "my_requests" -> MyRequestsScreen(
                     uiState = uiState,
-                    onNewRequest = { viewModel.navigateTo("new_request") },
+                    onNewRequest = { viewModel.startNewRequest() },
                     onSelectRequest = { viewModel.selectRequest(it) }
                 )
                 "new_request" -> NewTuitionRequestScreen(
                     uiState = uiState,
-                    onBack = { viewModel.navigateTo("my_requests") },
+                    onBack = { viewModel.discardRequestDraft() },
                     onNext = { viewModel.updateDraftStep(uiState.requestDraft.step + 1) },
                     onPrevious = { viewModel.updateDraftStep(uiState.requestDraft.step - 1) },
                     onSelectSubject = { id, name -> viewModel.selectDraftSubject(id, name) },
@@ -252,7 +359,10 @@ fun TutorBridgeNavGraph(
                 "request_detail" -> RequestDetailScreen(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("my_requests") },
-                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) }
+                    onAcceptApplicant = { applicant -> viewModel.acceptApplicant(applicant) },
+                    onEdit = { viewModel.startEditingRequest(it) },
+                    onClose = { viewModel.endRequest(it.id, withdraw = false) },
+                    onWithdraw = { viewModel.endRequest(it.id, withdraw = true) }
                 )
 
                 // ===== Tutor requests board =====
@@ -275,7 +385,9 @@ fun TutorBridgeNavGraph(
                     uiState = uiState,
                     onBack = { viewModel.navigateTo("tutor_home") },
                     onSelectInstitution = { viewModel.selectInstitution(it) },
-                    onSelectClaimPeriod = { viewModel.selectClaimPeriod(it) }
+                    onSelectClaimPeriod = { viewModel.selectClaimPeriod(it) },
+                    onLoadEarlier = { viewModel.loadEarlierClaims() },
+                    onFetchCsv = { month, onResult -> viewModel.fetchClaimCsv(month, onResult) }
                 )
                 "session_prep" -> SessionPrepScreen(
                     uiState = uiState,
@@ -310,6 +422,7 @@ fun TutorBridgeNavGraph(
                     onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") }
                 )
                 "settings" -> {
+                    val activity = LocalContext.current as FragmentActivity
                     val linkCalendar = GoogleAuthentication.rememberCalendarAuthorizer(
                         onAuthCode = { authCode -> viewModel.linkCalendar(authCode) },
                         onError = { message -> viewModel.setCalendarMessage(message) }
@@ -327,18 +440,24 @@ fun TutorBridgeNavGraph(
                         onSignOut = { viewModel.signOut() },
                         onEditProfileClick = { viewModel.navigateTo("edit_profile") },
                         onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
-                        onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
-                        onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
-                        onToggleBiometric = { viewModel.toggleBiometric(it) },
+                        onToggleMessageNotifications = { viewModel.toggleMessageNotifications(it) },
+                        onToggleBiometric = { enabled ->
+                            val status = BiometricAuthentication(activity).status()
+                            if (enabled && status != BiometricStatus.AVAILABLE) viewModel.showNotice(activity.getString(status.messageRes))
+                            else viewModel.toggleBiometric(enabled)
+                        },
                         onLinkCalendar = linkCalendar,
                         onUnlinkCalendar = { viewModel.unlinkCalendar() },
-                        onChangePassword = { viewModel.sendPasswordReset(it) }
+                        onChangePassword = { viewModel.sendPasswordReset(it) },
+                        onOpenSyncStatus = { viewModel.navigateTo("sync_status") },
+                        onSyncNow = { viewModel.syncNow() },
+                        onSelectDefaultArea = { viewModel.setDefaultArea(it) }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(
                     uiState = uiState,
                     onConfirmDelete = {
-                        viewModel.deleteStudentAccount {
+                        viewModel.deleteAccount {
                             viewModel.navigateTo("auth")
                         }
                     },
@@ -356,6 +475,7 @@ fun TutorBridgeNavGraph(
                     onNavigate = { viewModel.navigateTo(it) }
                 )
             }
+        }
         }
     }
 }

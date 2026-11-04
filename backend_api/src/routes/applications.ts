@@ -11,6 +11,7 @@ import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, requireRole, AuthRequest } from "../middleware/auth";
 import { notify } from "../utils/notify";
+import { ensureThread } from "../utils/threads";
 
 const router = Router();
 router.use(authenticate);
@@ -56,16 +57,18 @@ router.put(
       await TuitionRequest.findByIdAndUpdate(owningRequest._id, {
         $set: { status: TuitionRequestStatus.MATCHED },
       });
+      //A match is the moment two people need to be able to talk about times and venue.
+      await ensureThread(req.auth!.institutionId, req.auth!.userId, String(application.tutorId), {
+        applicationId: application._id,
+      });
     }
 
     notify(
       req.auth!.institutionId,
       String(application.tutorId),
       NotificationCategory.APPLICATION,
-      decision === "accept" ? "Your application was accepted" : "Your application was declined",
-      decision === "accept"
-        ? "The student accepted your offer - agree a time to lock in the booking."
-        : "The student went with another tutor this time.",
+      decision === "accept" ? "application.accepted" : "application.declined",
+      {},
       `tutorbridge://applications/${application._id}`
     );
 

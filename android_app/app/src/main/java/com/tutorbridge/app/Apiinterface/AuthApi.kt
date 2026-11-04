@@ -24,6 +24,10 @@ interface AuthApi {
     @POST("auth/change-password")
     suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
 
+    /** Public - called as the app starts, to wake a host that has gone to sleep. */
+    @GET("health")
+    suspend fun health(): Response<Unit>
+
     /** Public - the sign-up screen needs this before anybody is signed in. */
     @GET("reference/institutions")
     suspend fun listInstitutions(): Response<List<InstitutionSummary>>

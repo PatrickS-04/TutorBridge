@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Reference: Android Developers. 2026. Save data in a local database using Room. [Online].
+    //   Available at: https://developer.android.com/training/data-storage/room [Accessed 20 October 2026].
+    alias(libs.plugins.ksp)
     //Firebase
     id("com.google.gms.google-services")
 }
@@ -15,13 +18,18 @@ val localProperties = Properties().apply {
         ?.inputStream()?.use { load(it) }
 }
 
-// 10.0.2.2 is the emulator's alias for the host's localhost and is unroutable
-// from a physical device. For a phone, set API_BASE_URL=http://127.0.0.1:5000/
-// in local.properties: every build then tunnels that port on each connected
-// device to this machine over adb, whatever network the phone is on.
+// A fresh clone talks to the API hosted on Azure. To use the API on this machine
+// (npm run dev, port 5000), set API_BASE_URL in local.properties:
+//   http://127.0.0.1:5000/ -> every build tunnels that port on each connected device
+//               or emulator to this machine over adb, whatever network the phone is on
+//   emulator -> http://10.0.2.2:5000/ (the emulator's alias for the host's localhost,
+//               unroutable from a physical device)
 // Reference: Android Developers. 2026. Android Emulator networking. [Online].
 //   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
-val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:5000/")
+val apiBaseUrl: String = localProperties.getProperty(
+    "API_BASE_URL",
+    "https://tutorbridge-a8bagke0erc8a2an.southafricanorth-01.azurewebsites.net/"
+)
 
 android {
     namespace = "com.tutorbridge.app"
@@ -31,8 +39,11 @@ android {
         applicationId = "com.tutorbridge.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // CI numbers each build so a newer APK installs over an older one, and the
+        // release tag matches versionName. Local builds stay at version 1.
+        val ciRun = System.getenv("GITHUB_RUN_NUMBER")
+        versionCode = ciRun?.toInt() ?: 1
+        versionName = "1.0.${ciRun ?: 0}"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
@@ -42,8 +53,24 @@ android {
         }
     }
 
+    // The keystore and its passwords come from the environment and never enter git.
+    // Without RELEASE_KEYSTORE, assembleRelease still works but the APK is unsigned.
+    // Reference: Android Developers. 2026. Sign your app. [Online].
+    //   Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+    signingConfigs {
+        System.getenv("RELEASE_KEYSTORE")?.let { keystore ->
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -60,6 +87,17 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // android.util.Log is not on the JVM unit-test classpath; without this the
+        // first Log call in code under test throws "not mocked" instead of returning.
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+// Room writes each schema version here, so a migration can be checked against
+// the one before it. The folder is committed.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
@@ -103,6 +141,13 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.android)
 
+    // Offline mode: Room caches what the API sent, WorkManager replays what the
+    // user did while offline once the connection is back.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -133,4 +178,8 @@ dependencies {
     //Google Maps is reached by intent (see VenueLink), so the SDK is not a dependency.
 
     implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.google.zxing:core:3.5.3")
 }

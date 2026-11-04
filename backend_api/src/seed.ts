@@ -23,6 +23,7 @@ import { Institution, InstitutionStatus, Subject, Province, Area, User, UserRole
 
 const TUTOR_EMAIL = "tutor@tutorbridge.test";
 const ADMIN_EMAIL = "admin@tutorbridge.test";
+const PLATFORM_ADMIN_EMAIL = "platform@tutorbridge.test";
 
 const WEEKDAY_HOURS = [
   DayOfWeek.MONDAY,
@@ -109,11 +110,13 @@ async function main() {
   );
 
   const admin = await seedUser(ADMIN_EMAIL, "Test Admin", UserRole.INSTITUTION_ADMIN);
+  const platformAdmin = await seedUser(PLATFORM_ADMIN_EMAIL, "Platform Admin", UserRole.PLATFORM_ADMIN);
 
   console.log(`institution : ${institution.name}`);
   console.log(`subjects    : ${subjects.length}   provinces: ${provinces.length}   areas: ${areas.length}`);
   console.log(`tutor       : ${tutor!.email} (role ${tutor!.role}, ${tutor!.firebaseUid ? "already claimed" : "unclaimed"})`);
   console.log(`admin       : ${admin!.email} (role ${admin!.role}, ${admin!.firebaseUid ? "already claimed" : "unclaimed"})`);
+  console.log(`platform    : ${platformAdmin!.email} (role ${platformAdmin!.role}, ${platformAdmin!.firebaseUid ? "already claimed" : "unclaimed"})`);
   console.log(`\nSign UP in the app with one of those emails and any password to sign in as that role.`);
 
   await mongoose.disconnect();

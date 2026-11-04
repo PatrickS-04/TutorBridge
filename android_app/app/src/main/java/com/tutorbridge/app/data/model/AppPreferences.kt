@@ -15,9 +15,17 @@ class AppPreferences(context: Context) {
         LAST_ROLE_KEY, null)?.let { runCatching {
             UserRole.valueOf(it) }.getOrNull() }
 
+    /** Everything of this user's goes; whether this phone has been asked about biometrics stays, or the question would return at every sign-in. */
     fun clear() {
-        preferences.edit().clear().apply()
+        val offered = getBiometricOffered()
+        preferences.edit().clear().putBoolean(BIOMETRIC_OFFERED_KEY, offered).apply()
     }
+
+    fun markBiometricOffered() {
+        preferences.edit().putBoolean(BIOMETRIC_OFFERED_KEY, true).apply()
+    }
+
+    fun getBiometricOffered(): Boolean = preferences.getBoolean(BIOMETRIC_OFFERED_KEY, false)
 
     fun enableBiometricSaved(enabled: Boolean) {
         preferences.edit().putBoolean(BIOMETRIC_ENABLED_KEY, enabled).apply()
@@ -25,17 +33,11 @@ class AppPreferences(context: Context) {
 
     fun getEnabledBiometric(): Boolean = preferences.getBoolean(BIOMETRIC_ENABLED_KEY, false)
 
-    fun enableSMSFallbackSaved(enabled: Boolean) {
-        preferences.edit().putBoolean(SMS_FALLBACK_KEY, enabled).apply()
-    }
-
-    fun getEnabledSMSFallback(): Boolean = preferences.getBoolean(SMS_FALLBACK_KEY, false)
-
-    fun enableSessionRemindersSaved(enabled: Boolean) {
+    fun enableMessageNotificationsSaved(enabled: Boolean) {
         preferences.edit().putBoolean(SESSION_REMINDERS_KEY, enabled).apply()
     }
 
-    fun getEnabledSessionReminders(): Boolean = preferences.getBoolean(SESSION_REMINDERS_KEY, false)
+    fun getEnabledMessageNotifications(): Boolean = preferences.getBoolean(SESSION_REMINDERS_KEY, false)
 
     fun enableBookingUpdatesSaved(enabled: Boolean) {
         preferences.edit().putBoolean(BOOKING_UPDATES_KEY, enabled).apply()
@@ -46,7 +48,7 @@ class AppPreferences(context: Context) {
     private companion object {
         const val LAST_ROLE_KEY = "last_role"
         const val BIOMETRIC_ENABLED_KEY = "biometric_enabled"
-        const val SMS_FALLBACK_KEY = "sms_fallback_enabled"
+        const val BIOMETRIC_OFFERED_KEY = "biometric_offered"
         const val SESSION_REMINDERS_KEY = "session_reminders_enabled"
         const val BOOKING_UPDATES_KEY = "booking_updates_enabled"
     }

@@ -17,7 +17,7 @@ enum class EventStatus {
 }
 
 enum class RequestStatus {
-    OPEN, MATCHED, OFFERED, COMPLETED
+    OPEN, MATCHED, OFFERED, COMPLETED, WITHDRAWN
 }
 
 enum class ClaimStatus {
@@ -73,7 +73,13 @@ data class StudentRequestUi(
     val matchedTutorName: String = "",
     /** How many tutors applied; the applicants themselves load on the detail screen. */
     val applicantCount: Int = 0,
-    val applicants: List<TutorApplicant> = emptyList()
+    val applicants: List<TutorApplicant> = emptyList(),
+    /** Made offline and not yet sent: drawn as a card, but there is nothing on the server to open. */
+    val pendingSync: Boolean = false,
+    /** Ids and hours the edit form is prefilled from. */
+    val subjectId: String = "",
+    val areaId: String = "",
+    val availability: List<AvailabilityDto> = emptyList()
 )
 
 data class TutorApplicant(
@@ -103,7 +109,53 @@ data class CalendarEventUi(
     /** The tutor's prep checklist for this session; empty for the student. */
     val checklist: List<SessionGoalUi> = emptyList(),
     /** The tutor's free-text side notes about this student or guardian. */
-    val sideNotes: String = ""
+    val sideNotes: String = "",
+    /** The session's window as the server sent it (ISO-8601), which a reschedule keeps the length of. */
+    val startIso: String = "",
+    val endIso: String = "",
+    /** CONFIRMED on the server. EventStatus folds REQUESTED into CONFIRMED, and check-in needs the real thing. */
+    val isConfirmed: Boolean = false,
+    /** REQUESTED on the server: waiting on the tutor, so not on anyone's Google Calendar yet. */
+    val isPending: Boolean = false,
+    /** "14:02" once the student has checked in; blank until then. */
+    val checkedInTime: String = "",
+    /** Set when this session is one of a weekly series; the same for every session in it. */
+    val seriesId: String? = null,
+    /** Its place in the series, from 1; 0 for a single session. */
+    val seriesIndex: Int = 0,
+    /** How many sessions the series has; 0 for a single session. */
+    val seriesCount: Int = 0
+) {
+    val checkedIn: Boolean get() = checkedInTime.isNotEmpty()
+    val isSeries: Boolean get() = seriesId != null && seriesCount > 1
+}
+
+// ==================== MESSAGING ====================
+
+/** One row of the Messages list: the other person, and what was said last. */
+data class ThreadUi(
+    val id: String,
+    val otherName: String,
+    val initials: String,
+    val preview: String,
+    val time: String,
+    val unread: Int
+)
+
+data class MessageUi(
+    val id: String,
+    val body: String,
+    /** Sent by the signed-in user, so it sits on the right. */
+    val mine: Boolean,
+    val time: String,
+    /** The server's ISO sentAt, which is also what orders the conversation. */
+    val sentAt: String,
+    /** Made by the app when the message was written; the same id comes back on the server's copy, which is how the two are matched up. */
+    val clientId: String = "",
+    /** Still on its way: shown straight away, replaced by the stored copy once the server answers. */
+    val pending: Boolean = false,
+    /** Pending and sitting in the offline queue, not being sent right now - the screen says "waiting" rather than "sending". */
+    val queued: Boolean = false
 )
 
 /** A booking a student requested, waiting for the tutor to confirm or decline. */
@@ -113,7 +165,13 @@ data class PendingBookingUi(
     val initials: String,
     val subjectName: String,
     val whenLabel: String,
-    val location: String
+    val location: String,
+    /** Set when this waiting session is one of a recurring series the student booked in one go. */
+    val seriesId: String? = null,
+    val seriesIndex: Int = 0,
+    val seriesCount: Int = 0,
+    /** The weekday the session falls on, in the phone's time zone, so a series card can say which days it covers. */
+    val dayOfWeek: java.time.DayOfWeek? = null
 )
 
 data class NotificationUi(
@@ -121,9 +179,16 @@ data class NotificationUi(
     val emoji: String,
     val title: String,
     val body: String,
-    val time: String,
+    /** When it was sent (ISO-8601); the screen says how long ago, in the language the app is showing. */
+    val createdAt: String,
     val unread: Boolean
 )
+
+/** A new request starts on the student's default campus area, if that area still exists. */
+fun newRequestDraft(defaultAreaId: String, areas: List<NamedIdDto>): RequestDraft {
+    val area = areas.firstOrNull { it.id == defaultAreaId } ?: return RequestDraft()
+    return RequestDraft(areaId = area.id, preferredVenue = area.name)
+}
 
 data class RequestDraft(
     val step: Int = 1,
@@ -138,7 +203,9 @@ data class RequestDraft(
     val startTime: String = "14:00",
     val endTime: String = "17:00",
     val topic: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    /** Set while an existing request is being edited; null for a new one. */
+    val editingRequestId: String? = null
 )
 
 // ==================== TUTOR: CLAIMS & TIMESHEETS ====================
@@ -153,7 +220,7 @@ data class ClaimSessionUi(
     val studentIdTag: String,
     val topic: String,
     val hours: Double,
-    val checkedIn: Boolean = true
+    val checkedIn: Boolean = false
 )
 
 data class ClaimPeriodUi(
@@ -164,7 +231,8 @@ data class ClaimPeriodUi(
     val sessionsCount: Int,
     val claimValue: Double,
     val claimRef: String = "",
-    val sessions: List<ClaimSessionUi> = emptyList()
+    val sessions: List<ClaimSessionUi> = emptyList(),
+    val verifiedCount: Int = 0
 )
 
 data class InstitutionUi(
@@ -214,4 +282,13 @@ data class UserProfileUi(
     val profileCompleteness: Int = 100,
     val languagesSpoken: String = "",
     val consultationRoom: String = ""
+)
+
+// ==================== CHECK-IN ====================
+// The code on the tutor's screen while the check-in dialog is open
+data class CheckInCodeUi(
+    val bookingId: String,
+    val code: String,
+    val qrPayload: String,
+    val expiresAt: java.time.Instant
 )

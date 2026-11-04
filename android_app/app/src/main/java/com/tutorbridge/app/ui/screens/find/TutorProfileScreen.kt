@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.find
 
+import com.tutorbridge.app.ui.components.AppLogo
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,8 +21,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.R
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -40,9 +41,9 @@ fun TutorProfileScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Tutor Profile", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.tutor_profile_tutor_profile), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Card(
@@ -62,29 +63,25 @@ fun TutorProfileScreen(
                 Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_tutorbridge_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    AppLogo(size = 16.dp, contentDescription = null)
                     Text(
                         listOf(tutor.department, tutor.staffOrTutorId).filter { it.isNotBlank() }.joinToString(" • "),
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "${tutor.subject} (${tutor.courseCode})",
-                    color = CrimsonPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     listOfNotNull(
-                        if (tutor.reviewsCount > 0) "★ ${tutor.rating} Rating" else null,
-                        if (tutor.activeNow) "Active now" else if (tutor.activeToday) "Active today" else "Not available today"
+                        if (tutor.reviewsCount > 0) stringResource(R.string.tutor_profile_rating, tutor.rating) else null,
+                        if (tutor.activeNow) stringResource(R.string.common_active_now) else if (tutor.activeToday) stringResource(R.string.common_active_today) else stringResource(R.string.common_not_available_today)
                     ).joinToString("  •  "),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -98,7 +95,7 @@ fun TutorProfileScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("About ${tutor.name.split(" ").last()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.tutor_profile_about, tutor.name.split(" ").last()), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(tutor.bio, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -110,10 +107,10 @@ fun TutorProfileScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProfileInfoRow(Icons.Default.School, "Department", tutor.department)
-                ProfileInfoRow(Icons.Default.Language, "Languages", tutor.languages.joinToString(", "))
-                ProfileInfoRow(Icons.Default.History, "Total Consultations", "${tutor.totalConsultations}+ sessions")
-                ProfileInfoRow(Icons.Default.Place, "Consultation Venue", tutor.consultationVenue)
+                ProfileInfoRow(Icons.Default.School, stringResource(R.string.tutor_profile_department), tutor.department)
+                ProfileInfoRow(Icons.Default.Language, stringResource(R.string.tutor_profile_languages), tutor.languages.joinToString(", "))
+                ProfileInfoRow(Icons.Default.History, stringResource(R.string.tutor_profile_total_consultations), stringResource(R.string.tutor_profile_sessions_count, tutor.totalConsultations))
+                ProfileInfoRow(Icons.Default.Place, stringResource(R.string.tutor_profile_consultation_venue), tutor.consultationVenue)
             }
         }
 
@@ -121,21 +118,23 @@ fun TutorProfileScreen(
 
         Button(
             onClick = onBookSession,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = uiState.isOnline,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Select & Choose Time Slot", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.tutor_profile_select_choose_time_slot), fontWeight = FontWeight.Bold)
         }
+        NeedsConnectionHint(uiState.isOnline)
     }
 }
 
 @Composable
 private fun ProfileInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(icon, contentDescription = label, tint = NavySecondary, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         Column {
-            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
         }
     }

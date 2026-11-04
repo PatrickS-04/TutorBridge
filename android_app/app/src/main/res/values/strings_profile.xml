@@ -1,0 +1,14 @@
+<resources>
+    <string name="edit_profile_bio">Bio</string>
+    <string name="edit_profile_department_faculty">Department / Faculty</string>
+    <string name="edit_profile_edit_profile">Edit Profile</string>
+    <string name="edit_profile_email">Email</string>
+    <string name="edit_profile_hourly_rate_r">Hourly Rate (R)</string>
+    <string name="edit_profile_save_changes">Save Changes</string>
+    <string name="edit_tutor_add_languages_spoken_to_reach">• Add languages spoken to reach 100%</string>
+    <string name="edit_tutor_designated_campus_consultation_r">Designated Campus Consultation Room</string>
+    <string name="edit_tutor_edit_tutor_profile">Edit Tutor Profile</string>
+    <string name="edit_tutor_languages_spoken">Languages Spoken</string>
+    <string name="edit_tutor_profile_completeness">Profile Completeness</string>
+    <string name="edit_tutor_save_profile">Save Profile</string>
+</resources>

@@ -1,5 +1,9 @@
 package com.tutorbridge.app.ui.screens.booking
 
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.tutorbridge.app.ui.components.NeedsConnectionHint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -15,35 +19,36 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.SERIES_MIN
 import com.tutorbridge.app.data.model.TutorUi
+import com.tutorbridge.app.data.model.availableDays
+import com.tutorbridge.app.data.model.maxWeeksFor
+import com.tutorbridge.app.data.model.sessionDates
 import com.tutorbridge.app.data.repository.slotsOn
 import com.tutorbridge.app.ui.components.VenueLink
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.CrimsonTint
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavySecondary
-import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
-// The next two weeks, starting tomorrow.
-private val dayLabel = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
+// The next two weeks, starting today.
+private val dayLabel get() = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
 private fun upcomingDates(): List<Pair<String, Pair<String, String>>> =
-    (1..14).map { offset ->
+    (0..13).map { offset ->
         val date = LocalDate.now().plusDays(offset.toLong())
-        date.toString() to Pair(date.format(dayLabel).uppercase(Locale.ENGLISH), date.dayOfMonth.toString())
+        date.toString() to Pair(date.format(dayLabel).uppercase(Locale.getDefault()), date.dayOfMonth.toString())
     }
 
 // ==================== STEP 1: SELECT AVAILABILITY ====================
@@ -83,14 +88,14 @@ fun BookingFlowScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Select Availability", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_select_availability), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Text(
-            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-                ?.plus(" ${selectedDate.year}") ?: "Pick a date",
+            selectedDate?.month?.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
+                ?.plus(" ${selectedDate.year}") ?: stringResource(R.string.booking_pick_a_date),
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp
         )
@@ -104,25 +109,25 @@ fun BookingFlowScreen(
                 Column(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surface)
+                        .background(if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surface)
                         .clickable { onSelectDate(dateVal) }
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(dayNum.first, fontSize = 10.sp, color = if (selected) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
+                    Text(dayNum.first, fontSize = 12.sp, color = if (selected) MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(dayNum.second, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
 
-        Text("Available Slot (1 hour)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(R.string.booking_available_slot_1_hour), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
         if (slots.isEmpty()) {
             Text(
                 if (tutor.windows.isEmpty())
-                    "${tutor.name.split(" ").first()} has not published any hours yet - pick another tutor."
+                    stringResource(R.string.booking_no_hours_published, tutor.name.split(" ").first())
                 else
-                    "${tutor.name.split(" ").first()} has no hours set for this day - try another date.",
+                    stringResource(R.string.booking_no_hours_day, tutor.name.split(" ").first()),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -137,7 +142,7 @@ fun BookingFlowScreen(
                             modifier = Modifier.weight(1f).clickable { onSelectSlot(slot) },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Text(
@@ -145,7 +150,7 @@ fun BookingFlowScreen(
                                 modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp
                             )
                         }
@@ -155,21 +160,21 @@ fun BookingFlowScreen(
             }
         }
 
-        Text("Session Location", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(R.string.booking_session_location), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
         venues.forEach { venue ->
             val isSelected = uiState.selectedLocation == venue
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onSelectLocation(venue) },
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = if (isSelected) NavySecondary else MaterialTheme.colorScheme.surface)
+                colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surface)
             ) {
                 Text(
                     venue,
                     modifier = Modifier.padding(14.dp),
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                    color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -178,8 +183,8 @@ fun BookingFlowScreen(
             value = customVenue,
             // Capped where the server caps it, so a long paste fails here and not on submit.
             onValueChange = { if (it.length <= 120) onSelectLocation(it) },
-            label = { Text("Somewhere else") },
-            placeholder = { Text("e.g. The Daily Grind coffee shop, Main Road") },
+            label = { Text(stringResource(R.string.booking_somewhere_else)) },
+            placeholder = { Text(stringResource(R.string.booking_e_g_the_daily_grind)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
@@ -193,11 +198,11 @@ fun BookingFlowScreen(
         Button(
             onClick = onNext,
             enabled = uiState.selectedSlot.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Continue to Review", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_continue_to_review), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -208,7 +213,10 @@ fun BookingFlowScreen(
 fun ReviewBookingScreen(
     uiState: TutorBridgeUiState,
     onConfirm: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRepeatChange: (Boolean) -> Unit = {},
+    onRepeatCountChange: (Int) -> Unit = {},
+    onToggleDay: (DayOfWeek) -> Unit = {}
 ) {
     val tutor = uiState.selectedTutor ?: return
 
@@ -216,14 +224,15 @@ fun ReviewBookingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text("Review Booking", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_review_booking), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
         Card(
@@ -242,7 +251,7 @@ fun ReviewBookingScreen(
                 ) { Text(tutor.initials, fontWeight = FontWeight.Bold) }
                 Column {
                     Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("${tutor.subject} (${tutor.courseCode})", color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("${tutor.subject} (${tutor.courseCode})", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -253,34 +262,181 @@ fun ReviewBookingScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ReviewRow("Date", uiState.selectedBookingDate)
-                ReviewRow("Time", "${uiState.selectedSlot} (1 hour)")
-                ReviewRow("Location", uiState.selectedLocation)
-                ReviewRow("Calendar Sync", "✓ Auto-adds to Calendar tab")
+                ReviewRow(stringResource(R.string.booking_date), uiState.selectedBookingDate)
+                ReviewRow(stringResource(R.string.booking_time), stringResource(R.string.booking_time_one_hour, uiState.selectedSlot))
+                ReviewRow(stringResource(R.string.booking_location), uiState.selectedLocation)
+                ReviewRow(stringResource(R.string.booking_calendar_sync), stringResource(R.string.booking_auto_adds_to_calendar_tab))
             }
+        }
+
+        // A session the student already agreed with a tutor is one session; only a direct booking can repeat.
+        if (!uiState.bookingFromApplication) {
+            RepeatCard(
+                uiState = uiState,
+                onToggleDay = onToggleDay,
+                onRepeatChange = onRepeatChange,
+                onCountChange = onRepeatCountChange
+            )
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(NavyTint)
+                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(Icons.Default.Place, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
-            Text("You will meet ${tutor.name.split(" ").last()} at the location above once they confirm.", fontSize = 11.5.sp, color = NavySecondary)
+            Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
+            Text(stringResource(R.string.booking_you_will_meet, tutor.name.split(" ").last()), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(8.dp))
 
+        // How many sessions this will ask for: the days booked, for one week or for each week it repeats.
+        val sessions = uiState.bookedDays.size * (if (uiState.repeatWeekly) uiState.repeatCount else 1)
+        val series = !uiState.bookingFromApplication && sessions >= 2
         Button(
             onClick = onConfirm,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = uiState.isOnline,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Confirm Request", fontWeight = FontWeight.Bold)
+            Text(
+                if (series) stringResource(R.string.booking_confirm_series, sessions)
+                else stringResource(R.string.booking_confirm_request),
+                fontWeight = FontWeight.Bold
+            )
+        }
+        NeedsConnectionHint(uiState.isOnline)
+    }
+}
+
+/**
+ * Which days to book, whether to repeat them weekly, and the dates that result.
+ *
+ * The date picked above is the first session and its weekday is always booked. Every other day, and every following
+ * week, is counted from it in rolling blocks of seven days (see [sessionDates]), so the dates listed here are the
+ * dates the server books.
+ */
+@Composable
+private fun RepeatCard(
+    uiState: TutorBridgeUiState,
+    onToggleDay: (DayOfWeek) -> Unit,
+    onRepeatChange: (Boolean) -> Unit,
+    onCountChange: (Int) -> Unit
+) {
+    val firstDate = runCatching { LocalDate.parse(uiState.selectedBookingDate) }.getOrNull()
+    val weeks = if (uiState.repeatWeekly) uiState.repeatCount else 1
+    val dates = firstDate?.let { sessionDates(it, uiState.repeatDays, weeks) }.orEmpty()
+    val maxWeeks = maxWeeksFor(uiState.bookedDays.size)
+    // Only days the tutor works at this time can be added; the chosen date's own weekday is always on.
+    val open = availableDays(uiState.selectedTutor?.windows.orEmpty(), uiState.selectedSlot)
+    val dayName = { day: DayOfWeek -> day.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
+    val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column {
+                Text(stringResource(R.string.booking_days_title), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    stringResource(R.string.booking_days_hint),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                DayOfWeek.values().forEach { day ->
+                    FilterChip(
+                        selected = day in uiState.bookedDays,
+                        onClick = { onToggleDay(day) },
+                        enabled = day == uiState.firstDay || day in open,
+                        label = { Text(dayName(day), fontSize = 12.sp) }
+                    )
+                }
+            }
+
+            if (DayOfWeek.values().any { it != uiState.firstDay && it !in open }) {
+                Text(
+                    stringResource(R.string.booking_days_unavailable),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.booking_repeat_weekly), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        stringResource(R.string.booking_repeat_hint),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = uiState.repeatWeekly, onCheckedChange = onRepeatChange)
+            }
+
+            if (uiState.repeatWeekly) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.booking_repeat_weeks), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount - 1) },
+                            enabled = uiState.repeatCount > SERIES_MIN
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.booking_repeat_fewer))
+                        }
+                        Text("${uiState.repeatCount}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        IconButton(
+                            onClick = { onCountChange(uiState.repeatCount + 1) },
+                            enabled = uiState.repeatCount < maxWeeks
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.booking_repeat_more))
+                        }
+                    }
+                }
+            }
+
+            // Two or more dates is a series; one is the ordinary booking and needs no list.
+            if (dates.size >= 2) {
+                Text(
+                    stringResource(
+                        R.string.booking_pattern_summary,
+                        uiState.bookedDays.joinToString(", ") { dayName(it) },
+                        uiState.selectedSlot
+                    ),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    pluralStringResource(R.plurals.booking_pattern_total, dates.size, dates.size),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(stringResource(R.string.booking_repeat_dates), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                dates.forEachIndexed { index, date ->
+                    Text("${index + 1}.  ${date.format(dateFormat)}", fontSize = 13.sp)
+                }
+            }
         }
     }
 }
@@ -298,7 +454,9 @@ private fun ReviewRow(label: String, value: String) {
 @Composable
 fun BookingRequestSentScreen(
     onCheckStatus: () -> Unit,
-    onViewCalendar: () -> Unit
+    onViewCalendar: () -> Unit,
+    /** Sessions in the weekly series just requested, or 0 for a single session. */
+    seriesCount: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -309,16 +467,26 @@ fun BookingRequestSentScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier.size(80.dp).clip(CircleShape).background(NavyTint),
+            modifier = Modifier.size(80.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.HourglassEmpty, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(36.dp))
+            Icon(Icons.Default.HourglassEmpty, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(36.dp))
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Booking Request Sent!", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text(stringResource(R.string.booking_booking_request_sent), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        if (seriesCount > 0) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                pluralStringResource(R.plurals.booking_series_requested, seriesCount, seriesCount),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Your request was submitted and synched with your calendar. Most tutors reply in less than 2 hours.",
+            stringResource(
+                if (seriesCount > 0) R.string.booking_series_submitted else R.string.booking_your_request_was_submitted_and
+            ),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -326,12 +494,12 @@ fun BookingRequestSentScreen(
         Spacer(modifier = Modifier.height(28.dp))
         OutlinedButton(
             onClick = onCheckStatus,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             shape = RoundedCornerShape(24.dp)
-        ) { Text("Check for a reply", fontWeight = FontWeight.Bold) }
+        ) { Text(stringResource(R.string.booking_check_for_a_reply), fontWeight = FontWeight.Bold) }
         Spacer(modifier = Modifier.height(14.dp))
         TextButton(onClick = onViewCalendar) {
-            Text("View in Calendar Tab", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_view_in_calendar_tab), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -358,13 +526,13 @@ fun BookingConfirmationScreen(
             modifier = Modifier.size(80.dp).clip(CircleShape).background(EmeraldTint),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.CheckCircle, contentDescription = "Success", tint = EmeraldSuccess, modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.booking_success), tint = EmeraldSuccess, modifier = Modifier.size(48.dp))
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Session Confirmed!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.booking_session_confirmed), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Your tutor accepted! Get ready for your session at the location below.",
+            stringResource(R.string.booking_your_tutor_accepted_get_ready),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -377,9 +545,9 @@ fun BookingConfirmationScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ReviewRow2("Tutor", tutor?.name ?: "")
-                ReviewRow2("Date & Time", "${uiState.selectedBookingDate}, ${uiState.selectedSlot}")
-                ReviewRow2("Location", uiState.selectedLocation)
+                ReviewRow2(stringResource(R.string.booking_tutor), tutor?.name ?: "")
+                ReviewRow2(stringResource(R.string.booking_date_time), "${uiState.selectedBookingDate}, ${uiState.selectedSlot}")
+                ReviewRow2(stringResource(R.string.booking_location), uiState.selectedLocation)
             }
         }
 
@@ -387,15 +555,15 @@ fun BookingConfirmationScreen(
 
         Button(
             onClick = onGoToCalendar,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
-            Text("View on Calendar", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_view_on_calendar), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
         TextButton(onClick = onBackToDashboard) {
-            Text("Back to Dashboard", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.common_back_to_dashboard), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -431,7 +599,7 @@ fun BookingDeclinedScreen(
             Text("🙁", fontSize = 32.sp)
         }
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Booking Declined", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text(stringResource(R.string.booking_booking_declined), fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(20.dp))
 
         Card(
@@ -440,13 +608,13 @@ fun BookingDeclinedScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Tutor's note:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.booking_tutor_s_note), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     "\"$declineNote\"",
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = NavySecondary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -455,19 +623,19 @@ fun BookingDeclinedScreen(
 
         Button(
             onClick = onPickAnotherSlot,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
-            Text("Pick Another Slot", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_pick_another_slot), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedButton(
             onClick = onFindAnotherTutor,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
-            Text("Find Another Tutor", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.booking_find_another_tutor), fontWeight = FontWeight.Bold)
         }
     }
 }

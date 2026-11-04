@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.history
 
+import androidx.compose.ui.res.pluralStringResource
+import com.tutorbridge.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,16 +10,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -25,6 +28,7 @@ fun LearningHistoryScreen(
     uiState: TutorBridgeUiState,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -35,13 +39,24 @@ fun LearningHistoryScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    "${uiState.userName.split(" ").firstOrNull() ?: "Student"}'s Learning History",
+                    stringResource(
+                        R.string.history_title,
+                        uiState.userName.split(" ").firstOrNull() ?: stringResource(R.string.history_default_name)
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+                // Nothing to export until a session is completed.
+                IconButton(
+                    onClick = { exportLearningHistory(context, uiState.userName, uiState.institutionName, uiState.learningHistory) },
+                    enabled = uiState.learningHistory.isNotEmpty()
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = stringResource(R.string.history_pdf_share))
+                }
             }
         }
 
@@ -52,26 +67,7 @@ fun LearningHistoryScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Student Health Index", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text("${uiState.studentHealthIndexPercent}% High", color = CrimsonPrimary, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LinearProgressIndicator(
-                        progress = uiState.studentHealthIndexPercent / 100f,
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)),
-                        color = CrimsonPrimary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = {}, label = { Text("${uiState.lessonsTaught} Lessons Taught") })
-                        AssistChip(onClick = {}, label = { Text("${uiState.targetGrade} Target Grade") })
-                    }
+                    AssistChip(onClick = {}, label = { Text(pluralStringResource(R.plurals.history_lessons_taught, uiState.lessonsTaught, uiState.lessonsTaught)) })
                 }
             }
         }
@@ -81,8 +77,11 @@ fun LearningHistoryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Past Completed Sessions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("Active student since Sept 2026 • ${uiState.studentHealthIndexPercent}% Mastery", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.history_past_completed_sessions), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                // Newest first, so the last entry is the student's first session.
+                uiState.learningHistory.lastOrNull()?.let { first ->
+                    Text(stringResource(R.string.history_active_since, first.date), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 
@@ -95,7 +94,7 @@ fun LearningHistoryScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(entry.title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, modifier = Modifier.weight(1f))
-                        Text(entry.date, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(entry.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(entry.summary, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

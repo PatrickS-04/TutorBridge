@@ -3,10 +3,12 @@ package com.tutorbridge.app.Retrofit
 import com.tutorbridge.app.Apiinterface.AuthApi
 import com.tutorbridge.app.Apiinterface.TutorBridgeApi
 import com.tutorbridge.app.BuildConfig
+import com.tutorbridge.app.network.OfflineGateInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 // References:
@@ -18,13 +20,12 @@ import java.util.concurrent.TimeUnit
 //   Available at: https://github.com/google/gson [Accessed 21 September 2026].
 object RetrofitInstance {
 
-    // 10.0.2.2 = the host machine's localhost, as seen from the Android
-    // emulator, matching backend_api running locally on :5000. Point this at
-    // the deployed Azure App Service URL for a physical device / release build.
+    // Set in app/build.gradle.kts; local.properties can override API_BASE_URL.
     private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        // Bodies hold personal data, so they only reach logcat in debug builds.
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
     }
 
     // One client for everything: AuthInterceptor attaches the Firebase ID
@@ -32,10 +33,17 @@ object RetrofitInstance {
     // public endpoints (GET /reference/institutions) work through it too.
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            // First, so a forced-offline request is refused before anything else runs for it.
+            .addInterceptor(OfflineGateInterceptor())
+            // So the server words its errors in the app's language. Read per request: a language switch does not restart the process.
+            .addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("Accept-Language", Locale.getDefault().language).build())
+            }
             .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthInterceptor())
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            // Long enough for a free host to wake from sleep.
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 

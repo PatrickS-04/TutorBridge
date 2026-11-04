@@ -14,17 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.NamedIdDto
 import com.tutorbridge.app.data.model.UserRole
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.data.repository.initialsOf
+import com.tutorbridge.app.ui.components.savedAtLabel
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.R
+import com.tutorbridge.app.data.model.Language
 
 @Composable
 fun SettingsScreen(
@@ -36,32 +39,53 @@ fun SettingsScreen(
     onSignOut: () -> Unit,
     onEditProfileClick: () -> Unit = {},
     onToggleBookingUpdates: (Boolean) -> Unit = {},
-    onToggleSessionReminders: (Boolean) -> Unit = {},
-    onToggleSmsFallback: (Boolean) -> Unit = {},
+    onToggleMessageNotifications: (Boolean) -> Unit = {},
     onToggleBiometric: (Boolean) -> Unit = {},
     onLinkCalendar: () -> Unit = {},
     onUnlinkCalendar: () -> Unit = {},
-    onChangePassword: ((String) -> Unit) -> Unit = {}
+    onChangePassword: ((String) -> Unit) -> Unit = {},
+    onOpenSyncStatus: () -> Unit = {},
+    onSyncNow: () -> Unit = {},
+    onSelectDefaultArea: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val isTutor = uiState.role == UserRole.TUTOR
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var showLanguageDialog by remember {mutableStateOf(false) }
+    var showAreaDialog by remember { mutableStateOf(false) }
+
+    var showSignOutWarning by remember { mutableStateOf(false) }
+    // Work done offline and not yet sent lives on this phone, per account; signing out
+    // does not lose it, but it will not be sent until this person signs in again.
+    val unsent = uiState.pendingSyncCount + uiState.failedSyncCount
+    if (showSignOutWarning) {
+        AlertDialog(
+            onDismissRequest = { showSignOutWarning = false },
+            title = { Text(stringResource(R.string.unsent_warning_title)) },
+            text = { Text(pluralStringResource(R.plurals.unsent_warning_body, unsent, unsent)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSignOutWarning = false
+                    onSignOut()
+                }) { Text(stringResource(R.string.sign_out_anyway), color = MaterialTheme.colorScheme.primary) }
+            },
+            dismissButton = { TextButton(onClick = { showSignOutWarning = false }) { Text(stringResource(R.string.cancel_action)) } }
+        )
+    }
 
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("App Language") },
+            title = { Text(stringResource(R.string.settings_app_language)) },
             text = {
                 Column {
-                    listOf("English", "isiZulu", "Afrikaans").forEach { option ->
+                    Language.entries.map { it.displayName }.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onSelectLanguage(option)
                                     showLanguageDialog = false
-                                    (context as? android.app.Activity)?.recreate()
+                                    // AppCompat recreates the screen itself when the language changes.
+                                    onSelectLanguage(option)
                                 }
                                 .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -74,7 +98,39 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
+            }
+        )
+    }
+
+    if (showAreaDialog) {
+        val noDefault = NamedIdDto("", stringResource(R.string.settings_no_default_area))
+        AlertDialog(
+            onDismissRequest = { showAreaDialog = false },
+            title = { Text(stringResource(R.string.settings_default_area)) },
+            text = {
+                LazyColumn {
+                    items((listOf(noDefault) + uiState.areaOptions).size) { index ->
+                        val area = (listOf(noDefault) + uiState.areaOptions)[index]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAreaDialog = false
+                                    onSelectDefaultArea(area.id)
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = uiState.defaultAreaId == area.id, onClick = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(area.name)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAreaDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         )
     }
@@ -120,9 +176,9 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (isTutor) "CV" else "LN",
+                            text = initialsOf(uiState.userName),
                             fontWeight = FontWeight.Bold,
-                            color = NavySecondary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -138,7 +194,7 @@ fun SettingsScreen(
                         )
                     }
                     IconButton(onClick = onEditProfileClick) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.settings_edit), modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -159,6 +215,18 @@ fun SettingsScreen(
                         onClick = { showLanguageDialog = true }
                     )
                     Divider()
+                    // Only students post tuition requests, which is what this fills in.
+                    if (uiState.role != UserRole.TUTOR) {
+                        val defaultArea = uiState.areaOptions.firstOrNull { it.id == uiState.defaultAreaId }?.name
+                            ?: stringResource(R.string.settings_no_default_area)
+                        SettingsRow(
+                            icon = Icons.Default.Place,
+                            label = stringResource(R.string.settings_default_area),
+                            trailing = { Text("$defaultArea ›", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp) },
+                            onClick = { showAreaDialog = true }
+                        )
+                        Divider()
+                    }
                     SettingsCheckRow(
                         icon = Icons.Default.Notifications,
                         label = stringResource(R.string.booking_updates_label),
@@ -168,9 +236,9 @@ fun SettingsScreen(
                     Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Notifications,
-                        label = stringResource(R.string.session_reminders_label),
-                        checked = uiState.sessionRemindersEnabled,
-                        onCheckedChange = onToggleSessionReminders
+                        label = stringResource(R.string.message_notifications_label),
+                        checked = uiState.messageNotificationsEnabled,
+                        onCheckedChange = onToggleMessageNotifications
                     )
                 }
             }
@@ -191,8 +259,8 @@ fun SettingsScreen(
                         trailing = {
                             when {
                                 uiState.isCalendarLinking -> CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar) { Text(stringResource(R.string.calendar_disconnect)) }
-                                else -> TextButton(onClick = onLinkCalendar) { Text(stringResource(R.string.calendar_connect)) }
+                                uiState.calendarLinked -> TextButton(onClick = onUnlinkCalendar, enabled = uiState.isOnline) { Text(stringResource(R.string.calendar_disconnect)) }
+                                else -> TextButton(onClick = onLinkCalendar, enabled = uiState.isOnline) { Text(stringResource(R.string.calendar_connect)) }
                             }
                         },
                         onClick = {}
@@ -201,8 +269,8 @@ fun SettingsScreen(
                         //A failed write outranks the happy "Connected as" line:
                         //it is the one thing the row could say that the user
                         //cannot find out any other way.
-                        ?: uiState.calendarSyncError?.let { "Last sync failed: $it" }
-                        ?: uiState.calendarAccountEmail?.let { "Connected as $it" }
+                        ?: uiState.calendarSyncError?.let { stringResource(R.string.calendar_sync_failed, it) }
+                        ?: uiState.calendarAccountEmail?.let { stringResource(R.string.calendar_connected_as, it) }
                         ?: stringResource(R.string.calendar_default_status)
                     Text(
                         text = status,
@@ -225,7 +293,7 @@ fun SettingsScreen(
                     SettingsRow(
                         icon = Icons.Default.Lock,
                         label = stringResource(R.string.change_password_label),
-                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }) { Text(stringResource(R.string.email_link_action)) } },
+                        trailing = { TextButton(onClick = { onChangePassword { passwordMessage = it } }, enabled = uiState.isOnline) { Text(stringResource(R.string.email_link_action)) } },
                         onClick = {}
                     )
                     passwordMessage?.let {
@@ -239,18 +307,10 @@ fun SettingsScreen(
                     Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Shield,
-                        label = stringResource(R.string.sms_fallback_label),
-                        checked = uiState.smsFallbackEnabled,
-                        onCheckedChange = onToggleSmsFallback,
-                        tint = CrimsonPrimary
-                    )
-                    Divider()
-                    SettingsCheckRow(
-                        icon = Icons.Default.Shield,
                         label = stringResource(R.string.biometric_label),
                         checked = uiState.biometricEnabled,
                         onCheckedChange = onToggleBiometric,
-                        tint = CrimsonPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Divider()
                     SettingsCheckRow(
@@ -259,6 +319,43 @@ fun SettingsScreen(
                         checked = uiState.isDarkTheme,
                         onCheckedChange = onToggleDark
                     )
+                    Divider()
+                    SettingsCheckRow(
+                        icon = Icons.Default.CloudOff,
+                        label = stringResource(R.string.force_offline_label),
+                        checked = uiState.isOffline,
+                        onCheckedChange = onToggleOffline
+                    )
+                }
+            }
+        }
+
+        // Sync status: what is waiting to be sent, and what the server refused.
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column {
+                    SettingsRow(
+                        icon = Icons.Default.Sync,
+                        label = stringResource(R.string.sync_status_title),
+                        trailing = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (unsent > 0) Badge { Text("$unsent", fontSize = 12.sp) }
+                                TextButton(onClick = onSyncNow, enabled = uiState.isOnline) { Text(stringResource(R.string.sync_now)) }
+                            }
+                        },
+                        onClick = onOpenSyncStatus
+                    )
+                    Text(
+                        text = uiState.cacheSavedAtMillis?.let { stringResource(R.string.settings_last_synced, savedAtLabel(it)) }
+                            ?: stringResource(R.string.settings_not_synced_yet),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
+                    )
                 }
             }
         }
@@ -266,47 +363,45 @@ fun SettingsScreen(
         // Sign Out Button
         item {
             Button(
-                onClick = onSignOut,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                onClick = { if (unsent > 0) showSignOutWarning = true else onSignOut() },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
                     // Navy text on the dark navy surface is all but invisible, so dark
                     // mode gets the brand crimson behind it instead.
-                    containerColor = if (uiState.isDarkTheme) CrimsonPrimary else MaterialTheme.colorScheme.surface,
-                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else NavySecondary
+                    containerColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                 )
             ) {
-                Icon(Icons.Default.Logout, contentDescription = "Sign Out")
+                Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.common_sign_out))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.sign_out_action), fontWeight = FontWeight.Bold)
             }
         }
 
-        // Student-Only Delete Account Action
-        if (!isTutor) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        // Delete Account Action
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OutlinedButton(
+                    onClick = onDeleteAccountClick,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    OutlinedButton(
-                        onClick = onDeleteAccountClick,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = CrimsonPrimary)
-                    ) {
-                        Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.delete_account_action), fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.delete_account_subtitle),
-                        fontSize = 11.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.common_delete))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.delete_account_action), fontWeight = FontWeight.Bold)
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.delete_account_subtitle),
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
