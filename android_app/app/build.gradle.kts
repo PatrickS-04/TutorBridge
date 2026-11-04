@@ -28,7 +28,7 @@ val localProperties = Properties().apply {
 //   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
 val apiBaseUrl: String = localProperties.getProperty(
     "API_BASE_URL",
-    "https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/"
+    "https://tutorbridge-a8bagke0erc8a2an.southafricanorth-01.azurewebsites.net/"
 )
 
 android {

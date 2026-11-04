@@ -195,7 +195,7 @@ showcase the application needs as well as the group's best choices to make them.
 
 The system has four parts:
 * **Android app:** the client that students and tutors use.
-* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the free tier, so the first request after an idle spell is slow.
+* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-a8bagke0erc8a2an.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the B1 plan.
 * **Database:** MongoDB Atlas, which only the API talks to.
 * **External services:** Firebase Authentication (sign-in), Firebase Cloud Messaging (push notifications) and the Google Calendar API.
 
