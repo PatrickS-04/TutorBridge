@@ -9,6 +9,8 @@ import com.tutorbridge.app.data.repository.ApiException
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.tutorbridge.app.R
+import com.tutorbridge.app.push.PushEvents
+import com.tutorbridge.app.Retrofit.SessionEvents
 import com.tutorbridge.app.TutorBridgeApp
 import com.tutorbridge.app.data.local.LocalCache
 import com.tutorbridge.app.data.local.MessagePayload
@@ -37,6 +39,8 @@ import com.tutorbridge.app.data.repository.toWindowUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -105,26 +109,29 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * starts a fresh direct booking. */
     private var acceptedApplicationId: String? = null
 
+    /** The pages the back gesture returns through, this one last. See nextRouteHistory. */
+    private var routeHistory = emptyList<String>()
+
     init {
+        // Watched here because many actions set currentRoute directly, not through navigateTo.
+        viewModelScope.launch {
+            _uiState.map { it.currentRoute }.distinctUntilChanged().collect { routeHistory = nextRouteHistory(routeHistory, it) }
+        }
+
         val preferences = AppPreferences(getApplication())
         val enabledBiometric = preferences.getEnabledBiometric()
-        val enabledSMSFallback = preferences.getEnabledSMSFallback()
-        val enabledSessionReminders = preferences.getEnabledSessionReminders()
+        val enabledMessageNotifications = preferences.getEnabledMessageNotifications()
         val enabledBookingUpdates = preferences.getEnabledBookingUpdates()
 
         if (Firebase.auth.currentUser != null && enabledBiometric) {
             val lastRole = AppPreferences(getApplication()).getLastRole() ?: UserRole.STUDENT
-            _uiState.update { it.copy(role = lastRole, biometricEnabled = true, smsFallbackEnabled = enabledSMSFallback,
-                sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates, currentRoute = "biometric_lock") }
+            _uiState.update { it.copy(role = lastRole, biometricEnabled = true,
+                messageNotificationsEnabled = enabledMessageNotifications, bookingUpdatesEnabled = enabledBookingUpdates, currentRoute = "biometric_lock") }
         } else {
-            if (Firebase.auth.currentUser != null) {
-                Firebase.auth.signOut()
-                // Signed out without the user asking (no biometric lock to resume
-                // from), so what was saved for them goes too.
-                viewModelScope.launch { localCache.clear() }
-            }
-            _uiState.update { it.copy(biometricEnabled = enabledBiometric, smsFallbackEnabled = enabledSMSFallback,
-                sessionRemindersEnabled = enabledSessionReminders, bookingUpdatesEnabled = enabledBookingUpdates) }
+            // Someone signed in with no lock on goes straight back in; see the init at the end of the class.
+            val role = if (Firebase.auth.currentUser != null) preferences.getLastRole() ?: UserRole.STUDENT else null
+            _uiState.update { it.copy(role = role, biometricEnabled = enabledBiometric,
+                messageNotificationsEnabled = enabledMessageNotifications, bookingUpdatesEnabled = enabledBookingUpdates) }
         }
         // The picker should open on the language the app is really in, not on English.
         effectiveLanguage().let { language ->
@@ -132,6 +139,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             Firebase.auth.setLanguageCode(language.tag)
         }
         loadInstitutions()
+        // A free host may be asleep; this starts it waking before the first real call.
+        viewModelScope.launch { authRepository.wakeServer() }
+        viewModelScope.launch { SessionEvents.expired.collect { onSessionExpired() } }
+        viewModelScope.launch { PushEvents.arrived.collect { loadThreads() } }
 
         // The phone's connection, for the offline banner and for refreshing when it comes back.
         viewModelScope.launch { networkMonitor.isOnline.collect { onNetworkChanged(it) } }
@@ -180,7 +191,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
                 finishSignIn(institutionId, fullName)
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not create an account") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(authErrorRes(exception))) }
             }
         }
     }
@@ -192,7 +203,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 Firebase.auth.signInWithEmailAndPassword(email.trim(), password).await()
                 finishSignIn(institutionId = null, fullName = null)
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not sign in") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(authErrorRes(exception))) }
             }
         }
     }
@@ -212,7 +223,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 Firebase.auth.signInWithCredential(credential).await()
                 finishSignIn(_uiState.value.selectedSignupInstitutionId, fullName = null)
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Google Sign-In Failed") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(authErrorRes(exception))) }
             }
         }
     }
@@ -244,7 +255,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             }
             is AuthResult.Failure -> {
                 Firebase.auth.signOut()
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message) }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = result.message ?: text(R.string.error_unreachable)) }
             }
         }
     }
@@ -282,7 +293,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 }
                 .onFailure { error ->
-                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = error.message ?: "Could not change the password") }
+                    _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = friendlyMessage(error)) }
                 }
         }
     }
@@ -300,9 +311,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 Firebase.auth.sendPasswordResetEmail(email).await()
-                onResult("We emailed a reset link to $email")
+                onResult(getApplication<Application>().getString(R.string.auth_password_reset_sent_to, email))
             } catch (exception: Exception) {
-                onResult(exception.message ?: "Could not send the reset email")
+                onResult(text(R.string.auth_password_reset_failed))
             }
         }
     }
@@ -323,7 +334,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         }
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null, authInfoMessage = null) }
         viewModelScope.launch {
-            val sent = "If $address has an account, we've emailed it a link to reset the password."
+            val sent = getApplication<Application>().getString(R.string.auth_password_reset_if_exists, address)
             try {
                 Firebase.auth.sendPasswordResetEmail(address).await()
                 _uiState.update { it.copy(isAuthLoading = false, authInfoMessage = sent) }
@@ -332,7 +343,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             } catch (exception: FirebaseAuthInvalidCredentialsException) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_invalid_email)) }
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not send the reset email") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.auth_password_reset_failed)) }
             }
         }
     }
@@ -344,12 +355,15 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     fun completeAuth() {
         val role = _uiState.value.role ?: UserRole.STUDENT
         val user = Firebase.auth.currentUser
-        AppPreferences(getApplication()).saveLastRole(role)
+        val preferences = AppPreferences(getApplication())
+        preferences.saveLastRole(role)
+        val offerBiometric = !preferences.getEnabledBiometric() && !preferences.getBiometricOffered()
         _uiState.update { state ->
             val nextDestination = if (state.role == UserRole.TUTOR) "tutor_home" else "student_home"
             state.copy(role = role, currentRoute = nextDestination, userName = user?.displayName ?:
                 user?.email?.substringBefore("@") ?: state.userName,
-                userEmail = user?.email ?: state.userEmail)
+                userEmail = user?.email ?: state.userEmail,
+                showBiometricOffer = offerBiometric)
         }
         watchCacheClock()
         watchOutbox()
@@ -417,7 +431,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     private suspend fun <P : Any> queueForLater(type: OutboxType, payload: P, dedupeKey: String?, announce: Boolean): Delivery {
         if (outbox.enqueue(type, payload, dedupeKey) == null) {
-            return Delivery.Refused(IllegalStateException("Sign in to save your changes"))
+            return Delivery.Refused(IllegalStateException(text(R.string.vm_sign_in_to_save)))
         }
         if (announce) _uiState.update { it.copy(noticeMessage = text(R.string.saved_offline)) }
         requestSync()
@@ -431,8 +445,10 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
 
     /** "Sync now": ask for the waiting items to be sent. Items the server refused stay as they are - see [retryFailedSync]. */
     fun syncNow() {
-        if (_uiState.value.isOnline) requestSync()
-        else _uiState.update { it.copy(dataErrorMessage = text(R.string.error_offline)) }
+        if (_uiState.value.isOnline) {
+            requestSync()
+            refreshAll()     // also what moves "Last synced" on
+        } else _uiState.update { it.copy(dataErrorMessage = text(R.string.error_offline)) }
     }
 
     /** Another go at everything the server refused: they go back in the queue and a sync is requested. */
@@ -500,7 +516,20 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         routeForDeepLink(link, _uiState.value.role)?.let { navigateTo(it) }
     }
 
-    fun signOut() {
+    /** Guards against the sign-out's own requests being refused and starting another one. */
+    private var signingOut = false
+
+    /** The server refused this user's token (see AuthInterceptor), so they have to sign in again. */
+    private fun onSessionExpired() {
+        if (signingOut || Firebase.auth.currentUser == null) return
+        // On these screens a sign-in is in progress and reports its own failure.
+        if (_uiState.value.currentRoute in setOf("splash", "auth")) return
+        signOut(message = text(R.string.session_expired))
+    }
+
+    fun signOut(message: String? = null) {
+        if (signingOut) return
+        signingOut = true
         chatPoller?.cancel()
         cacheClockJob?.cancel()
         outboxJob?.cancel()
@@ -508,11 +537,16 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             // Timeout so a bad connection can't leave the user stuck on "Sign out".
             withTimeoutOrNull(3_000) { unregisterPushToken() }
             Firebase.auth.signOut()          // only after the DELETE
+            GoogleAuthentication.clearCredentials(getApplication())
             localCache.clear()               // nothing of this user stays on the phone
             AppPreferences(getApplication()).clear()
             lastBookingId = null
             pendingDeepLink = null           // added in C5
-            _uiState.update { signedOutState() }
+            _uiState.update { state ->
+                if (message == null) signedOutState()
+                else signedOutState().copy(currentRoute = "auth", authErrorMessage = message)
+            }
+            signingOut = false
             loadInstitutions()
         }
     }
@@ -535,6 +569,13 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             "my_requests", "tutor_requests" -> loadRequests()
             "claims_export" -> loadClaims()
         }
+    }
+
+    /** Returns to the previous page; false when there is none, so the back gesture would leave the app. */
+    fun goBack(): Boolean {
+        val previous = routeHistory.getOrNull(routeHistory.size - 2) ?: return false
+        navigateTo(previous)
+        return true
     }
 
     fun dismissDataError() {
@@ -597,7 +638,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             val profileResult = repository.updateProfile(UpdateProfileRequest(bio = bio, hourlyRate = hourlyRate, department = department))
             if (profileResult.isFailure) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = profileResult.exceptionOrNull()?.message ?: "Could not update profile") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = friendlyMessage(profileResult.exceptionOrNull()!!)) }
                 return@launch
             }
 
@@ -612,14 +653,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     it.copy(
                         isAuthLoading = false,
                         currentProfile = profileResult.getOrNull(),
-                        profileStatusMessage = if (emailChanged) "Profile saved. Check your new email inbox to confirm the address change." else "Profile saved."
+                        profileStatusMessage = text(if (emailChanged) R.string.vm_profile_saved_confirm_email else R.string.vm_profile_saved)
                     )
                 }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_change_email)) }
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not update email") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_email_update_failed)) }
             }
         }
     }
@@ -638,9 +679,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     it.copy(
                         selectedLanguage = (plan.applyOnThisPhone ?: effectiveLanguage()).displayName,
                         isDarkTheme = settings.theme == "DARK",
-                        smsFallbackEnabled = settings.smsFallback,
+                        defaultAreaId = settings.defaultAreaId,
                         bookingUpdatesEnabled = settings.notifications.booking,
-                        sessionRemindersEnabled = settings.notifications.message
+                        messageNotificationsEnabled = settings.notifications.message
                     )
                 }
             }.onFailure { reportLoadError(it) }
@@ -809,7 +850,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             seriesErrorMessageRes(error.errorCode)!!,
             formatSeriesDates(error.dates, ZoneId.systemDefault(), Locale.getDefault())
         )
-        else -> error.message ?: "Could not reach the server"
+        else -> error.message ?: text(R.string.error_unreachable)
     }
 
     // ==================== CALENDAR ====================
@@ -984,7 +1025,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                             else -> state.currentRoute
                         },
                         dataErrorMessage = if (booking?.status == "REQUESTED") {
-                            "Still waiting for the tutor to reply"
+                            text(R.string.vm_still_waiting_tutor)
                         } else {
                             state.dataErrorMessage
                         }
@@ -1098,9 +1139,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(requestDraft = it.requestDraft.copy(step = step)) }
     }
 
-    /** The "New" button: always a blank wizard, even if an edit was abandoned half way. */
+    /** The "New" button: a fresh wizard, even if an edit was abandoned half way, with only the default area filled in. */
     fun startNewRequest() {
-        _uiState.update { it.copy(requestDraft = RequestDraft(), currentRoute = "new_request") }
+        _uiState.update { it.copy(requestDraft = newRequestDraft(it.defaultAreaId, it.areaOptions), currentRoute = "new_request") }
     }
 
     /** Leaves the wizard, dropping whatever was typed - new request or edit alike. */
@@ -1181,7 +1222,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     state.copy(
                         isRefreshing = false,
                         dataErrorMessage = if (failure is IOException) friendlyMessage(failure) else failure.message
-                            ?: if (editing != null) "Could not save the changes" else "Could not post the request"
+                            ?: text(if (editing != null) R.string.vm_save_changes_failed else R.string.vm_post_request_failed)
                     )
                 }
             }
@@ -1483,9 +1524,9 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                         it.copy(
                             selectedCalendarDate = date,
                             noticeMessage = if (ack.status == "REQUESTED" && !isTutor) {
-                                "Sent to your tutor - they need to confirm the new time."
+                                text(R.string.vm_reschedule_sent)
                             } else {
-                                "Session moved to ${date} at ${time}."
+                                getApplication<Application>().getString(R.string.vm_session_moved, date.toString(), time)
                             }
                         )
                     }
@@ -1704,7 +1745,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(deleteConfirmText = text) }
     }
 
-    fun deleteStudentAccount(onComplete: () -> Unit) {
+    fun deleteAccount(onComplete: () -> Unit) {
         val user = Firebase.auth.currentUser
         if (user == null) {
             _uiState.update { it.copy(authErrorMessage = text(R.string.vm_no_signed_in_user)) }
@@ -1723,8 +1764,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.update {
                         it.copy(
                             isAuthLoading = false,
-                            authErrorMessage = scheduled.exceptionOrNull()?.message
-                                ?: "Could not reach TutorBridge - your account was not deleted"
+                            authErrorMessage = friendlyMessage(scheduled.exceptionOrNull()!!)
                         )
                     }
                     return@launch
@@ -1735,13 +1775,14 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 cacheClockJob?.cancel()
                 outboxJob?.cancel()
                 localCache.clear()
+                GoogleAuthentication.clearCredentials(getApplication())
                 AppPreferences(getApplication()).clear()
                 _uiState.update { signedOutState() }
                 onComplete()
             } catch (exception: FirebaseAuthRecentLoginRequiredException) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_reauth_delete_account)) }
             } catch (exception: Exception) {
-                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = exception.message ?: "Could not delete account") }
+                _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(R.string.vm_delete_failed)) }
             }
         }
     }
@@ -1821,16 +1862,26 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
         saveNotificationPreferences()
     }
 
-    fun toggleSessionReminders(enabled: Boolean) {
-        AppPreferences(getApplication()).enableSessionRemindersSaved(enabled)
-        _uiState.update { it.copy(sessionRemindersEnabled = enabled) }
+    fun toggleMessageNotifications(enabled: Boolean) {
+        AppPreferences(getApplication()).enableMessageNotificationsSaved(enabled)
+        _uiState.update { it.copy(messageNotificationsEnabled = enabled) }
         saveNotificationPreferences()
     }
 
-    fun toggleSmsFallback(enabled: Boolean) {
-        AppPreferences(getApplication()).enableSMSFallbackSaved(enabled)
-        _uiState.update { it.copy(smsFallbackEnabled = enabled) }
-        saveSettings(UpdateSettingsRequest(smsFallback = enabled))
+    /** An empty id means no default. */
+    fun setDefaultArea(id: String) {
+        _uiState.update { it.copy(defaultAreaId = id) }
+        saveSettings(UpdateSettingsRequest(defaultAreaId = id))
+    }
+
+    /** Answered the "turn on fingerprint unlock?" question, or the phone cannot do it, so it is not asked again. */
+    fun dismissBiometricOffer() {
+        AppPreferences(getApplication()).markBiometricOffered()
+        _uiState.update { it.copy(showBiometricOffer = false) }
+    }
+
+    fun showNotice(message: String) {
+        _uiState.update { it.copy(noticeMessage = message) }
     }
 
     fun toggleBiometric(enabled: Boolean) {
@@ -1874,7 +1925,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.update {
                         it.copy(
                             isCalendarLinking = false,
-                            calendarMessage = error.message ?: "Could not link Google Calendar"
+                            calendarMessage = friendlyMessage(error)
                         )
                     }
                 }
@@ -1907,7 +1958,7 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             UpdateSettingsRequest(
                 notifications = NotificationPreferencesDto(
                     booking = state.bookingUpdatesEnabled,
-                    message = state.sessionRemindersEnabled
+                    message = state.messageNotificationsEnabled
                 )
             )
         )
@@ -1971,6 +2022,20 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
     private fun signedOutState(): TutorBridgeUiState {
         OfflineMode.forced = false
         return TutorBridgeUiState(networkAvailable = _uiState.value.networkAvailable)
+    }
+
+    // Last in the class: this reaches most of the ViewModel, so every property has to be set up first.
+    init {
+        if (Firebase.auth.currentUser != null && !_uiState.value.biometricEnabled) {
+            completeAuth()
+            // A tutor who closed the app on the new-password screen still has to replace the temporary one.
+            viewModelScope.launch {
+                val result = authRepository.bootstrapProfile(null, null)
+                if (result is AuthResult.Success && result.profile.mustChangePassword) {
+                    _uiState.update { it.copy(currentRoute = "new_password") }
+                }
+            }
+        }
     }
 
     private companion object {

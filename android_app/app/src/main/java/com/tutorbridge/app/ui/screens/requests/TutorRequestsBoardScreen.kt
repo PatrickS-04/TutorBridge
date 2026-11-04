@@ -22,10 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -89,7 +87,7 @@ private fun SegTab(label: String, selected: Boolean, modifier: Modifier, onClick
         Text(
             label,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) NavySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp
         )
     }
@@ -110,7 +108,7 @@ private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndO
                 ) { Text(req.studentInitials, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                 Column {
                     Text(req.studentName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(req.subject, color = CrimsonPrimary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    Text(req.subject, color = MaterialTheme.colorScheme.primary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Text("🕐 ${req.timeWindow} • 📍 ${req.preferredVenue}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -129,7 +127,7 @@ private fun OpenRequestCard(req: StudentRequestUi, online: Boolean, onAcceptAndO
                 enabled = online,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(23.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(stringResource(R.string.request_board_accept_offer_session_department), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }

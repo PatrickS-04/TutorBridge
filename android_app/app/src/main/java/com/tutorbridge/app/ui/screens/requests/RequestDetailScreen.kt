@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
 import com.tutorbridge.app.data.model.TutorApplicant
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -64,7 +63,7 @@ fun RequestDetailScreen(
                 TextButton(onClick = {
                     confirming = null
                     if (end == RequestEnd.WITHDRAW) onWithdraw(req) else onClose(req)
-                }) { Text(if (end == RequestEnd.WITHDRAW) stringResource(R.string.request_detail_withdraw) else stringResource(R.string.request_detail_close), color = CrimsonPrimary) }
+                }) { Text(if (end == RequestEnd.WITHDRAW) stringResource(R.string.request_detail_withdraw) else stringResource(R.string.request_detail_close), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = { TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.request_detail_keep_it)) } }
         )
@@ -107,7 +106,7 @@ fun RequestDetailScreen(
                                     RequestStatus.WITHDRAWN -> stringResource(R.string.common_withdrawn)
                                     else -> stringResource(R.string.common_closed)
                                 },
-                                color = CrimsonPrimary,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
@@ -155,7 +154,7 @@ fun RequestDetailScreen(
                             enabled = online,
                             modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                             shape = RoundedCornerShape(22.dp)
-                        ) { Text(stringResource(R.string.request_detail_withdraw), fontWeight = FontWeight.Bold, color = CrimsonPrimary) }
+                        ) { Text(stringResource(R.string.request_detail_withdraw), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }
                     }
                     NeedsConnectionHint(online)
                 }
@@ -217,7 +216,7 @@ private fun ApplicantCard(applicant: TutorApplicant, canAccept: Boolean, onAccep
                 enabled = canAccept,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
                 shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(stringResource(R.string.request_detail_accept_match), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
             }

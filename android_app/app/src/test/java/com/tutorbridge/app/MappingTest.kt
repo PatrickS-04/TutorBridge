@@ -7,6 +7,7 @@ import com.tutorbridge.app.data.repository.toRequestUi
 import com.tutorbridge.app.data.repository.toInstitutionUi
 import com.tutorbridge.app.data.repository.toLearningHistory
 import com.tutorbridge.app.data.repository.toTutorUi
+import com.tutorbridge.app.ui.screens.calendar.rescheduleHoursOn
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -61,8 +62,28 @@ class MappingTest {
         val tutor = tutorDto.toTutorUi()
 
         // 09:00-12:00 is three whole hours, and none of them spill past the window.
-        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday))
-        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1)))
+        val beforeTheDay = monday.minusDays(1).atStartOfDay()
+        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday, beforeTheDay))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1), beforeTheDay))
+    }
+
+    @Test
+    fun `booking today only offers the slots that have not started`() {
+        val tutor = tutorDto.toTutorUi()
+
+        assertEquals(listOf("10:00 AM", "11:00 AM"), tutor.slotsOn(monday, monday.atTime(9, 30)))
+        // A slot starting this very minute has already begun.
+        assertEquals(listOf("11:00 AM"), tutor.slotsOn(monday, monday.atTime(10, 0)))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday, monday.atTime(11, 30)))
+    }
+
+    @Test
+    fun `a session can be moved to later today but not to an hour already gone`() {
+        val evening = monday.atTime(18, 30)
+
+        assertEquals(listOf(19, 20), rescheduleHoursOn(monday, evening).map { it.hour })
+        assertEquals(emptyList<Int>(), rescheduleHoursOn(monday, monday.atTime(20, 0)).map { it.hour })
+        assertEquals((7..20).toList(), rescheduleHoursOn(monday.plusDays(1), evening).map { it.hour })
     }
 
     @Test
@@ -88,6 +109,22 @@ class MappingTest {
 
         // A booking with an unreadable time is dropped, not rendered blank.
         assertEquals(null, booking.copy(startTime = "").toCalendarEvent(selfIsTutor = false))
+    }
+
+    @Test
+    fun `only a requested booking is pending`() {
+        val booking = BookingDto(
+            _id = "b1",
+            subjectName = "Mathematics",
+            startTime = "2026-09-21T08:30:00.000Z",
+            endTime = "2026-09-21T09:30:00.000Z",
+            status = "REQUESTED"
+        )
+
+        assertTrue(booking.toCalendarEvent(selfIsTutor = false)!!.isPending)
+        listOf("CONFIRMED", "TRIAL_RUNNING", "ACTIVE", "COMPLETED", "CANCELLED").forEach { status ->
+            assertTrue(!booking.copy(status = status).toCalendarEvent(selfIsTutor = false)!!.isPending)
+        }
     }
 
     @Test

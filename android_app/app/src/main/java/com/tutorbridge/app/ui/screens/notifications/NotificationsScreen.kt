@@ -20,9 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.ui.components.relativeTimeText
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.components.relativeTimeText
-import com.tutorbridge.app.ui.theme.NavyTint
 import com.tutorbridge.app.ui.components.relativeTimeText
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
@@ -53,7 +51,7 @@ fun NotificationsScreen(
                     Text(stringResource(R.string.common_notifications), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 TextButton(onClick = onMarkAllRead) {
-                    Text(stringResource(R.string.notifications_mark_all_read), color = CrimsonPrimary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.notifications_mark_all_read), color = MaterialTheme.colorScheme.primary, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -70,7 +68,7 @@ fun NotificationsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
-                        modifier = Modifier.size(38.dp).clip(CircleShape).background(NavyTint),
+                        modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
                         contentAlignment = Alignment.Center
                     ) { Text(notif.emoji, fontSize = 16.sp) }
 
@@ -82,7 +80,7 @@ fun NotificationsScreen(
                         ) {
                             Text(notif.title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, modifier = Modifier.weight(1f))
                             if (notif.unread) {
-                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(CrimsonPrimary))
+                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))

@@ -384,6 +384,7 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         startIso = startTime,
         endIso = endTime,
         isConfirmed = status == "CONFIRMED",
+        isPending = status == "REQUESTED",
         checkedInTime = parseInstant(attendance?.checkedInAt)?.format(displayTime).orEmpty(),
         seriesId = seriesId,
         seriesIndex = seriesIndex ?: 0,
@@ -419,7 +420,8 @@ fun MessageDto.toMessageUi(selfId: String): MessageUi = MessageUi(
     id = _id,
     body = body,
     mine = senderId == selfId,
-    time = chatTime(sentAt),
+    // The chat's day headers carry the date, so the bubble only needs the time.
+    time = parseInstant(sentAt)?.format(chatToday).orEmpty(),
     sentAt = sentAt,
     // Gson leaves a field the JSON lacks as null whatever default Kotlin declares, and a
     // message saved by an older app version, or sent by an older server, has no clientMessageId.
@@ -563,12 +565,13 @@ fun List<AvailabilityDto>.toTimeWindowLabel(): String {
     return "$days ${first.start}–${first.end}"
 }
 
-/** Hourly starts the tutor is free on [date], for the booking flow. */
-fun TutorUi.slotsOn(date: LocalDate): List<String> {
+/** Hourly starts the tutor is free on [date] that are still ahead of [now], for the booking flow. */
+fun TutorUi.slotsOn(date: LocalDate, now: java.time.LocalDateTime = java.time.LocalDateTime.now()): List<String> {
     val windows = this.windows.filter { it.day == date.dayOfWeek }
     return windows.flatMap { window ->
         generateSequence(window.start) { it.plusHours(1) }
             .takeWhile { !it.plusHours(1).isAfter(window.end) }
+            .filter { date.atTime(it).isAfter(now) }
             .map { it.format(slotTime) }
             .toList()
     }

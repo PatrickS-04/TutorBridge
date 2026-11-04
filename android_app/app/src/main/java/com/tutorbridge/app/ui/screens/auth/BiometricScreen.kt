@@ -16,10 +16,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun BiometricScreen(
+    message: String? = null,
     onUnlockClick: () -> Unit,
     onSignInDifferently: () -> Unit
 ) {
@@ -31,6 +33,10 @@ fun BiometricScreen(
         Text(stringResource(R.string.biometric_welcome_back), style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
         Text(stringResource(R.string.biometric_confirm_it_s_you_to), style = MaterialTheme.typography.bodyMedium)
+        message?.let {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+        }
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = onUnlockClick, modifier = Modifier.fillMaxWidth(0.8f)) {
             Text(stringResource(R.string.biometric_unlock))

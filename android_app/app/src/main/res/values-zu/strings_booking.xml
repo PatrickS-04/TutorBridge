@@ -30,7 +30,7 @@
     <string name="booking_time">Isikhathi</string>
     <string name="booking_tutor">Uthisha</string>
     <string name="booking_no_hours_published">U-%1$s akakashicileli amahora - khetha omunye uthisha.</string>
-    <string name="booking_no_hours_day">U-%1$s akanawo amahora alolu suku - zama olunye usuku.</string>
+    <string name="booking_no_hours_day">U-%1$s akanazo izikhathi ezivulekile ngalolu suku - zama olunye usuku.</string>
     <string name="booking_time_one_hour">%1$s (ihora eli-1)</string>
     <string name="booking_repeat_weekly">Phinda njalo ngeviki</string>
     <string name="booking_repeat_hint">Bhukha isikhathi esifanayo njalo ngeviki. Uthisha uqinisekisa lonke uchungechunge.</string>

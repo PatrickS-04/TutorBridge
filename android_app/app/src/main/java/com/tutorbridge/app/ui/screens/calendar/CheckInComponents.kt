@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.screens.calendar
 
+import com.tutorbridge.app.ui.theme.CheckedInGreen
+import com.tutorbridge.app.ui.theme.QrBackground
+import com.tutorbridge.app.ui.theme.QrForeground
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +37,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,7 +55,6 @@ import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
 
-private val CheckedInGreen = Color(0xFF2E7D32)
 
 // Tutor: the QR code and digits to show the student, with a live countdown
 @Composable
@@ -74,11 +75,11 @@ fun CheckInCodeDialog(code: CheckInCodeUi, onNewCode: () -> Unit, onDismiss: () 
                 Text(stringResource(R.string.checkin_show_code_hint), fontSize = 13.sp, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
                 Box(
-                    modifier = Modifier.size(220.dp).background(Color.White, RoundedCornerShape(12.dp)).padding(8.dp),
+                    modifier = Modifier.size(220.dp).background(QrBackground, RoundedCornerShape(12.dp)).padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (expired) {
-                        Text(stringResource(R.string.checkin_code_expired), color = Color.Black, textAlign = TextAlign.Center)
+                        Text(stringResource(R.string.checkin_code_expired), color = QrForeground, textAlign = TextAlign.Center)
                     } else {
                         QrCode(code.qrPayload, stringResource(R.string.checkin_qr_description), Modifier.fillMaxSize())
                     }

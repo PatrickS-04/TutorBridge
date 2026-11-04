@@ -30,6 +30,7 @@
     <string name="calendar_filter_office_hours">Office Hours</string>
     <string name="calendar_filter_exam_prep">Exam Prep</string>
     <string name="series_badge">Series %1$d of %2$d</string>
+    <string name="calendar_awaiting_confirmation">Awaiting confirmation</string>
     <string name="calendar_series_cancel">Cancel this and following</string>
     <string name="calendar_series_cancel_title">Cancel the rest of this series?</string>
     <string name="calendar_series_cancel_confirm">Cancel sessions</string>

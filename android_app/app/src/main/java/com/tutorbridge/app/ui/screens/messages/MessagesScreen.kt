@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.ThreadUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -95,7 +94,7 @@ fun MessagesScreen(
                             Text(thread.time, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (thread.unread > 0) {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Badge(containerColor = CrimsonPrimary) { Text("${thread.unread}", fontSize = 12.sp) }
+                                Badge(containerColor = MaterialTheme.colorScheme.primary) { Text("${thread.unread}", fontSize = 12.sp) }
                             }
                         }
                     }

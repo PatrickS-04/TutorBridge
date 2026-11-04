@@ -11,6 +11,7 @@ import com.tutorbridge.app.data.repository.TutorBridgeRepository
 import com.tutorbridge.app.push.NotificationChannels
 import com.tutorbridge.app.sync.OutboxProcessor
 import com.tutorbridge.app.sync.RepositoryOutboxSender
+import com.tutorbridge.app.sync.SyncScheduler
 
 /**
  * Holds what has to outlive any one screen or ViewModel, because the background
@@ -37,6 +38,7 @@ class TutorBridgeApp : Application() {
         super.onCreate()
         Log.i(TAG, "Application created")
         NotificationChannels.ensure(this)
+        SyncScheduler.schedulePeriodic(this)
     }
 
     private companion object {

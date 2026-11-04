@@ -2,9 +2,12 @@ package com.tutorbridge.app
 
 import com.tutorbridge.app.data.model.MessageUi
 import com.tutorbridge.app.viewmodel.mergeMessages
+import com.tutorbridge.app.viewmodel.messagesByDay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 // Reference: Android Developers. 2026. Build local unit tests. [Online].
 //   Available at: https://developer.android.com/training/testing/local-tests [Accessed 21 September 2026].
@@ -13,6 +16,19 @@ class ChatMergeTest {
 
     private fun message(id: String, at: String, body: String = id, pending: Boolean = false) =
         MessageUi(id = id, body = body, mine = false, time = "", sentAt = at, pending = pending)
+
+    @Test
+    fun `messages split by the local day, not the UTC one`() {
+        // 22:30 UTC on the 7th is already 00:30 on the 8th in Johannesburg.
+        val chat = listOf(
+            message("a", "2026-10-07T21:30:00.000Z"),
+            message("b", "2026-10-07T22:30:00.000Z"),
+            message("c", "2026-10-08T08:00:00.000Z")
+        )
+        val days = messagesByDay(chat, ZoneId.of("Africa/Johannesburg"))
+        assertEquals(listOf(LocalDate.of(2026, 10, 7), LocalDate.of(2026, 10, 8)), days.keys.toList())
+        assertEquals(listOf("b", "c"), days.getValue(LocalDate.of(2026, 10, 8)).map { it.id })
+    }
 
     @Test
     fun `a page that repeats what is already there adds nothing twice`() {

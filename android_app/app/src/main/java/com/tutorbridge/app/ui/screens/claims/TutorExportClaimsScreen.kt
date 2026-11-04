@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.claims
 
+import com.tutorbridge.app.ui.theme.CheckedInGreen
 import com.tutorbridge.app.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
@@ -18,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,10 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.data.model.ClaimStatus
 import com.tutorbridge.app.viewmodel.CLAIM_MONTHS_MAX
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -107,9 +105,9 @@ fun TutorExportClaimsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
-                        modifier = Modifier.size(36.dp).clip(CircleShape).background(NavySecondary),
+                        modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary),
                         contentAlignment = Alignment.Center
-                    ) { Text(institution.shortName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                    ) { Text(institution.shortName, color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(institution.fullName, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         Text(stringResource(R.string.claims_faculty_staff, institution.faculty, institution.staffId), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -133,7 +131,7 @@ fun TutorExportClaimsScreen(
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (selected) NavySecondary else MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant)
                             .clickable { onSelectClaimPeriod(p.id) }
                             .padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -143,12 +141,12 @@ fun TutorExportClaimsScreen(
                             p.label,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
+                            color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             if (p.status == ClaimStatus.PAID) stringResource(R.string.claims_paid) else stringResource(R.string.tutor_home_active),
                             fontSize = 12.sp,
-                            color = if (selected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (selected) MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -187,7 +185,7 @@ fun TutorExportClaimsScreen(
                             }
                         } else {
                             Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                Text(stringResource(R.string.claims_draft_claimable), color = CrimsonPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(stringResource(R.string.claims_draft_claimable), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                     }
@@ -209,7 +207,7 @@ fun TutorExportClaimsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(stringResource(R.string.claims_claim_ref, period.claimRef), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.claims_copy_ref), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.claims_copy_ref), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -256,7 +254,7 @@ fun TutorExportClaimsScreen(
                                 onClick = {},
                                 modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                                 shape = RoundedCornerShape(22.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -289,10 +287,10 @@ fun TutorExportClaimsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Badge(containerColor = NavySecondary) {
-                                Text(session.courseCode, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Badge(containerColor = MaterialTheme.colorScheme.secondary) {
+                                Text(session.courseCode, color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text(session.amount, fontWeight = FontWeight.Bold, color = CrimsonPrimary, fontSize = 13.sp)
+                            Text(session.amount, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("${session.date} • ${session.timeRange}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -306,7 +304,7 @@ fun TutorExportClaimsScreen(
                         Text(stringResource(if (session.checkedIn) R.string.claims_session_checked_in else R.string.claims_session_not_checked_in),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (session.checkedIn) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                            color = if (session.checkedIn) CheckedInGreen else MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -323,7 +321,7 @@ private fun StatBlock(label: String, value: String, emphasized: Boolean = false)
             value,
             fontWeight = FontWeight.Bold,
             fontSize = if (emphasized) 16.sp else 15.sp,
-            color = if (emphasized) CrimsonPrimary else MaterialTheme.colorScheme.onSurface
+            color = if (emphasized) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }

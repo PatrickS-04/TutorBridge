@@ -56,6 +56,9 @@ router.post(
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "endTime must be a valid time after startTime", "endTime"));
     }
+    if (start <= new Date()) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "A session must be booked for a future time", "startTime"));
+    }
 
     //Nested populate: the subject names the calendar event and the campus area
     //is the fallback venue - a single-level populate leaves both as bare ids.
@@ -150,6 +153,10 @@ router.post(
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
       return res.status(400).json(apiError("VALIDATION_ERROR", "endTime must be a valid time after startTime", "endTime"));
     }
+    //Today is bookable, but only the part of it still ahead - for a single session as much as a series.
+    if (start <= new Date()) {
+      return res.status(400).json(apiError("VALIDATION_ERROR", "A session must be booked for a future time", "startTime"));
+    }
 
     const tutor = await User.findOne({
       _id: tutorId,
@@ -169,9 +176,6 @@ router.post(
       const parsed = parseRepeat(repeat);
       if ("error" in parsed) {
         return res.status(400).json(apiError("VALIDATION_ERROR", parsed.error, parsed.field));
-      }
-      if (start <= new Date()) {
-        return res.status(400).json(apiError("VALIDATION_ERROR", "The first session of a series must be in the future", "startTime"));
       }
       //Without days it repeats the weekday of the first session; with them, each chosen weekday.
       const startDay = campusParts(start).day;

@@ -1,6 +1,9 @@
 package com.tutorbridge.app.viewmodel
 
 import com.tutorbridge.app.data.model.MessageUi
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 /** The server's cap on one message (models/Message.ts); the compose box enforces it too. */
 const val MAX_MESSAGE_LENGTH = 2000
@@ -23,3 +26,7 @@ fun mergeMessages(existing: List<MessageUi>, incoming: List<MessageUi>): List<Me
     val stillWaiting = existing.filterNot { it.pending && it.clientId in arrived }
     return (incoming + stillWaiting).distinctBy { it.id }.sortedBy { it.sentAt }
 }
+
+/** The conversation split by the day each message was sent, on this phone's calendar. An unreadable sentAt lands under null. */
+fun messagesByDay(messages: List<MessageUi>, zone: ZoneId = ZoneId.systemDefault()): Map<LocalDate?, List<MessageUi>> =
+    messages.groupBy { runCatching { Instant.parse(it.sentAt).atZone(zone).toLocalDate() }.getOrNull() }

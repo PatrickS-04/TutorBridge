@@ -1,4 +1,4 @@
-# PROG7314 POE Part 2
+# PROG7314 POE (Hosted on Azure)
 ## TutorBridge Android Application
 > By Dillon Rinkwest - ST10439147, Patrick Shutte - ST10440987, Liam Swile - ST10438679 and Uzair Essa - ST10440109
 
@@ -28,6 +28,8 @@ students with proper and chosen resources with the option out and off campus tut
 
 > GitHub Submission File: TutorBridge
 
+<img width="1877" height="850" alt="image" src="https://github.com/user-attachments/assets/2c7a46fc-2ba0-4ab5-9e57-dd982325519f" />
+
 ---
 
 ### Intended User Base
@@ -38,20 +40,24 @@ students with proper and chosen resources with the option out and off campus tut
 ---
 
 ### Features/Scope
-## Features/Scope
 | Feature | Status | What it does |
 |---|---|---|
-| Biometric unlock | Done | Turned on in Settings, it keeps you signed in and asks for a biometric scan (or the phone's screen lock) each time the app starts |
+| Biometric unlock | Done | Offered after sign-in and switched in Settings, it asks for a biometric scan (or the phone's screen lock) each time the app starts. Without it you simply stay signed in |
 | Single sign-on | Done | Sign in with a Google account, or with email and password (Firebase Authentication). "Forgot password?" on the sign-in screen emails a reset link |
 | Payroll claim export | Done | Tutors see their hours and earnings for each monthly claim period (up to 24 months back, loaded in steps), built from completed sessions, and export it as a PDF voucher or as the API's CSV |
 | Reschedule a session | Done | Either person can move an upcoming session instead of cancelling it. A tutor's move stands; a student's move of a confirmed session goes back to the tutor to confirm. The other person is notified and the Google Calendar event follows |
 | Manage your requests | Done | A student can edit an open request, or close it (sorted) or withdraw it (no longer wanted). Tutors who offered are told |
 | Messaging | Done | A chat opens between a student and a tutor when an offer is accepted or a tutor is booked. Unread counts, push notification on a new message |
 | Two-phase booking with overlap rejection | Done | A student requests a slot and the tutor confirms it. A slot that overlaps one of the tutor's confirmed sessions is rejected, both when it's requested and again when it's confirmed |
-| Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited |
+| Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited. Linking also adds upcoming confirmed sessions that aren't on a calendar yet |
 | Match relevance | Done | The API scores each tutor against the student's own requests (shared subject, shared campus area, completed sessions). "Top Tutors For You" ranks on it and the "% match" badge shows it; with nothing to match on, the section is just "Tutors on Campus" |
 | Session materials pack | Partly done | Tutors keep a private to-do list and notes for each session on the Session Prep screen |
 | Institutional structure | Done | Each user belongs to an institution and only sees that institution's tutors. Institution admins add tutor accounts and review verification documents through the API; the app has no admin screens yet |
+| QR attendance check-in | Done | From 15 minutes before a session until it ends, the tutor can show a 6-digit code, as a QR code and as text, that lasts 5 minutes. The student scans or types it on their own phone, and claim vouchers show which sessions were verified this way. Five wrong codes means the tutor has to show a new one |
+| Recurring bookings | Done | A student can book the same time on 1 to 7 weekdays for 1 to 8 weeks, up to 24 sessions. Every session has to fit the tutor's weekly hours. The tutor can confirm or decline the whole series, and the rest of a series can be cancelled at once |
+| Multi-language support | Done | The app is available in English, Afrikaans and isiZulu, and the chosen language is kept across restarts. Push notifications and API error messages are translated too |
+| Offline mode with sync | Done | Screens show what was last saved when there is no connection, and changes made offline are sent once it returns. See [Offline Sync](#offline-sync) |
+| Learning history | Done | Students see their completed sessions and can export them as a PDF to save or share |
 
 **Also in the app**
 - Tuition request board: students post what they need, tutors apply with a rate, and the student accepts one and schedules the session
@@ -62,7 +68,7 @@ students with proper and chosen resources with the option out and off campus tut
 ---
 
 ### Tech Stack
-* **Android app:** Kotlin, Jetpack Compose (Material 3), Retrofit and OkHttp, Credential Manager (Google sign-in), AndroidX Biometric
+* **Android app:** Kotlin, Jetpack Compose (Material 3), Retrofit and OkHttp, Credential Manager (Google sign-in), AndroidX Biometric, Room and WorkManager (offline sync), Google code scanner and ZXing (QR check-in)
 * **Backend API:** Node.js, Express, TypeScript, Mongoose, Swagger UI (OpenAPI docs)
 * **Database:** MongoDB Atlas
 * **Firebase:** Authentication, Cloud Messaging (push notifications)
@@ -95,9 +101,12 @@ TutorBridge/
 │   │       │   │   │   ├── AuthInterceptor.kt
 │   │       │   │   │   └── RetrofitInstance.kt
 │   │       │   │   ├── data/
+│   │       │   │   │   ├── local/              # Room database and offline cache
 │   │       │   │   │   ├── model/              # API/domain models, preferences, auth helpers
 │   │       │   │   │   └── repository/
 │   │       │   │   │       └── TutorBridgeRepository.kt
+│   │       │   │   ├── network/                # Connectivity awareness
+│   │       │   │   ├── sync/                   # Outbox sending with WorkManager
 │   │       │   │   ├── repository/
 │   │       │   │   │   └── AuthRepository.kt
 │   │       │   │   ├── push/                   # FCM push notifications
@@ -109,7 +118,7 @@ TutorBridge/
 │   │       │   │   │   ├── DeepLinkRouter.kt
 │   │       │   │   │   └── RouteAccess.kt
 │   │       │   │   └── ui/
-│   │       │   │       ├── components/         # Shared composables (VenueLink)
+│   │       │   │       ├── components/         # Shared composables (VenueLink, QrCode, OfflineBanner, SeriesBadge)
 │   │       │   │       ├── navigation/
 │   │       │   │       │   └── TutorBridgeNavGraph.kt
 │   │       │   │       ├── theme/              # Color.kt, Theme.kt
@@ -122,13 +131,15 @@ TutorBridge/
 │   │       │   │           ├── find/           # Find tutors, tutor profile
 │   │       │   │           ├── history/        # Learning history
 │   │       │   │           ├── home/           # Student and tutor home
+│   │       │   │           ├── messages/
 │   │       │   │           ├── notifications/
 │   │       │   │           ├── offline/
 │   │       │   │           ├── prep/           # Session prep
 │   │       │   │           ├── profile/        # Edit tutor profile
 │   │       │   │           ├── requests/       # Tuition requests + tutor board
 │   │       │   │           ├── settings/       # Settings, edit profile, delete account
-│   │       │   │           └── splash/
+│   │       │   │           ├── splash/
+│   │       │   │           └── sync/           # Sync status
 │   │       │   └── res/
 │   │       │       ├── drawable/               # Icons and logo
 │   │       │       ├── mipmap-anydpi-v26/      # Launcher icons
@@ -136,9 +147,7 @@ TutorBridge/
 │   │       │       ├── values-af/              # Afrikaans strings
 │   │       │       ├── values-zu/              # isiZulu strings
 │   │       │       └── xml/                    # FileProvider paths
-│   │       └── test/java/com/tutorbridge/app/
-│   │           ├── MappingTest.kt
-│   │           └── RouteAccessTest.kt
+│   │       └── test/java/com/tutorbridge/app/  # Unit tests (MappingTest.kt, CheckInTest.kt, OutboxSenderTest.kt and more)
 │   ├── gradle/
 │   │   ├── libs.versions.toml                  # Version catalog
 │   │   └── wrapper/
@@ -165,7 +174,8 @@ TutorBridge/
 │       │                               # notifications, notificationTokens, reference,
 │       │                               # threads, timesheets, tuitionRequests, users
 │       └── utils/                      # Google Calendar sync, push, notify, pagination,
-│                                       # CRUD router factory, async handler,
+│                                       # CRUD router factory, async handler, attendance,
+│                                       # series, matchScore, translated messages,
 │                                       # completePastSessions, purgeScheduledDeletions (+ tests)
 ├── firebase.json
 ├── .firebaserc
@@ -179,13 +189,13 @@ TutorBridge/
 <img width="1760" height="968" alt="image" src="https://github.com/user-attachments/assets/e1ac94b2-4733-4815-852b-9ffbb6387b94" />
 
 Looking at the above diagram the architectural choices made for this project centers around the android application, the project
-custom APIs, a database and external APIs with the android application being our device, custom APIs being a Node.js API run locally,
+custom APIs, a database and external APIs with the android application being our device, custom APIs being a Node.js API hosted on Azure App Service,
 the database being a MongoDB atlas database and our external APIs being Firebase services as well as google workspace services. These choices
 showcase the application needs as well as the group's best choices to make them.
 
 The system has four parts:
 * **Android app:** the client that students and tutors use.
-* **TutorBridge API:** a Node.js/Express REST API run locally on port 5000, with interactive docs at `/docs`. It was hosted on Azure App Service during the project and has since been taken down to save cost.
+* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the free tier, so the first request after an idle spell is slow.
 * **Database:** MongoDB Atlas, which only the API talks to.
 * **External services:** Firebase Authentication (sign-in), Firebase Cloud Messaging (push notifications) and the Google Calendar API.
 
@@ -209,6 +219,13 @@ The project is split into layers, so each part has one job.
 
 ---
 
+## Offline Sync
+Screens read what was last saved in Room, and anything done offline goes into an outbox table. WorkManager sends the outbox as soon as there is a connection, retries with a growing delay if the server cannot be reached, and runs every 15 minutes as a backup. A `GET /health` call wakes the API when the app starts.
+
+**Conflicts:** changes are sent in the order they were made, and the last one to reach the server wins. Settings merge field by field, so a later value replaces an earlier one. If the server refuses a change it is marked as failed on the Sync status screen, where it can be retried or discarded.
+
+---
+
 ## Setup
 
 ### Prerequisites
@@ -220,8 +237,8 @@ The project is split into layers, so each part has one job.
 
 ### Clone the repository
 ```bash
-git clone https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679.git
-cd prog7314-g2-2026-formative-2-part-2-st10438679
+git clone https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10439147.git
+cd prog7314-g2-2026-formative-2-part-2-st10439147
 ```
 
 ### Set up the API
@@ -262,11 +279,12 @@ The API runs at http://localhost:5000, and its interactive docs are at http://lo
 
 ### Run the Android app
 1. Open the **`android_app/`** folder (not the repo root) in Android Studio and let Gradle sync.
-2. Make sure the API is running (see above). There's nothing to change: out of the box the app calls `http://127.0.0.1:5000/`, and each build runs `adb reverse`, so an emulator or a USB-connected phone reaches the API on your computer. Rebuild if you reconnect the phone.
-   To use a different address, set `API_BASE_URL` in `android_app/local.properties` (this file isn't committed), for example the emulator's alias for your computer:
+2. There's nothing to change to try the app: out of the box it calls the API hosted on Azure, on an emulator or a phone.
+   To develop against the API running on your own computer instead, set `API_BASE_URL` in `android_app/local.properties` (this file isn't committed):
    ```properties
-   API_BASE_URL=http://10.0.2.2:5000/
+   API_BASE_URL=http://127.0.0.1:5000/
    ```
+   Each build then runs `adb reverse`, so an emulator or a USB-connected phone reaches your computer. Rebuild if you reconnect the phone. On an emulator you can use its alias for your computer instead, `http://10.0.2.2:5000/`.
 3. Select the **app** run configuration and press **Run**.
 
 > **Google sign-in** only works on builds whose signing key is registered in the Firebase project. On your own machine, sign in with email and password, or add the SHA-1 from `./gradlew signingReport` in Firebase console → Project settings → Your apps.
@@ -290,6 +308,7 @@ cd android_app
 ./gradlew testDebugUnitTest
 ```
 Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JAVA_HOME` isn't set, point it at Android Studio's bundled JDK (the `jbr` folder in its install directory).
+
 ---
 
 ## Version Control/GitHub Workflows
@@ -298,8 +317,11 @@ Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JA
 
 **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request, on every branch:
 * The **backend** job installs the API's dependencies, compiles the TypeScript and runs the backend tests.
-* The **android** job runs the unit tests and builds a debug APK.
-* A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test report instead.
+* The **android** job runs the unit tests and lint, then builds a debug APK.
+* A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test and lint reports instead.
+* A push to `master` also deploys the API to Azure App Service, once the backend tests pass.
+
+<img width="1417" height="882" alt="image" src="https://github.com/user-attachments/assets/d0f10c98-df82-4216-809c-ed52b8e591bf" />
 
 A failed job puts a red cross next to the commit on GitHub, so the team can see which change broke the build and fix it before merging.
 
@@ -317,13 +339,16 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Android Developers. n.d. *Download Android Studio & app tools*. [Online]. Available at: https://developer.android.com/studio [Accessed 21 September 2026].
 - Android Developers. 2026. *Get started with Jetpack Compose*. [Online]. Available at: https://developer.android.com/develop/ui/compose/documentation [Accessed 21 September 2026].
 - Android Developers. 2026. *Google Maps intents for Android*. [Online]. Available at: https://developer.android.com/guide/components/google-maps-intents [Accessed 21 September 2026].
+- Android Developers. 2026. *Getting started with WorkManager*. [Online]. Available at: https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started [Accessed 21 October 2026].
 - Android Developers. 2026. *Guide to app architecture*. [Online]. Available at: https://developer.android.com/topic/architecture [Accessed 21 September 2026].
 - Android Developers. 2026. *Kotlin coroutines on Android*. [Online]. Available at: https://developer.android.com/kotlin/coroutines [Accessed 21 September 2026].
 - Android Developers. 2026. *Localize your app*. [Online]. Available at: https://developer.android.com/guide/topics/resources/localization [Accessed 21 September 2026].
 - Android Developers. 2026. *Material Design 3 in Compose*. [Online]. Available at: https://developer.android.com/develop/ui/compose/designsystems/material3 [Accessed 21 September 2026].
+- Android Developers. 2026. *Monitor connectivity status and connection metering*. [Online]. Available at: https://developer.android.com/develop/connectivity/network-ops/reading-network-state [Accessed 20 October 2026].
 - Android Developers. 2026. *Notification runtime permission*. [Online]. Available at: https://developer.android.com/develop/ui/compose/notifications/notification-permission [Accessed 21 September 2026].
 - Android Developers. 2026. *PdfDocument*. [Online]. Available at: https://developer.android.com/reference/android/graphics/pdf/PdfDocument [Accessed 21 September 2026].
 - Android Developers. 2026. *Per-app language preferences*. [Online]. Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
+- Android Developers. 2026. *Save data in a local database using Room*. [Online]. Available at: https://developer.android.com/training/data-storage/room [Accessed 20 October 2026].
 - Android Developers. 2026. *Save simple data with SharedPreferences*. [Online]. Available at: https://developer.android.com/training/data-storage/shared-preferences [Accessed 21 September 2026].
 - Android Developers. 2025. *Setting up file sharing*. [Online]. Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026].
 - Android Developers. 2026. *Show a biometric authentication dialog*. [Online]. Available at: https://developer.android.com/identity/sign-in/biometric-auth [Accessed 21 September 2026].
@@ -334,10 +359,12 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Firebase. 2026. *Authenticate with Google on Android*. [Online]. Available at: https://firebase.google.com/docs/auth/android/google-signin [Accessed 21 September 2026].
 - Firebase. 2026. *Get started with Firebase Cloud Messaging in Android apps*. [Online]. Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026].
 - Google. 2024. *Gson* (Version 2.11.0). [Computer program]. Available at: https://github.com/google/gson [Accessed 21 September 2026].
+- Google for Developers. 2026. *Google code scanner (Android only)*. [Online]. Available at: https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner [Accessed 4 November 2026].
 - Google for Developers. 2026. *Client authentication*. [Online]. Available at: https://developers.google.com/android/guides/client-auth [Accessed 21 September 2026].
 - JetBrains. n.d. *Kotlin documentation*. [Online]. Available at: https://kotlinlang.org/docs/home.html [Accessed 21 September 2026].
 - Square, Inc. 2023. *OkHttp* (Version 4.12.0). [Computer program]. Available at: https://lysine.dev/okhttp/ [Accessed 21 September 2026].
 - Square, Inc. 2024. *Retrofit* (Version 2.11.0). [Computer program]. Available at: https://lysine.dev/retrofit/ [Accessed 21 September 2026].
+- ZXing Authors. 2024. *ZXing* (Version 3.5.3). [Computer program]. Available at: https://github.com/zxing/zxing [Accessed 4 November 2026].
 
 ### Backend API
 - Express.js. n.d. *Error handling*. [Online]. Available at: https://expressjs.com/en/guide/error-handling/ [Accessed 21 September 2026].
@@ -370,6 +397,9 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - GitHub. n.d. *Building and testing Java with Gradle*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
 - GitHub. n.d. *Building and testing Node.js*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs [Accessed 21 September 2026].
 - GitHub. n.d. *Store and share data with workflow artifacts*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
+- Microsoft. 2025. *Deploy by using GitHub Actions*. [Online]. Available at: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions [Accessed 21 September 2026].
+- Microsoft. 2025. *Quickstart: create a Node.js web app*. [Online]. Available at: https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs [Accessed 21 September 2026].
+- Microsoft. 2026. *azure/webapps-deploy* (Version 3). [Computer program]. Available at: https://github.com/Azure/webapps-deploy [Accessed 21 September 2026].
 
 ### README and version control
 - GitHub. n.d. *Basic writing and formatting syntax*. [Online]. Available at: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax [Accessed 21 September 2026].

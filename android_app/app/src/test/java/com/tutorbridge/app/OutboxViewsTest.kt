@@ -119,13 +119,13 @@ class OutboxViewsTest {
 
         assertEquals("LIGHT", merged.theme)
         assertEquals("ZU", merged.language)
-        assertNull(merged.smsFallback)
+        assertNull(merged.biometricEntry)
         assertNull(emptyList<OutboxEntity>().pendingSettings())
     }
 
     @Test
     fun `a reload does not undo a setting that has not been sent yet`() {
-        val fromServer = UserSettingsDto(language = "EN", theme = "LIGHT", smsFallback = true)
+        val fromServer = UserSettingsDto(language = "EN", theme = "LIGHT")
         val pending = UpdateSettingsRequest(theme = "DARK", notifications = NotificationPreferencesDto(booking = false))
 
         val shown = fromServer.withPending(pending)
@@ -134,6 +134,14 @@ class OutboxViewsTest {
         assertEquals(false, shown.notifications.booking)
         assertEquals("untouched settings keep the server's value", "EN", shown.language)
         assertEquals(fromServer, fromServer.withPending(null))
+    }
+
+    @Test
+    fun `a default area not sent yet survives a reload, and clearing it counts as a change`() {
+        val fromServer = UserSettingsDto(defaultAreaId = "old")
+        assertEquals("new", fromServer.withPending(UpdateSettingsRequest(defaultAreaId = "new")).defaultAreaId)
+        assertEquals("", fromServer.withPending(UpdateSettingsRequest(defaultAreaId = "")).defaultAreaId)
+        assertEquals("old", fromServer.withPending(UpdateSettingsRequest(theme = "DARK")).defaultAreaId)
     }
 
     @Test

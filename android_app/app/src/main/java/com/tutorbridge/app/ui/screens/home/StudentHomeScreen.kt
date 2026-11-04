@@ -1,6 +1,8 @@
 package com.tutorbridge.app.ui.screens.home
 
 import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.MessagesButton
+import com.tutorbridge.app.ui.components.PendingBadge
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,13 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -51,12 +50,7 @@ fun StudentHomeScreen(
                     Text(stringResource(R.string.student_home_let_s_learn_today), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val unread = uiState.threads.sumOf { it.unread }
-                    IconButton(onClick = { onNavigate("messages") }) {
-                        BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
-                            Icon(Icons.Default.Chat, contentDescription = stringResource(R.string.common_messages))
-                        }
-                    }
+                    MessagesButton(unread = uiState.threads.sumOf { it.unread }, onClick = { onNavigate("messages") })
                     IconButton(onClick = { onNavigate("notifications") }) {
                         Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
                     }
@@ -74,7 +68,7 @@ fun StudentHomeScreen(
                     // the student's card opens the schedule and venue instead.
                     .clickable { onNavigate("calendar") },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -82,27 +76,27 @@ fun StudentHomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Badge(containerColor = CrimsonPrimary) {
+                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
                             Text(
                                 nextEvent?.let { stringResource(R.string.student_home_next_session, it.startTime) } ?: stringResource(R.string.student_home_no_sessions_booked),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
                         }
-                        Text(stringResource(R.string.student_home_schedule_room), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.student_home_schedule_room), color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(
-                            modifier = Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)),
+                            modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 nextEvent?.participantName.orEmpty().split(" ").mapNotNull { part ->
                                     part.firstOrNull()?.uppercase()
                                 }.take(2).joinToString(""),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
@@ -110,20 +104,24 @@ fun StudentHomeScreen(
                         Column {
                             Text(
                                 nextEvent?.participantName ?: stringResource(R.string.student_home_book_your_first_session),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
                             Text(
                                 nextEvent?.subject.orEmpty(),
-                                color = Color.White.copy(alpha = 0.85f),
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.85f),
                                 fontSize = 12.sp
                             )
                             Text(
                                 nextEvent?.location.orEmpty(),
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
+                            if (nextEvent?.isPending == true) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                PendingBadge(onDark = true)
+                            }
                         }
                     }
                 }
@@ -144,7 +142,13 @@ fun StudentHomeScreen(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.student_home_upcoming_on_your_calendar), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(stringResource(R.string.student_home_full_calendar), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.student_home_full_calendar),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigate("calendar") }
+                )
             }
         }
 
@@ -162,6 +166,10 @@ fun StudentHomeScreen(
                     Column {
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                         Text("${event.date} • ${event.startTime}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (event.isPending) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            PendingBadge()
+                        }
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                         Text(event.location.split("—").firstOrNull()?.trim() ?: stringResource(R.string.student_home_campus), fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -181,7 +189,7 @@ fun StudentHomeScreen(
                 Text(if (personalised) stringResource(R.string.student_home_top_tutors_for_you) else stringResource(R.string.student_home_tutors_on_campus), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Text(
                     stringResource(R.string.student_home_see_all),
-                    color = CrimsonPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onNavigate("find_tutors") }
@@ -209,11 +217,11 @@ fun StudentHomeScreen(
                             Text(tutor.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             if (tutor.matchPercent > 0) {
                                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {
-                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = CrimsonPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.common_percent_match, tutor.matchPercent), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 12.sp, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                        Text("${tutor.subject} (${tutor.courseCode})", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(
                             listOfNotNull(
                                 if (tutor.activeNow) stringResource(R.string.common_active_now) else if (tutor.activeToday) stringResource(R.string.common_active_today) else null,
@@ -241,7 +249,7 @@ private fun QuickAction(icon: androidx.compose.ui.graphics.vector.ImageVector, l
             modifier = Modifier.padding(vertical = 14.dp).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(icon, contentDescription = label, tint = NavySecondary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.height(6.dp))
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }

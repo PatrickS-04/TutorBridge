@@ -52,8 +52,8 @@ data class TutorBridgeUiState(
     val outboxItems: List<OutboxEntity> = emptyList(),
     val selectedLanguage: String = "English",
     val bookingUpdatesEnabled: Boolean = true,
-    val sessionRemindersEnabled: Boolean = true,
-    val smsFallbackEnabled: Boolean = false,
+    val messageNotificationsEnabled: Boolean = true,
+    val showBiometricOffer: Boolean = false,
     val biometricEnabled: Boolean = false,
 
     // Google Calendar: linked once, then every confirmed booking is written there.
@@ -87,6 +87,7 @@ data class TutorBridgeUiState(
     // Reference data (subjects and campus areas), for the new-request wizard
     val subjectOptions: List<NamedIdDto> = emptyList(),
     val areaOptions: List<NamedIdDto> = emptyList(),
+    val defaultAreaId: String = "",
 
     // Calendar
     val selectedCalendarDate: LocalDate = LocalDate.now(),
@@ -98,7 +99,7 @@ data class TutorBridgeUiState(
     val selectedTutor: TutorUi? = null,
     val selectedSlot: String = "",
     val selectedLocation: String = "",
-    val selectedBookingDate: String = LocalDate.now().plusDays(1).toString(),
+    val selectedBookingDate: String = LocalDate.now().toString(),
     /** Repeat weekly: when on, [repeatCount] is how many weeks (a month is 4); when off, the chosen days run for one week. */
     val repeatWeekly: Boolean = false,
     val repeatCount: Int = SERIES_DEFAULT,

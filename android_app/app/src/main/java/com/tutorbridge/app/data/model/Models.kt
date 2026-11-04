@@ -115,6 +115,8 @@ data class CalendarEventUi(
     val endIso: String = "",
     /** CONFIRMED on the server. EventStatus folds REQUESTED into CONFIRMED, and check-in needs the real thing. */
     val isConfirmed: Boolean = false,
+    /** REQUESTED on the server: waiting on the tutor, so not on anyone's Google Calendar yet. */
+    val isPending: Boolean = false,
     /** "14:02" once the student has checked in; blank until then. */
     val checkedInTime: String = "",
     /** Set when this session is one of a weekly series; the same for every session in it. */
@@ -181,6 +183,12 @@ data class NotificationUi(
     val createdAt: String,
     val unread: Boolean
 )
+
+/** A new request starts on the student's default campus area, if that area still exists. */
+fun newRequestDraft(defaultAreaId: String, areas: List<NamedIdDto>): RequestDraft {
+    val area = areas.firstOrNull { it.id == defaultAreaId } ?: return RequestDraft()
+    return RequestDraft(areaId = area.id, preferredVenue = area.name)
+}
 
 data class RequestDraft(
     val step: Int = 1,

@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,11 +24,8 @@ import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.RequestStatus
 import com.tutorbridge.app.data.model.StudentRequestUi
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
 import com.tutorbridge.app.ui.theme.EmeraldTint
-import com.tutorbridge.app.ui.theme.NavyTint
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -57,7 +53,7 @@ fun MyRequestsScreen(
             Button(
                 onClick = onNewRequest,
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -111,16 +107,16 @@ fun MyRequestsScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(NavyTint)
+                                            .background(MaterialTheme.colorScheme.secondaryContainer)
                                             .padding(10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Icon(Icons.Default.Group, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.Group, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
                                         Text(
                                             pluralStringResource(R.plurals.my_requests_applicants, req.applicantCount, req.applicantCount),
                                             fontSize = 12.sp,
-                                            color = NavySecondary
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
@@ -153,7 +149,7 @@ fun MyRequestsScreen(
 @Composable
 private fun StatusBadge(status: RequestStatus) {
     val (label, bg, fg) = when (status) {
-        RequestStatus.OPEN -> Triple(stringResource(R.string.my_requests_open_request), MaterialTheme.colorScheme.primaryContainer, CrimsonPrimary)
+        RequestStatus.OPEN -> Triple(stringResource(R.string.my_requests_open_request), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary)
         RequestStatus.MATCHED -> Triple(stringResource(R.string.my_requests_matched), EmeraldTint, EmeraldSuccess)
         RequestStatus.OFFERED -> Triple(stringResource(R.string.request_board_offered), EmeraldTint, EmeraldSuccess)
         RequestStatus.COMPLETED -> Triple(stringResource(R.string.common_closed), MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)

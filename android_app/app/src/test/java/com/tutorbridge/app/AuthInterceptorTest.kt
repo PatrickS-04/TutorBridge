@@ -26,15 +26,18 @@ class AuthInterceptorTest {
     private var reachedServer = false
     private var authHeader: String? = null
 
+    private var serverCode = 200
+    private var rejections = 0
+
     private fun client(token: TokenResult): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor { token })
+        .addInterceptor(AuthInterceptor(onRejected = { rejections++ }) { token })
         .addInterceptor(Interceptor { chain ->
             reachedServer = true
             authHeader = chain.request().header("Authorization")
             Response.Builder()
                 .request(chain.request())
                 .protocol(Protocol.HTTP_1_1)
-                .code(200)
+                .code(serverCode)
                 .message("OK")
                 .body("".toResponseBody(null))
                 .build()
@@ -47,6 +50,22 @@ class AuthInterceptorTest {
     fun `a signed-in request carries the bearer token`() {
         client(TokenResult.Token("abc123")).newCall(request).execute()
         assertEquals("Bearer abc123", authHeader)
+    }
+
+    @Test
+    fun `a 401 for a signed-in user reports the session as over`() {
+        serverCode = 401
+        client(TokenResult.Token("abc123")).newCall(request).execute()
+        assertEquals(1, rejections)
+    }
+
+    @Test
+    fun `a 401 for nobody signed in, or any other answer, reports nothing`() {
+        serverCode = 401
+        client(TokenResult.NoUser).newCall(request).execute()
+        serverCode = 403
+        client(TokenResult.Token("abc123")).newCall(request).execute()
+        assertEquals(0, rejections)
     }
 
     @Test

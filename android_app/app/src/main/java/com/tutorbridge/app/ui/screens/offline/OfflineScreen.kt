@@ -19,8 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 
 @Composable
@@ -54,7 +52,7 @@ fun OfflineScreen(
                 modifier = Modifier.padding(14.dp).fillMaxWidth(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.5.sp,
-                color = CrimsonPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         }
@@ -68,7 +66,7 @@ fun OfflineScreen(
                 modifier = Modifier.size(84.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = NavySecondary, modifier = Modifier.size(36.dp))
+                Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(36.dp))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.offline_you_re_offline), fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -85,7 +83,7 @@ fun OfflineScreen(
             onClick = onRetry,
             modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text(stringResource(R.string.offline_retry_connection), fontWeight = FontWeight.Bold)
         }

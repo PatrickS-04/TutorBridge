@@ -1,8 +1,10 @@
 package com.tutorbridge.app.ui.screens.home
 
 import com.tutorbridge.app.R
+import com.tutorbridge.app.ui.components.MessagesButton
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
+import com.tutorbridge.app.ui.components.PendingBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,9 +28,7 @@ import com.tutorbridge.app.data.model.PendingBookingUi
 import com.tutorbridge.app.data.model.PendingItem
 import com.tutorbridge.app.data.model.groupPending
 import com.tutorbridge.app.ui.components.VenueLink
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
 import com.tutorbridge.app.ui.theme.EmeraldSuccess
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
@@ -65,12 +64,7 @@ fun TutorHomeScreen(
                     Text(uiState.userName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val unread = uiState.threads.sumOf { it.unread }
-                    IconButton(onClick = { onNavigate("messages") }) {
-                        BadgedBox(badge = { if (unread > 0) Badge { Text("$unread", fontSize = 12.sp) } }) {
-                            Icon(Icons.Default.Chat, contentDescription = stringResource(R.string.common_messages))
-                        }
-                    }
+                    MessagesButton(unread = uiState.threads.sumOf { it.unread }, onClick = { onNavigate("messages") })
                     IconButton(onClick = { onNavigate("notifications") }) {
                         Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.common_notifications))
                     }
@@ -99,7 +93,7 @@ fun TutorHomeScreen(
                     .fillMaxWidth()
                     .clickable { onNavigate("claims_export") },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -108,26 +102,26 @@ fun TutorHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(stringResource(R.string.common_timesheets_claims), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.tutor_home_pay_period, activePeriod?.label ?: stringResource(R.string.tutor_home_this_month)), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(stringResource(R.string.common_timesheets_claims), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.tutor_home_pay_period, activePeriod?.label ?: stringResource(R.string.tutor_home_this_month)), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
-                        Badge(containerColor = CrimsonPrimary) {
-                            Text(stringResource(R.string.tutor_home_claimable), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                            Text(stringResource(R.string.tutor_home_claimable), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            Text(stringResource(R.string.tutor_home_logged_hours), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                            Text(stringResource(R.string.tutor_home_hours_value, (activePeriod?.totalHours ?: 0.0).toString()), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_logged_hours), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_hours_value, (activePeriod?.totalHours ?: 0.0).toString()), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                         Column {
-                            Text(stringResource(R.string.tutor_home_claim_amount), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                            Text(stringResource(R.string.tutor_home_money_value, (activePeriod?.claimValue ?: 0.0).toInt()), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(stringResource(R.string.tutor_home_claim_amount), color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text(stringResource(R.string.tutor_home_money_value, (activePeriod?.claimValue ?: 0.0).toInt()), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text(stringResource(R.string.tutor_home_export_submit_claim_to_faculty), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text(stringResource(R.string.tutor_home_export_submit_claim_to_faculty), color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                 }
             }
         }
@@ -217,6 +211,10 @@ fun TutorHomeScreen(
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (event.isPending) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        PendingBadge()
+                    }
                 }
             }
         }
@@ -267,8 +265,8 @@ private fun PendingBookingCard(
                     enabled = isOnline,
                     modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
-                ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_sync), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSecondary) }
             }
             NeedsConnectionHint(isOnline)
         }
@@ -311,7 +309,7 @@ private fun PendingSeriesCard(
                         ),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = CrimsonPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                     VenueLink(booking.location, fontSize = 12.sp)
                 }
@@ -329,8 +327,8 @@ private fun PendingSeriesCard(
                     enabled = isOnline,
                     modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)
-                ) { Text(stringResource(R.string.tutor_home_accept_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) { Text(stringResource(R.string.tutor_home_accept_series), fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSecondary) }
             }
             NeedsConnectionHint(isOnline)
         }

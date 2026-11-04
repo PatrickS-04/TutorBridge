@@ -20,9 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorbridge.app.data.model.NamedIdDto
 import com.tutorbridge.app.data.model.UserRole
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
+import com.tutorbridge.app.data.repository.initialsOf
+import com.tutorbridge.app.ui.components.savedAtLabel
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import com.tutorbridge.app.R
@@ -38,18 +39,19 @@ fun SettingsScreen(
     onSignOut: () -> Unit,
     onEditProfileClick: () -> Unit = {},
     onToggleBookingUpdates: (Boolean) -> Unit = {},
-    onToggleSessionReminders: (Boolean) -> Unit = {},
-    onToggleSmsFallback: (Boolean) -> Unit = {},
+    onToggleMessageNotifications: (Boolean) -> Unit = {},
     onToggleBiometric: (Boolean) -> Unit = {},
     onLinkCalendar: () -> Unit = {},
     onUnlinkCalendar: () -> Unit = {},
     onChangePassword: ((String) -> Unit) -> Unit = {},
-    onOpenSyncStatus: () -> Unit = {}
+    onOpenSyncStatus: () -> Unit = {},
+    onSyncNow: () -> Unit = {},
+    onSelectDefaultArea: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val isTutor = uiState.role == UserRole.TUTOR
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var showLanguageDialog by remember {mutableStateOf(false) }
+    var showAreaDialog by remember { mutableStateOf(false) }
 
     var showSignOutWarning by remember { mutableStateOf(false) }
     // Work done offline and not yet sent lives on this phone, per account; signing out
@@ -64,7 +66,7 @@ fun SettingsScreen(
                 TextButton(onClick = {
                     showSignOutWarning = false
                     onSignOut()
-                }) { Text(stringResource(R.string.sign_out_anyway), color = CrimsonPrimary) }
+                }) { Text(stringResource(R.string.sign_out_anyway), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = { TextButton(onClick = { showSignOutWarning = false }) { Text(stringResource(R.string.cancel_action)) } }
         )
@@ -97,6 +99,38 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
+            }
+        )
+    }
+
+    if (showAreaDialog) {
+        val noDefault = NamedIdDto("", stringResource(R.string.settings_no_default_area))
+        AlertDialog(
+            onDismissRequest = { showAreaDialog = false },
+            title = { Text(stringResource(R.string.settings_default_area)) },
+            text = {
+                LazyColumn {
+                    items((listOf(noDefault) + uiState.areaOptions).size) { index ->
+                        val area = (listOf(noDefault) + uiState.areaOptions)[index]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAreaDialog = false
+                                    onSelectDefaultArea(area.id)
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = uiState.defaultAreaId == area.id, onClick = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(area.name)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAreaDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         )
     }
@@ -142,9 +176,9 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (isTutor) "CV" else "LN",
+                            text = initialsOf(uiState.userName),
                             fontWeight = FontWeight.Bold,
-                            color = NavySecondary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -181,6 +215,18 @@ fun SettingsScreen(
                         onClick = { showLanguageDialog = true }
                     )
                     Divider()
+                    // Only students post tuition requests, which is what this fills in.
+                    if (uiState.role != UserRole.TUTOR) {
+                        val defaultArea = uiState.areaOptions.firstOrNull { it.id == uiState.defaultAreaId }?.name
+                            ?: stringResource(R.string.settings_no_default_area)
+                        SettingsRow(
+                            icon = Icons.Default.Place,
+                            label = stringResource(R.string.settings_default_area),
+                            trailing = { Text("$defaultArea ›", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp) },
+                            onClick = { showAreaDialog = true }
+                        )
+                        Divider()
+                    }
                     SettingsCheckRow(
                         icon = Icons.Default.Notifications,
                         label = stringResource(R.string.booking_updates_label),
@@ -190,9 +236,9 @@ fun SettingsScreen(
                     Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Notifications,
-                        label = stringResource(R.string.session_reminders_label),
-                        checked = uiState.sessionRemindersEnabled,
-                        onCheckedChange = onToggleSessionReminders
+                        label = stringResource(R.string.message_notifications_label),
+                        checked = uiState.messageNotificationsEnabled,
+                        onCheckedChange = onToggleMessageNotifications
                     )
                 }
             }
@@ -261,18 +307,10 @@ fun SettingsScreen(
                     Divider()
                     SettingsCheckRow(
                         icon = Icons.Default.Shield,
-                        label = stringResource(R.string.sms_fallback_label),
-                        checked = uiState.smsFallbackEnabled,
-                        onCheckedChange = onToggleSmsFallback,
-                        tint = CrimsonPrimary
-                    )
-                    Divider()
-                    SettingsCheckRow(
-                        icon = Icons.Default.Shield,
                         label = stringResource(R.string.biometric_label),
                         checked = uiState.biometricEnabled,
                         onCheckedChange = onToggleBiometric,
-                        tint = CrimsonPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Divider()
                     SettingsCheckRow(
@@ -299,12 +337,26 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                SettingsRow(
-                    icon = Icons.Default.Sync,
-                    label = stringResource(R.string.sync_status_title),
-                    trailing = { if (unsent > 0) Badge { Text("$unsent", fontSize = 12.sp) } },
-                    onClick = onOpenSyncStatus
-                )
+                Column {
+                    SettingsRow(
+                        icon = Icons.Default.Sync,
+                        label = stringResource(R.string.sync_status_title),
+                        trailing = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (unsent > 0) Badge { Text("$unsent", fontSize = 12.sp) }
+                                TextButton(onClick = onSyncNow, enabled = uiState.isOnline) { Text(stringResource(R.string.sync_now)) }
+                            }
+                        },
+                        onClick = onOpenSyncStatus
+                    )
+                    Text(
+                        text = uiState.cacheSavedAtMillis?.let { stringResource(R.string.settings_last_synced, savedAtLabel(it)) }
+                            ?: stringResource(R.string.settings_not_synced_yet),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
+                    )
+                }
             }
         }
 
@@ -317,8 +369,8 @@ fun SettingsScreen(
                 colors = ButtonDefaults.buttonColors(
                     // Navy text on the dark navy surface is all but invisible, so dark
                     // mode gets the brand crimson behind it instead.
-                    containerColor = if (uiState.isDarkTheme) CrimsonPrimary else MaterialTheme.colorScheme.surface,
-                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else NavySecondary
+                    containerColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    contentColor = if (uiState.isDarkTheme) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.common_sign_out))
@@ -327,31 +379,29 @@ fun SettingsScreen(
             }
         }
 
-        // Student-Only Delete Account Action
-        if (!isTutor) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        // Delete Account Action
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OutlinedButton(
+                    onClick = onDeleteAccountClick,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    OutlinedButton(
-                        onClick = onDeleteAccountClick,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = CrimsonPrimary)
-                    ) {
-                        Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.common_delete))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.delete_account_action), fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.delete_account_subtitle),
-                        fontSize = 12.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Icon(Icons.Default.DeleteForever, contentDescription = stringResource(R.string.common_delete))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.delete_account_action), fontWeight = FontWeight.Bold)
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.delete_account_subtitle),
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

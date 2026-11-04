@@ -5,8 +5,8 @@ import assert from "node:assert/strict";
 
 process.env.CALENDAR_TOKEN_KEY = "11".repeat(32);
 
-import { buildEvent, encryptToken, decryptToken, readIdTokenEmail } from "./googleCalendar";
-import { LessonMode } from "../models";
+import { buildEvent, encryptToken, decryptToken, readIdTokenEmail, syncUpcomingBookings } from "./googleCalendar";
+import { Booking, BookingStatus, CalendarLink, LessonMode } from "../models";
 
 const session = {
   subjectName: "Maths",
@@ -51,4 +51,31 @@ test("readIdTokenEmail reads the payload and shrugs off junk", () => {
   assert.equal(readIdTokenEmail(`header.${payload}.signature`), "tutor@example.com");
   assert.equal(readIdTokenEmail("not-a-jwt"), undefined);
   assert.equal(readIdTokenEmail(undefined), undefined);
+});
+
+test("syncUpcomingBookings picks only the user's upcoming unsynced sessions and survives a bad one", async (t) => {
+  const find = t.mock.method(Booking, "find", async () => [
+    { _id: "b1", tutorId: "bad-tutor", studentId: "u1" },
+    { _id: "b2", tutorId: "t2", studentId: "u1" },
+  ]);
+  //The first session's lookup blows up; the second must still be attempted.
+  const lookedUp: string[] = [];
+  t.mock.method(CalendarLink, "findOne", (filter: { userId: string }) => ({
+    select: async () => {
+      lookedUp.push(filter.userId);
+      if (filter.userId === "bad-tutor") throw new Error("boom");
+      return null;
+    },
+  }));
+  t.mock.method(console, "error", () => {});
+  t.mock.method(console, "log", () => {});
+
+  await syncUpcomingBookings("u1");
+
+  const filter = find.mock.calls[0].arguments[0] as any;
+  assert.deepEqual(filter.$or, [{ tutorId: "u1" }, { studentId: "u1" }]);
+  assert.equal(filter.status, BookingStatus.CONFIRMED);
+  assert.ok(filter.startTime.$gt instanceof Date);
+  assert.deepEqual(filter.googleCalendarEventId, { $exists: false });
+  assert.deepEqual(lookedUp, ["bad-tutor", "t2", "u1"]);
 });

@@ -1,8 +1,10 @@
 package com.tutorbridge.app.ui.navigation
 
+import android.os.SystemClock
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.R
-import android.hardware.biometrics.BiometricManager
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -10,13 +12,18 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
 import com.tutorbridge.app.data.model.AuthMode
 import com.tutorbridge.app.data.model.BiometricAuthentication
+import com.tutorbridge.app.data.model.BiometricStatus
 import com.tutorbridge.app.data.model.GoogleAuthentication
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.ui.components.OfflineBanner
@@ -85,6 +92,23 @@ fun TutorBridgeNavGraph(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Back walks to the previous page. With none left, it warns once, and a second
+    // press within the toast's 2 seconds closes the app. Screens with their own
+    // BackHandler (unsaved notes, wizard steps) are composed later, so they go first.
+    val backActivity = LocalContext.current as FragmentActivity
+    var lastBackAt by remember { mutableLongStateOf(0L) }
+    BackHandler {
+        if (!viewModel.goBack()) {
+            val now = SystemClock.uptimeMillis()
+            if (lastBackAt != 0L && now - lastBackAt < 2_000L) {
+                backActivity.finish()
+            } else {
+                lastBackAt = now
+                Toast.makeText(backActivity, R.string.common_back_again_to_exit, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // Anything the server refused or could not answer.
     LaunchedEffect(uiState.dataErrorMessage) {
         uiState.dataErrorMessage?.let { message ->
@@ -97,6 +121,28 @@ fun TutorBridgeNavGraph(
         uiState.noticeMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.dismissNotice()
+        }
+    }
+
+    if (uiState.showBiometricOffer) {
+        val activity = LocalContext.current as FragmentActivity
+        if (BiometricAuthentication(activity).status() == BiometricStatus.AVAILABLE) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissBiometricOffer() },
+                title = { Text(stringResource(R.string.biometric_offer_title)) },
+                text = { Text(stringResource(R.string.biometric_offer_body)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.toggleBiometric(true)
+                        viewModel.dismissBiometricOffer()
+                    }) { Text(stringResource(R.string.biometric_offer_yes)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissBiometricOffer() }) { Text(stringResource(R.string.biometric_offer_no)) }
+                }
+            )
+        } else {
+            LaunchedEffect(Unit) { viewModel.dismissBiometricOffer() }
         }
     }
 
@@ -175,18 +221,27 @@ fun TutorBridgeNavGraph(
                 )
                 "biometric_lock" -> {
                     val activity = LocalContext.current as FragmentActivity
+                    var message by remember { mutableStateOf<String?>(null) }
+                    val unlock = {
+                        val biometric = BiometricAuthentication(activity)
+                        val status = biometric.status()
+                        if (status == BiometricStatus.AVAILABLE) {
+                            message = null
+                            biometric.authenticate(
+                                onSuccess = { viewModel.completeAuth() },
+                                onFailure = { message = it }
+                            )
+                        } else {
+                            // Never let them through because the lock cannot be shown:
+                            // signing in again is the way out.
+                            message = activity.getString(status.messageRes)
+                        }
+                    }
+                    // The prompt comes up by itself, before any of the user's data.
+                    LaunchedEffect(Unit) { unlock() }
                     BiometricScreen(
-                        onUnlockClick = {
-                            val biometricManager = BiometricAuthentication(activity)
-                            if (biometricManager.canAuthenticate()) {
-                                biometricManager.authenticate(
-                                    onSuccess = { viewModel.completeAuth() },
-                                    onFailure = {}
-                                )
-                            } else {
-                                viewModel.completeAuth()
-                            }
-                        },
+                        message = message,
+                        onUnlockClick = unlock,
                         onSignInDifferently = { viewModel.signOut() }
                     )
                 }
@@ -367,6 +422,7 @@ fun TutorBridgeNavGraph(
                     onBack = { viewModel.navigateTo(if (uiState.role == UserRole.TUTOR) "tutor_home" else "student_home") }
                 )
                 "settings" -> {
+                    val activity = LocalContext.current as FragmentActivity
                     val linkCalendar = GoogleAuthentication.rememberCalendarAuthorizer(
                         onAuthCode = { authCode -> viewModel.linkCalendar(authCode) },
                         onError = { message -> viewModel.setCalendarMessage(message) }
@@ -384,19 +440,24 @@ fun TutorBridgeNavGraph(
                         onSignOut = { viewModel.signOut() },
                         onEditProfileClick = { viewModel.navigateTo("edit_profile") },
                         onToggleBookingUpdates = { viewModel.toggleBookingUpdates(it) },
-                        onToggleSessionReminders = { viewModel.toggleSessionReminders(it) },
-                        onToggleSmsFallback = { viewModel.toggleSmsFallback(it) },
-                        onToggleBiometric = { viewModel.toggleBiometric(it) },
+                        onToggleMessageNotifications = { viewModel.toggleMessageNotifications(it) },
+                        onToggleBiometric = { enabled ->
+                            val status = BiometricAuthentication(activity).status()
+                            if (enabled && status != BiometricStatus.AVAILABLE) viewModel.showNotice(activity.getString(status.messageRes))
+                            else viewModel.toggleBiometric(enabled)
+                        },
                         onLinkCalendar = linkCalendar,
                         onUnlinkCalendar = { viewModel.unlinkCalendar() },
                         onChangePassword = { viewModel.sendPasswordReset(it) },
-                        onOpenSyncStatus = { viewModel.navigateTo("sync_status") }
+                        onOpenSyncStatus = { viewModel.navigateTo("sync_status") },
+                        onSyncNow = { viewModel.syncNow() },
+                        onSelectDefaultArea = { viewModel.setDefaultArea(it) }
                     )
                 }
                 "delete_account" -> DeleteAccountScreen(
                     uiState = uiState,
                     onConfirmDelete = {
-                        viewModel.deleteStudentAccount {
+                        viewModel.deleteAccount {
                             viewModel.navigateTo("auth")
                         }
                     },

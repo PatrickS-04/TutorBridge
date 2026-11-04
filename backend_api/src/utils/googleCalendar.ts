@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { CalendarLink, User, IBooking, LessonMode } from "../models";
+import { Booking, BookingStatus, CalendarLink, User, IBooking, LessonMode } from "../models";
 
 //Writes confirmed bookings into the tutor's Google Calendar. The tutor links
 //their account once (POST /calendar/link) and we keep the refresh token; every
@@ -146,6 +146,24 @@ export function buildEvent(booking: BookingEvent, guestName: string, guestEmail?
  */
 export function syncBookingCreated(booking: IBooking) {
   createEvent(booking).catch((error) => console.error("calendar sync failed:", error));
+}
+
+/**
+ * Catch a newly linked calendar up on sessions confirmed before the link. Only
+ * upcoming ones without an event: a past session is no use on a calendar, and
+ * one that already has an event is on someone's calendar already. One at a time,
+ * and one bad session must not cost the user the rest.
+ */
+export async function syncUpcomingBookings(userId: string) {
+  const bookings = await Booking.find({
+    $or: [{ tutorId: userId }, { studentId: userId }],
+    status: BookingStatus.CONFIRMED,
+    startTime: { $gt: new Date() },
+    googleCalendarEventId: { $exists: false },
+  });
+  for (const booking of bookings) {
+    await createEvent(booking).catch((error) => console.error("calendar sync failed:", error));
+  }
 }
 
 /**

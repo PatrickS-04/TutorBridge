@@ -1317,7 +1317,8 @@ export const openapiSpec = {
         tags: ["Calendar"],
         summary: "Link a Google Calendar",
         description:
-          "Exchanges the one-time auth code from the app's Google sign-in for a refresh token, stored encrypted.",
+          "Exchanges the one-time auth code from the app's Google sign-in for a refresh token, stored encrypted. " +
+          "Upcoming confirmed sessions with no calendar event yet are then added in the background.",
         requestBody: {
           required: true,
           ...json({
@@ -1602,8 +1603,8 @@ export const openapiSpec = {
               verification: { type: "boolean" },
             },
           },
-          smsFallback: { type: "boolean" },
           biometricEntry: { type: "boolean" },
+          defaultAreaId: { type: "string" },
           theme: enumOf(Theme),
         },
       },

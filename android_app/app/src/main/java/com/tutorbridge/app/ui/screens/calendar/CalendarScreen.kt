@@ -28,16 +28,16 @@ import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.EventStatus
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.data.model.sessionsFrom
+import com.tutorbridge.app.ui.components.PendingBadge
 import com.tutorbridge.app.ui.components.SeriesBadge
 import com.tutorbridge.app.ui.components.VenueLink
-import com.tutorbridge.app.ui.theme.CrimsonPrimary
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.ScannedCheckIn
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -102,7 +102,7 @@ fun CalendarScreen(
                     cancellingSeries = null
                     onCancelSeries(event)
                 }) {
-                    Text(stringResource(R.string.calendar_series_cancel_confirm), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.calendar_series_cancel_confirm), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -143,7 +143,7 @@ fun CalendarScreen(
                     Button(
                         onClick = onAddEvent,
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -167,7 +167,7 @@ fun CalendarScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = NavySecondary)
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                         Column {
                             Text(
                                 "${yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${yearMonth.year}",
@@ -233,7 +233,7 @@ fun CalendarScreen(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .clip(CircleShape)
-                                                .background(if (isSelected) NavySecondary else Color.Transparent)
+                                                .background(if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent)
                                                 .clickable { onSelectDate(date) },
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -241,7 +241,7 @@ fun CalendarScreen(
                                                 "$dayNum",
                                                 fontSize = 12.5.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                                color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }
@@ -291,7 +291,7 @@ fun CalendarScreen(
                         modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.EventBusy, contentDescription = null, tint = CrimsonPrimary)
+                        Icon(Icons.Default.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(stringResource(R.string.calendar_no_sessions_on_this_date), fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -324,20 +324,24 @@ fun CalendarScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("${event.startTime} - ${event.endTime}", fontWeight = FontWeight.Bold, color = CrimsonPrimary, fontSize = 13.sp)
+                            Text("${event.startTime} - ${event.endTime}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
                             Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                                Text(event.type.name, color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                                Text(event.type.name, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (event.isPending) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            PendingBadge()
+                        }
                         if (event.isSeries) {
                             Spacer(modifier = Modifier.height(4.dp))
                             SeriesBadge(event.seriesIndex, event.seriesCount)
                         }
                         VenueLink(event.location, fontSize = 12.5.sp)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = NavySecondary, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.calendar_with_person, event.participantName), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(8.dp))
                         CheckInRow(
                             event = event,
@@ -358,7 +362,7 @@ fun CalendarScreen(
                                 Icon(
                                     Icons.Default.EditNote,
                                     contentDescription = null,
-                                    tint = CrimsonPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
@@ -401,7 +405,7 @@ fun CalendarScreen(
                                         stringResource(R.string.calendar_series_cancel),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = CrimsonPrimary
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -421,6 +425,11 @@ private fun CalendarEventUi.isUpcoming(): Boolean {
 }
 
 private val rescheduleHours = (7..20).map { LocalTime.of(it, 0) }
+
+/** The start times a session can be moved to on [date]: on today, only those still ahead of [now]. */
+internal fun rescheduleHoursOn(date: LocalDate, now: LocalDateTime): List<LocalTime> =
+    rescheduleHours.filter { date.atTime(it).isAfter(now) }
+
 private val hourLabel get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 private val dayLabel get() = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
@@ -434,9 +443,15 @@ private fun RescheduleDialog(
     onDismiss: () -> Unit,
     onConfirm: (LocalDate, LocalTime) -> Unit
 ) {
-    val days = remember { (1..21).map { LocalDate.now().plusDays(it.toLong()) } }
+    // Fixed when the dialog opens, so the hours can't run out under it; the server refuses a time that has since passed.
+    val now = remember { LocalDateTime.now() }
+    // Today is only offered while it has an hour left.
+    val days = remember { (0..21).map { now.toLocalDate().plusDays(it.toLong()) }.filter { rescheduleHoursOn(it, now).isNotEmpty() } }
     var date by remember { mutableStateOf(days.first()) }
-    var time by remember { mutableStateOf(LocalTime.of(14, 0)) }
+    var preferredTime by remember { mutableStateOf(LocalTime.of(14, 0)) }
+    val hours = rescheduleHoursOn(date, now)
+    // A time picked on another day may already have passed today.
+    val time = if (preferredTime in hours) preferredTime else hours.first()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -466,10 +481,10 @@ private fun RescheduleDialog(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    rescheduleHours.forEach { hour ->
+                    hours.forEach { hour ->
                         FilterChip(
                             selected = hour == time,
-                            onClick = { time = hour },
+                            onClick = { preferredTime = hour },
                             label = { Text(hour.format(hourLabel), fontSize = 12.sp) }
                         )
                     }
@@ -478,7 +493,7 @@ private fun RescheduleDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(date, time) }) {
-                Text(stringResource(R.string.calendar_move_session), color = CrimsonPrimary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_move_session), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calendar_keep_current_time)) } }

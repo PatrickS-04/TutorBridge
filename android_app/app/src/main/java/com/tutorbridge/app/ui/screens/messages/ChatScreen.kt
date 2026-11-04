@@ -1,5 +1,6 @@
 package com.tutorbridge.app.ui.screens.messages
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,10 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,11 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorbridge.app.R
 import com.tutorbridge.app.data.model.MessageUi
-import com.tutorbridge.app.ui.theme.NavySecondary
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
+import com.tutorbridge.app.viewmodel.messagesByDay
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-/** One conversation: messages oldest to newest, with the compose box pinned below. */
+/** One conversation: messages oldest to newest under day headers, with the compose box pinned below. */
+@OptIn(ExperimentalFoundationApi::class) // stickyHeader
 @Composable
 fun ChatScreen(
     uiState: TutorBridgeUiState,
@@ -42,9 +47,15 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val hasEarlier = uiState.chatPage < uiState.chatTotalPages
 
+    val chat = uiState.visibleChat
+    val days = remember(chat) { messagesByDay(chat) }
+
     // Follow the conversation down when a message arrives or is sent.
-    LaunchedEffect(uiState.visibleChat.lastOrNull()?.id) {
-        if (uiState.visibleChat.isNotEmpty()) listState.animateScrollToItem(uiState.visibleChat.size - 1 + if (hasEarlier) 1 else 0)
+    LaunchedEffect(chat.lastOrNull()?.id) {
+        if (chat.isNotEmpty()) {
+            val above = days.keys.count { it != null } + if (hasEarlier) 1 else 0
+            listState.animateScrollToItem(chat.size - 1 + above)
+        }
     }
 
     Column(
@@ -86,7 +97,10 @@ fun ChatScreen(
                     )
                 }
             }
-            items(uiState.visibleChat, key = { it.id }) { message -> Bubble(message) }
+            days.forEach { (day, messages) ->
+                if (day != null) stickyHeader(key = "day-$day") { DayHeader(day) }
+                items(messages, key = { it.id }) { message -> Bubble(message) }
+            }
         }
 
         Row(
@@ -107,10 +121,38 @@ fun ChatScreen(
             FilledIconButton(
                 onClick = onSend,
                 enabled = uiState.chatDraft.isNotBlank(),
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = NavySecondary)
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Icon(Icons.Default.Send, contentDescription = stringResource(R.string.chat_send))
             }
+        }
+    }
+}
+
+/** The day chip that sits above a day's messages and stays pinned to the top while they scroll by. */
+@Composable
+private fun DayHeader(day: LocalDate) {
+    val today = LocalDate.now()
+    val label = when {
+        day == today -> stringResource(R.string.chat_today)
+        day == today.minusDays(1) -> stringResource(R.string.chat_yesterday)
+        day.isAfter(today.minusDays(7)) -> day.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
+        day.year == today.year -> day.format(DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault()))
+        else -> day.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault()))
+    }
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shadowElevation = 1.dp
+        ) {
+            Text(
+                label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            )
         }
     }
 }
@@ -125,13 +167,13 @@ private fun Bubble(message: MessageUi) {
             modifier = Modifier
                 .widthIn(max = 280.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (message.mine) NavySecondary else MaterialTheme.colorScheme.surfaceVariant)
+                .background(if (message.mine) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(
                 message.body,
                 fontSize = 14.sp,
-                color = if (message.mine) Color.White else MaterialTheme.colorScheme.onSurface
+                color = if (message.mine) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
             )
             Text(
                 when {
@@ -140,7 +182,7 @@ private fun Bubble(message: MessageUi) {
                     else -> message.time
                 },
                 fontSize = 12.sp,
-                color = if (message.mine) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (message.mine) MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
