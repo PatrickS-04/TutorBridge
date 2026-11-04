@@ -52,9 +52,9 @@ export const translatedErrors: Record<string, Record<Language, string>> = {
     af: "'n Sessie kan slegs na 'n toekomstige tyd geskuif word",
     zu: "Iseshini ingahanjiswa kuphela esikhathini esizayo",
   },
-  "The first session of a series must be in the future": {
-    af: "Die eerste sessie van 'n reeks moet in die toekoms wees",
-    zu: "Iseshini yokuqala yochungechunge kufanele ibe esikhathini esizayo",
+  "A session must be booked for a future time": {
+    af: "'n Sessie moet vir 'n toekomstige tyd bespreek word",
+    zu: "Iseshini kufanele ibhukhelwe isikhathi esizayo",
   },
   "repeat.days must include the weekday of the first session": {
     af: "Die herhaaldae moet die weekdag van die eerste sessie insluit",

@@ -61,8 +61,19 @@ class MappingTest {
         val tutor = tutorDto.toTutorUi()
 
         // 09:00-12:00 is three whole hours, and none of them spill past the window.
-        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday))
-        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1)))
+        val beforeTheDay = monday.minusDays(1).atStartOfDay()
+        assertEquals(listOf("09:00 AM", "10:00 AM", "11:00 AM"), tutor.slotsOn(monday, beforeTheDay))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday.plusDays(1), beforeTheDay))
+    }
+
+    @Test
+    fun `booking today only offers the slots that have not started`() {
+        val tutor = tutorDto.toTutorUi()
+
+        assertEquals(listOf("10:00 AM", "11:00 AM"), tutor.slotsOn(monday, monday.atTime(9, 30)))
+        // A slot starting this very minute has already begun.
+        assertEquals(listOf("11:00 AM"), tutor.slotsOn(monday, monday.atTime(10, 0)))
+        assertEquals(emptyList<String>(), tutor.slotsOn(monday, monday.atTime(11, 30)))
     }
 
     @Test

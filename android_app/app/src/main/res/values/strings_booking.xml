@@ -29,7 +29,7 @@
     <string name="booking_time">Time</string>
     <string name="booking_tutor">Tutor</string>
     <string name="booking_no_hours_published">%1$s has not published any hours yet - pick another tutor.</string>
-    <string name="booking_no_hours_day">%1$s has no hours set for this day - try another date.</string>
+    <string name="booking_no_hours_day">%1$s has no free slots on this day - try another date.</string>
     <string name="booking_time_one_hour">%1$s (1 hour)</string>
     <string name="booking_repeat_weekly">Repeat weekly</string>
     <string name="booking_repeat_hint">Book the same time every week. The tutor confirms the whole series.</string>

@@ -42,11 +42,11 @@ import com.tutorbridge.app.ui.theme.EmeraldTint
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
 import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 
-// The next two weeks, starting tomorrow.
+// The next two weeks, starting today.
 private val dayLabel get() = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
 private fun upcomingDates(): List<Pair<String, Pair<String, String>>> =
-    (1..14).map { offset ->
+    (0..13).map { offset ->
         val date = LocalDate.now().plusDays(offset.toLong())
         date.toString() to Pair(date.format(dayLabel).uppercase(Locale.getDefault()), date.dayOfMonth.toString())
     }

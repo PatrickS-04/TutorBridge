@@ -30,7 +30,7 @@
     <string name="booking_time">Tyd</string>
     <string name="booking_tutor">Tutor</string>
     <string name="booking_no_hours_published">%1$s het nog geen ure gepubliseer nie - kies \'n ander tutor.</string>
-    <string name="booking_no_hours_day">%1$s het geen ure vir hierdie dag gestel nie - probeer \'n ander datum.</string>
+    <string name="booking_no_hours_day">%1$s het geen oop tye op hierdie dag nie - probeer \'n ander datum.</string>
     <string name="booking_time_one_hour">%1$s (1 uur)</string>
     <string name="booking_repeat_weekly">Herhaal weekliks</string>
     <string name="booking_repeat_hint">Bespreek elke week dieselfde tyd. Die tutor bevestig die hele reeks.</string>

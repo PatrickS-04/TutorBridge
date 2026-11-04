@@ -563,12 +563,13 @@ fun List<AvailabilityDto>.toTimeWindowLabel(): String {
     return "$days ${first.start}–${first.end}"
 }
 
-/** Hourly starts the tutor is free on [date], for the booking flow. */
-fun TutorUi.slotsOn(date: LocalDate): List<String> {
+/** Hourly starts the tutor is free on [date] that are still ahead of [now], for the booking flow. */
+fun TutorUi.slotsOn(date: LocalDate, now: java.time.LocalDateTime = java.time.LocalDateTime.now()): List<String> {
     val windows = this.windows.filter { it.day == date.dayOfWeek }
     return windows.flatMap { window ->
         generateSequence(window.start) { it.plusHours(1) }
             .takeWhile { !it.plusHours(1).isAfter(window.end) }
+            .filter { date.atTime(it).isAfter(now) }
             .map { it.format(slotTime) }
             .toList()
     }

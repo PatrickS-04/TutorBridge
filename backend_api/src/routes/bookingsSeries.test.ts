@@ -254,6 +254,17 @@ test("a series whose first session is in the past is refused, and books nothing"
   assert.equal(created.length, 0);
 });
 
+test("a single session already started today is refused, and one later today is booked", async () => {
+  const started = await bookSeries(undefined, new Date(Date.now() - 60_000));
+  assert.equal(started.status, 400);
+  assert.equal(started.body.error.field, "startTime");
+  assert.equal(created.length, 0);
+
+  const later = await bookSeries(undefined, new Date(Date.now() + 60_000));
+  assert.equal(later.status, 201);
+  assert.equal(created.length, 1);
+});
+
 test("a series at a time the tutor is not available is refused, listing every week", async () => {
   const evening = nextMonday(18); // 18:00-19:00, after the 17:00 close
   const { status, body } = await bookSeries({ frequency: "WEEKLY", count: 3 }, evening);

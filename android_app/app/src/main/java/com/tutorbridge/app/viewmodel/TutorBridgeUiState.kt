@@ -99,7 +99,7 @@ data class TutorBridgeUiState(
     val selectedTutor: TutorUi? = null,
     val selectedSlot: String = "",
     val selectedLocation: String = "",
-    val selectedBookingDate: String = LocalDate.now().plusDays(1).toString(),
+    val selectedBookingDate: String = LocalDate.now().toString(),
     /** Repeat weekly: when on, [repeatCount] is how many weeks (a month is 4); when off, the chosen days run for one week. */
     val repeatWeekly: Boolean = false,
     val repeatCount: Int = SERIES_DEFAULT,
