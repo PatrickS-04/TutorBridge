@@ -1,4 +1,4 @@
-# PROG7314 POE Part 2
+# PROG7314 POE (Hosted on Azure)
 ## TutorBridge Android Application
 > By Dillon Rinkwest - ST10439147, Patrick Shutte - ST10440987, Liam Swile - ST10438679 and Uzair Essa - ST10440109
 
@@ -28,6 +28,8 @@ students with proper and chosen resources with the option out and off campus tut
 
 > GitHub Submission File: TutorBridge
 
+<img width="1877" height="850" alt="image" src="https://github.com/user-attachments/assets/2c7a46fc-2ba0-4ab5-9e57-dd982325519f" />
+
 ---
 
 ### Intended User Base
@@ -38,7 +40,6 @@ students with proper and chosen resources with the option out and off campus tut
 ---
 
 ### Features/Scope
-## Features/Scope
 | Feature | Status | What it does |
 |---|---|---|
 | Biometric unlock | Done | Offered after sign-in and switched in Settings, it asks for a biometric scan (or the phone's screen lock) each time the app starts. Without it you simply stay signed in |
@@ -52,6 +53,11 @@ students with proper and chosen resources with the option out and off campus tut
 | Match relevance | Done | The API scores each tutor against the student's own requests (shared subject, shared campus area, completed sessions). "Top Tutors For You" ranks on it and the "% match" badge shows it; with nothing to match on, the section is just "Tutors on Campus" |
 | Session materials pack | Partly done | Tutors keep a private to-do list and notes for each session on the Session Prep screen |
 | Institutional structure | Done | Each user belongs to an institution and only sees that institution's tutors. Institution admins add tutor accounts and review verification documents through the API; the app has no admin screens yet |
+| QR attendance check-in | Done | From 15 minutes before a session until it ends, the tutor can show a 6-digit code, as a QR code and as text, that lasts 5 minutes. The student scans or types it on their own phone, and claim vouchers show which sessions were verified this way. Five wrong codes means the tutor has to show a new one |
+| Recurring bookings | Done | A student can book the same time on 1 to 7 weekdays for 1 to 8 weeks, up to 24 sessions. Every session has to fit the tutor's weekly hours. The tutor can confirm or decline the whole series, and the rest of a series can be cancelled at once |
+| Multi-language support | Done | The app is available in English, Afrikaans and isiZulu, and the chosen language is kept across restarts. Push notifications and API error messages are translated too |
+| Offline mode with sync | Done | Screens show what was last saved when there is no connection, and changes made offline are sent once it returns. See [Offline Sync](#offline-sync) |
+| Learning history | Done | Students see their completed sessions and can export them as a PDF to save or share |
 
 **Also in the app**
 - Tuition request board: students post what they need, tutors apply with a rate, and the student accepts one and schedules the session
@@ -62,7 +68,7 @@ students with proper and chosen resources with the option out and off campus tut
 ---
 
 ### Tech Stack
-* **Android app:** Kotlin, Jetpack Compose (Material 3), Retrofit and OkHttp, Credential Manager (Google sign-in), AndroidX Biometric
+* **Android app:** Kotlin, Jetpack Compose (Material 3), Retrofit and OkHttp, Credential Manager (Google sign-in), AndroidX Biometric, Room and WorkManager (offline sync), Google code scanner and ZXing (QR check-in)
 * **Backend API:** Node.js, Express, TypeScript, Mongoose, Swagger UI (OpenAPI docs)
 * **Database:** MongoDB Atlas
 * **Firebase:** Authentication, Cloud Messaging (push notifications)
@@ -95,9 +101,12 @@ TutorBridge/
 │   │       │   │   │   ├── AuthInterceptor.kt
 │   │       │   │   │   └── RetrofitInstance.kt
 │   │       │   │   ├── data/
+│   │       │   │   │   ├── local/              # Room database and offline cache
 │   │       │   │   │   ├── model/              # API/domain models, preferences, auth helpers
 │   │       │   │   │   └── repository/
 │   │       │   │   │       └── TutorBridgeRepository.kt
+│   │       │   │   ├── network/                # Connectivity awareness
+│   │       │   │   ├── sync/                   # Outbox sending with WorkManager
 │   │       │   │   ├── repository/
 │   │       │   │   │   └── AuthRepository.kt
 │   │       │   │   ├── push/                   # FCM push notifications
@@ -109,7 +118,7 @@ TutorBridge/
 │   │       │   │   │   ├── DeepLinkRouter.kt
 │   │       │   │   │   └── RouteAccess.kt
 │   │       │   │   └── ui/
-│   │       │   │       ├── components/         # Shared composables (VenueLink)
+│   │       │   │       ├── components/         # Shared composables (VenueLink, QrCode, OfflineBanner, SeriesBadge)
 │   │       │   │       ├── navigation/
 │   │       │   │       │   └── TutorBridgeNavGraph.kt
 │   │       │   │       ├── theme/              # Color.kt, Theme.kt
@@ -122,13 +131,15 @@ TutorBridge/
 │   │       │   │           ├── find/           # Find tutors, tutor profile
 │   │       │   │           ├── history/        # Learning history
 │   │       │   │           ├── home/           # Student and tutor home
+│   │       │   │           ├── messages/
 │   │       │   │           ├── notifications/
 │   │       │   │           ├── offline/
 │   │       │   │           ├── prep/           # Session prep
 │   │       │   │           ├── profile/        # Edit tutor profile
 │   │       │   │           ├── requests/       # Tuition requests + tutor board
 │   │       │   │           ├── settings/       # Settings, edit profile, delete account
-│   │       │   │           └── splash/
+│   │       │   │           ├── splash/
+│   │       │   │           └── sync/           # Sync status
 │   │       │   └── res/
 │   │       │       ├── drawable/               # Icons and logo
 │   │       │       ├── mipmap-anydpi-v26/      # Launcher icons
@@ -136,9 +147,7 @@ TutorBridge/
 │   │       │       ├── values-af/              # Afrikaans strings
 │   │       │       ├── values-zu/              # isiZulu strings
 │   │       │       └── xml/                    # FileProvider paths
-│   │       └── test/java/com/tutorbridge/app/
-│   │           ├── MappingTest.kt
-│   │           └── RouteAccessTest.kt
+│   │       └── test/java/com/tutorbridge/app/  # Unit tests (MappingTest.kt, CheckInTest.kt, OutboxSenderTest.kt and more)
 │   ├── gradle/
 │   │   ├── libs.versions.toml                  # Version catalog
 │   │   └── wrapper/
@@ -165,7 +174,8 @@ TutorBridge/
 │       │                               # notifications, notificationTokens, reference,
 │       │                               # threads, timesheets, tuitionRequests, users
 │       └── utils/                      # Google Calendar sync, push, notify, pagination,
-│                                       # CRUD router factory, async handler,
+│                                       # CRUD router factory, async handler, attendance,
+│                                       # series, matchScore, translated messages,
 │                                       # completePastSessions, purgeScheduledDeletions (+ tests)
 ├── firebase.json
 ├── .firebaserc
@@ -227,8 +237,8 @@ Screens read what was last saved in Room, and anything done offline goes into an
 
 ### Clone the repository
 ```bash
-git clone https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10438679.git
-cd prog7314-g2-2026-formative-2-part-2-st10438679
+git clone https://github.com/EMWCCN/prog7314-g2-2026-formative-2-part-2-st10439147.git
+cd prog7314-g2-2026-formative-2-part-2-st10439147
 ```
 
 ### Set up the API
@@ -298,6 +308,7 @@ cd android_app
 ./gradlew testDebugUnitTest
 ```
 Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JAVA_HOME` isn't set, point it at Android Studio's bundled JDK (the `jbr` folder in its install directory).
+
 ---
 
 ## Version Control/GitHub Workflows
@@ -306,8 +317,11 @@ Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JA
 
 **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request, on every branch:
 * The **backend** job installs the API's dependencies, compiles the TypeScript and runs the backend tests.
-* The **android** job runs the unit tests and builds a debug APK.
-* A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test report instead.
+* The **android** job runs the unit tests and lint, then builds a debug APK.
+* A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test and lint reports instead.
+* A push to `master` also deploys the API to Azure App Service, once the backend tests pass.
+
+<img width="1417" height="882" alt="image" src="https://github.com/user-attachments/assets/d0f10c98-df82-4216-809c-ed52b8e591bf" />
 
 A failed job puts a red cross next to the commit on GitHub, so the team can see which change broke the build and fix it before merging.
 
@@ -325,13 +339,16 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Android Developers. n.d. *Download Android Studio & app tools*. [Online]. Available at: https://developer.android.com/studio [Accessed 21 September 2026].
 - Android Developers. 2026. *Get started with Jetpack Compose*. [Online]. Available at: https://developer.android.com/develop/ui/compose/documentation [Accessed 21 September 2026].
 - Android Developers. 2026. *Google Maps intents for Android*. [Online]. Available at: https://developer.android.com/guide/components/google-maps-intents [Accessed 21 September 2026].
+- Android Developers. 2026. *Getting started with WorkManager*. [Online]. Available at: https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started [Accessed 21 October 2026].
 - Android Developers. 2026. *Guide to app architecture*. [Online]. Available at: https://developer.android.com/topic/architecture [Accessed 21 September 2026].
 - Android Developers. 2026. *Kotlin coroutines on Android*. [Online]. Available at: https://developer.android.com/kotlin/coroutines [Accessed 21 September 2026].
 - Android Developers. 2026. *Localize your app*. [Online]. Available at: https://developer.android.com/guide/topics/resources/localization [Accessed 21 September 2026].
 - Android Developers. 2026. *Material Design 3 in Compose*. [Online]. Available at: https://developer.android.com/develop/ui/compose/designsystems/material3 [Accessed 21 September 2026].
+- Android Developers. 2026. *Monitor connectivity status and connection metering*. [Online]. Available at: https://developer.android.com/develop/connectivity/network-ops/reading-network-state [Accessed 20 October 2026].
 - Android Developers. 2026. *Notification runtime permission*. [Online]. Available at: https://developer.android.com/develop/ui/compose/notifications/notification-permission [Accessed 21 September 2026].
 - Android Developers. 2026. *PdfDocument*. [Online]. Available at: https://developer.android.com/reference/android/graphics/pdf/PdfDocument [Accessed 21 September 2026].
 - Android Developers. 2026. *Per-app language preferences*. [Online]. Available at: https://developer.android.com/guide/topics/resources/app-languages [Accessed 21 September 2026].
+- Android Developers. 2026. *Save data in a local database using Room*. [Online]. Available at: https://developer.android.com/training/data-storage/room [Accessed 20 October 2026].
 - Android Developers. 2026. *Save simple data with SharedPreferences*. [Online]. Available at: https://developer.android.com/training/data-storage/shared-preferences [Accessed 21 September 2026].
 - Android Developers. 2025. *Setting up file sharing*. [Online]. Available at: https://developer.android.com/training/secure-file-sharing/setup-sharing [Accessed 21 September 2026].
 - Android Developers. 2026. *Show a biometric authentication dialog*. [Online]. Available at: https://developer.android.com/identity/sign-in/biometric-auth [Accessed 21 September 2026].
@@ -342,10 +359,12 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Firebase. 2026. *Authenticate with Google on Android*. [Online]. Available at: https://firebase.google.com/docs/auth/android/google-signin [Accessed 21 September 2026].
 - Firebase. 2026. *Get started with Firebase Cloud Messaging in Android apps*. [Online]. Available at: https://firebase.google.com/docs/cloud-messaging/android/get-started [Accessed 21 September 2026].
 - Google. 2024. *Gson* (Version 2.11.0). [Computer program]. Available at: https://github.com/google/gson [Accessed 21 September 2026].
+- Google for Developers. 2026. *Google code scanner (Android only)*. [Online]. Available at: https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner [Accessed 4 November 2026].
 - Google for Developers. 2026. *Client authentication*. [Online]. Available at: https://developers.google.com/android/guides/client-auth [Accessed 21 September 2026].
 - JetBrains. n.d. *Kotlin documentation*. [Online]. Available at: https://kotlinlang.org/docs/home.html [Accessed 21 September 2026].
 - Square, Inc. 2023. *OkHttp* (Version 4.12.0). [Computer program]. Available at: https://lysine.dev/okhttp/ [Accessed 21 September 2026].
 - Square, Inc. 2024. *Retrofit* (Version 2.11.0). [Computer program]. Available at: https://lysine.dev/retrofit/ [Accessed 21 September 2026].
+- ZXing Authors. 2024. *ZXing* (Version 3.5.3). [Computer program]. Available at: https://github.com/zxing/zxing [Accessed 4 November 2026].
 
 ### Backend API
 - Express.js. n.d. *Error handling*. [Online]. Available at: https://expressjs.com/en/guide/error-handling/ [Accessed 21 September 2026].
