@@ -7,6 +7,7 @@ import com.tutorbridge.app.data.repository.toRequestUi
 import com.tutorbridge.app.data.repository.toInstitutionUi
 import com.tutorbridge.app.data.repository.toLearningHistory
 import com.tutorbridge.app.data.repository.toTutorUi
+import com.tutorbridge.app.ui.screens.calendar.rescheduleHoursOn
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -74,6 +75,15 @@ class MappingTest {
         // A slot starting this very minute has already begun.
         assertEquals(listOf("11:00 AM"), tutor.slotsOn(monday, monday.atTime(10, 0)))
         assertEquals(emptyList<String>(), tutor.slotsOn(monday, monday.atTime(11, 30)))
+    }
+
+    @Test
+    fun `a session can be moved to later today but not to an hour already gone`() {
+        val evening = monday.atTime(18, 30)
+
+        assertEquals(listOf(19, 20), rescheduleHoursOn(monday, evening).map { it.hour })
+        assertEquals(emptyList<Int>(), rescheduleHoursOn(monday, monday.atTime(20, 0)).map { it.hour })
+        assertEquals((7..20).toList(), rescheduleHoursOn(monday.plusDays(1), evening).map { it.hour })
     }
 
     @Test

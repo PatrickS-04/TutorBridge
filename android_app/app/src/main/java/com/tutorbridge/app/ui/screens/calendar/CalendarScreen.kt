@@ -36,6 +36,7 @@ import com.tutorbridge.app.viewmodel.TutorBridgeUiState
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -419,6 +420,11 @@ private fun CalendarEventUi.isUpcoming(): Boolean {
 }
 
 private val rescheduleHours = (7..20).map { LocalTime.of(it, 0) }
+
+/** The start times a session can be moved to on [date]: on today, only those still ahead of [now]. */
+internal fun rescheduleHoursOn(date: LocalDate, now: LocalDateTime): List<LocalTime> =
+    rescheduleHours.filter { date.atTime(it).isAfter(now) }
+
 private val hourLabel get() = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 private val dayLabel get() = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
@@ -432,9 +438,15 @@ private fun RescheduleDialog(
     onDismiss: () -> Unit,
     onConfirm: (LocalDate, LocalTime) -> Unit
 ) {
-    val days = remember { (1..21).map { LocalDate.now().plusDays(it.toLong()) } }
+    // Fixed when the dialog opens, so the hours can't run out under it; the server refuses a time that has since passed.
+    val now = remember { LocalDateTime.now() }
+    // Today is only offered while it has an hour left.
+    val days = remember { (0..21).map { now.toLocalDate().plusDays(it.toLong()) }.filter { rescheduleHoursOn(it, now).isNotEmpty() } }
     var date by remember { mutableStateOf(days.first()) }
-    var time by remember { mutableStateOf(LocalTime.of(14, 0)) }
+    var preferredTime by remember { mutableStateOf(LocalTime.of(14, 0)) }
+    val hours = rescheduleHoursOn(date, now)
+    // A time picked on another day may already have passed today.
+    val time = if (preferredTime in hours) preferredTime else hours.first()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -464,10 +476,10 @@ private fun RescheduleDialog(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    rescheduleHours.forEach { hour ->
+                    hours.forEach { hour ->
                         FilterChip(
                             selected = hour == time,
-                            onClick = { time = hour },
+                            onClick = { preferredTime = hour },
                             label = { Text(hour.format(hourLabel), fontSize = 12.sp) }
                         )
                     }
