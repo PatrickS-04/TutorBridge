@@ -39,8 +39,11 @@ android {
         applicationId = "com.tutorbridge.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // CI numbers each build so a newer APK installs over an older one, and the
+        // release tag matches versionName. Local builds stay at version 1.
+        val ciRun = System.getenv("GITHUB_RUN_NUMBER")
+        versionCode = ciRun?.toInt() ?: 1
+        versionName = "1.0.${ciRun ?: 0}"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
@@ -50,8 +53,24 @@ android {
         }
     }
 
+    // The keystore and its passwords come from the environment and never enter git.
+    // Without RELEASE_KEYSTORE, assembleRelease still works but the APK is unsigned.
+    // Reference: Android Developers. 2026. Sign your app. [Online].
+    //   Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+    signingConfigs {
+        System.getenv("RELEASE_KEYSTORE")?.let { keystore ->
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

@@ -49,6 +49,8 @@ jobs:
   #   Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
   android:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
     defaults:
       run:
         working-directory: android_app
@@ -68,6 +70,25 @@ jobs:
         with:
           name: tutorbridge-debug-apk
           path: android_app/app/build/outputs/apk/debug/*.apk
+      # Signed release APK. A repo without the keystore secrets (a fork, say) skips it.
+      # Gradle only names the file app-release.apk when it signed it, so the upload
+      # below fails rather than publishing an unsigned build.
+      # Reference: Android Developers. 2026. Sign your app. [Online].
+      #   Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+      - if: env.RELEASE_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          RELEASE_KEYSTORE="$RUNNER_TEMP/release.jks" ./gradlew assembleRelease
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: env.RELEASE_KEYSTORE_BASE64 != ''
+        with:
+          name: tutorbridge-release-apk
+          path: android_app/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -75,3 +96,25 @@ jobs:
           path: |
             android_app/app/build/reports/tests/
             android_app/app/build/reports/lint-results-debug.html
+
+  # Continuous delivery: a master push that passes both jobs above publishes its
+  # signed APK as a GitHub Release, tagged to match the versionName in the app.
+  # Only this job can write to the repo. No APK (keystore secrets missing) fails it.
+  # References:
+  # GitHub. n.d. Automatic token authentication. [Online].
+  #   Available at: https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication [Accessed 4 November 2026].
+  # GitHub. n.d. gh release create. [Online].
+  #   Available at: https://cli.github.com/manual/gh_release_create [Accessed 4 November 2026].
+  release:
+    needs: [backend, android]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'DRPS-Solutions/TutorBridge'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tutorbridge-release-apk
+      - run: gh release create "v1.0.$GITHUB_RUN_NUMBER" app-release.apk --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

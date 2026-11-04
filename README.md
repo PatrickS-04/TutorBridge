@@ -319,7 +319,11 @@ Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JA
 * The **backend** job installs the API's dependencies, compiles the TypeScript and runs the backend tests.
 * The **android** job runs the unit tests and lint, then builds a debug APK.
 * A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test and lint reports instead.
-* A push to `master` also deploys the API to Azure App Service, once the backend tests pass.
+* When the keystore secrets are set, the **android** job also builds a signed release APK and uploads it as the `tutorbridge-release-apk` artifact.
+
+**CD:** a push to `master` also delivers both halves of the project:
+* The API deploys to Azure App Service, once the backend tests pass.
+* The **release** job publishes the signed APK as a GitHub Release tagged `v1.0.<run number>`, once both other jobs pass.
 
 <img width="1417" height="882" alt="image" src="https://github.com/user-attachments/assets/d0f10c98-df82-4216-809c-ed52b8e591bf" />
 
@@ -394,6 +398,9 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Wirtz, D. 2025. *bcrypt.js* (Version 3.0.3). [Computer program]. Available at: https://github.com/dcodeIO/bcrypt.js [Accessed 21 September 2026].
 
 ### Hosting and CI
+- Android Developers. 2026. *Sign your app*. [Online]. Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+- GitHub. n.d. *Automatic token authentication*. [Online]. Available at: https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication [Accessed 4 November 2026].
+- GitHub. n.d. *gh release create*. [Online]. Available at: https://cli.github.com/manual/gh_release_create [Accessed 4 November 2026].
 - GitHub. n.d. *Building and testing Java with Gradle*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
 - GitHub. n.d. *Building and testing Node.js*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs [Accessed 21 September 2026].
 - GitHub. n.d. *Store and share data with workflow artifacts*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
