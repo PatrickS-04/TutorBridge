@@ -1,5 +1,8 @@
 package com.tutorbridge.app.ui.navigation
 
+import android.os.SystemClock
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.R
 import androidx.compose.foundation.layout.Column
@@ -10,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -87,6 +91,23 @@ fun TutorBridgeNavGraph(
     val showBottomBar = uiState.role != null && uiState.currentRoute in (studentRoutesWithBottomBar + tutorRoutesWithBottomBar)
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Back walks to the previous page. With none left, it warns once, and a second
+    // press within the toast's 2 seconds closes the app. Screens with their own
+    // BackHandler (unsaved notes, wizard steps) are composed later, so they go first.
+    val backActivity = LocalContext.current as FragmentActivity
+    var lastBackAt by remember { mutableLongStateOf(0L) }
+    BackHandler {
+        if (!viewModel.goBack()) {
+            val now = SystemClock.uptimeMillis()
+            if (lastBackAt != 0L && now - lastBackAt < 2_000L) {
+                backActivity.finish()
+            } else {
+                lastBackAt = now
+                Toast.makeText(backActivity, R.string.common_back_again_to_exit, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // Anything the server refused or could not answer.
     LaunchedEffect(uiState.dataErrorMessage) {

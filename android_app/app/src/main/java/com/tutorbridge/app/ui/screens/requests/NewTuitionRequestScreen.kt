@@ -47,6 +47,8 @@ fun NewTuitionRequestScreen(
     val step = draft.step
     val totalSteps = 5
 
+    androidx.activity.compose.BackHandler { if (step > 1) onPrevious() else onBack() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

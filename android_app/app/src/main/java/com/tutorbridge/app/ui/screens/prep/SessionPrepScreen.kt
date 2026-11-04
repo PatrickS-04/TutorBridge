@@ -50,6 +50,9 @@ fun SessionPrepScreen(
     val checklist = uiState.sessionChecklist
     val completed = checklist.count { it.completed }
 
+    // Same as the arrow: leaving is what writes the side notes.
+    androidx.activity.compose.BackHandler { onBack() }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

@@ -1,6 +1,7 @@
 <resources>
     <!-- Afrikaans: AI-drafted translation. Not yet reviewed by a native speaker. -->
     <string name="common_back">Terug</string>
+    <string name="common_back_again_to_exit">Druk weer terug om uit te gaan</string>
     <string name="common_back_to_dashboard">Terug na kontrolebord</string>
     <string name="common_delete">SKRAP</string>
     <string name="common_from_hh_mm">Van (UU:mm)</string>

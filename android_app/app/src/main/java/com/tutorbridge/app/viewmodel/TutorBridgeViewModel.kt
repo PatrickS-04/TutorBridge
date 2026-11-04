@@ -39,6 +39,8 @@ import com.tutorbridge.app.data.repository.toWindowUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -107,7 +109,15 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * starts a fresh direct booking. */
     private var acceptedApplicationId: String? = null
 
+    /** The pages the back gesture returns through, this one last. See nextRouteHistory. */
+    private var routeHistory = emptyList<String>()
+
     init {
+        // Watched here because many actions set currentRoute directly, not through navigateTo.
+        viewModelScope.launch {
+            _uiState.map { it.currentRoute }.distinctUntilChanged().collect { routeHistory = nextRouteHistory(routeHistory, it) }
+        }
+
         val preferences = AppPreferences(getApplication())
         val enabledBiometric = preferences.getEnabledBiometric()
         val enabledMessageNotifications = preferences.getEnabledMessageNotifications()
@@ -559,6 +569,13 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             "my_requests", "tutor_requests" -> loadRequests()
             "claims_export" -> loadClaims()
         }
+    }
+
+    /** Returns to the previous page; false when there is none, so the back gesture would leave the app. */
+    fun goBack(): Boolean {
+        val previous = routeHistory.getOrNull(routeHistory.size - 2) ?: return false
+        navigateTo(previous)
+        return true
     }
 
     fun dismissDataError() {

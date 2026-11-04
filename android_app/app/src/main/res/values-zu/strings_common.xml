@@ -1,6 +1,7 @@
 <resources>
     <!-- isiZulu: AI-drafted translation. Not yet reviewed by a native speaker. -->
     <string name="common_back">Emuva</string>
+    <string name="common_back_again_to_exit">Cindezela emuva futhi ukuze uphume</string>
     <string name="common_back_to_dashboard">Buyela ekhasini eliyinhloko</string>
     <string name="common_delete">SUSA</string>
     <string name="common_from_hh_mm">Kusuka (HH:mm)</string>
