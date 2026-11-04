@@ -23,8 +23,19 @@ import com.tutorbridge.app.ui.theme.CrimsonTint
 @Composable
 fun SeriesBadge(index: Int, count: Int, modifier: Modifier = Modifier, onDark: Boolean = false) {
     if (index < 1 || count < 2) return
+    SessionPill(stringResource(R.string.series_badge, index, count), modifier, onDark)
+}
+
+/** Marks a session the tutor has not confirmed yet. [onDark] is for the navy next-session card. */
+@Composable
+fun PendingBadge(modifier: Modifier = Modifier, onDark: Boolean = false) {
+    SessionPill(stringResource(R.string.calendar_awaiting_confirmation), modifier, onDark)
+}
+
+@Composable
+private fun SessionPill(text: String, modifier: Modifier, onDark: Boolean) {
     Text(
-        text = stringResource(R.string.series_badge, index, count),
+        text = text,
         color = if (onDark) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.Bold,
         fontSize = 12.sp,

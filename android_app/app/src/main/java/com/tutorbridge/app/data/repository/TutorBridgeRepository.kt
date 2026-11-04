@@ -384,6 +384,7 @@ fun BookingDto.toCalendarEvent(selfIsTutor: Boolean): CalendarEventUi? {
         startIso = startTime,
         endIso = endTime,
         isConfirmed = status == "CONFIRMED",
+        isPending = status == "REQUESTED",
         checkedInTime = parseInstant(attendance?.checkedInAt)?.format(displayTime).orEmpty(),
         seriesId = seriesId,
         seriesIndex = seriesIndex ?: 0,

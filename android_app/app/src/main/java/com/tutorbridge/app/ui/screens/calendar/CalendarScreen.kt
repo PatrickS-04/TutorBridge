@@ -28,6 +28,7 @@ import com.tutorbridge.app.data.model.CalendarEventUi
 import com.tutorbridge.app.data.model.EventStatus
 import com.tutorbridge.app.data.model.UserRole
 import com.tutorbridge.app.data.model.sessionsFrom
+import com.tutorbridge.app.ui.components.PendingBadge
 import com.tutorbridge.app.ui.components.SeriesBadge
 import com.tutorbridge.app.ui.components.VenueLink
 import com.tutorbridge.app.ui.theme.TutorBridgeTheme
@@ -330,6 +331,10 @@ fun CalendarScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (event.isPending) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            PendingBadge()
+                        }
                         if (event.isSeries) {
                             Spacer(modifier = Modifier.height(4.dp))
                             SeriesBadge(event.seriesIndex, event.seriesCount)

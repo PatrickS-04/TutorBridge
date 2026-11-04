@@ -4,6 +4,7 @@ import com.tutorbridge.app.R
 import com.tutorbridge.app.ui.components.MessagesButton
 import androidx.compose.ui.res.stringResource
 import com.tutorbridge.app.ui.components.NeedsConnectionHint
+import com.tutorbridge.app.ui.components.PendingBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -210,6 +211,10 @@ fun TutorHomeScreen(
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (event.isPending) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        PendingBadge()
+                    }
                 }
             }
         }

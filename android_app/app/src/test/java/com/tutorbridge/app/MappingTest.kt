@@ -112,6 +112,22 @@ class MappingTest {
     }
 
     @Test
+    fun `only a requested booking is pending`() {
+        val booking = BookingDto(
+            _id = "b1",
+            subjectName = "Mathematics",
+            startTime = "2026-09-21T08:30:00.000Z",
+            endTime = "2026-09-21T09:30:00.000Z",
+            status = "REQUESTED"
+        )
+
+        assertTrue(booking.toCalendarEvent(selfIsTutor = false)!!.isPending)
+        listOf("CONFIRMED", "TRIAL_RUNNING", "ACTIVE", "COMPLETED", "CANCELLED").forEach { status ->
+            assertTrue(!booking.copy(status = status).toCalendarEvent(selfIsTutor = false)!!.isPending)
+        }
+    }
+
+    @Test
     fun `a session carries the tutor's notes, and nothing when the server sends none`() {
         val booking = BookingDto(
             _id = "b1",

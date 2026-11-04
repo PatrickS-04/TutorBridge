@@ -2,6 +2,7 @@ package com.tutorbridge.app.ui.screens.home
 
 import com.tutorbridge.app.R
 import com.tutorbridge.app.ui.components.MessagesButton
+import com.tutorbridge.app.ui.components.PendingBadge
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -117,6 +118,10 @@ fun StudentHomeScreen(
                                 color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
+                            if (nextEvent?.isPending == true) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                PendingBadge(onDark = true)
+                            }
                         }
                     }
                 }
@@ -161,6 +166,10 @@ fun StudentHomeScreen(
                     Column {
                         Text(event.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                         Text("${event.date} • ${event.startTime}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (event.isPending) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            PendingBadge()
+                        }
                     }
                     Badge(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                         Text(event.location.split("—").firstOrNull()?.trim() ?: stringResource(R.string.student_home_campus), fontSize = 12.sp, fontWeight = FontWeight.Bold)

@@ -31,6 +31,7 @@
     <string name="calendar_filter_office_hours">Kantoorure</string>
     <string name="calendar_filter_exam_prep">Eksamenvoorbereiding</string>
     <string name="series_badge">Reeks %1$d van %2$d</string>
+    <string name="calendar_awaiting_confirmation">Wag op bevestiging</string>
     <string name="calendar_series_cancel">Kanselleer hierdie en volgende</string>
     <string name="calendar_series_cancel_title">Kanselleer die res van hierdie reeks?</string>
     <string name="calendar_series_cancel_confirm">Kanselleer sessies</string>
