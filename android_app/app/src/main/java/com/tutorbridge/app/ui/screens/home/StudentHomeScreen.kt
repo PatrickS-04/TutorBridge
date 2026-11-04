@@ -137,7 +137,13 @@ fun StudentHomeScreen(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.student_home_upcoming_on_your_calendar), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(stringResource(R.string.student_home_full_calendar), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.student_home_full_calendar),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onNavigate("calendar") }
+                )
             }
         }
 
