@@ -2,7 +2,7 @@ import { Router } from "express";
 import { CalendarLink } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { authenticate, AuthRequest } from "../middleware/auth";
-import { exchangeAuthCode, encryptToken, CALENDAR_SCOPE } from "../utils/googleCalendar";
+import { exchangeAuthCode, encryptToken, syncUpcomingBookings, CALENDAR_SCOPE } from "../utils/googleCalendar";
 
 const router = Router();
 router.use(authenticate);
@@ -43,6 +43,9 @@ router.post(
       },
       { new: true, upsert: true }
     );
+
+    //Not awaited: the link has worked, however long Google takes over the backlog.
+    syncUpcomingBookings(req.auth!.userId).catch((error) => console.error("calendar catch-up failed:", error));
 
     res.status(201).json({
       linked: true,

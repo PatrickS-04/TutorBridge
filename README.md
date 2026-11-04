@@ -48,7 +48,7 @@ students with proper and chosen resources with the option out and off campus tut
 | Manage your requests | Done | A student can edit an open request, or close it (sorted) or withdraw it (no longer wanted). Tutors who offered are told |
 | Messaging | Done | A chat opens between a student and a tutor when an offer is accepted or a tutor is booked. Unread counts, push notification on a new message |
 | Two-phase booking with overlap rejection | Done | A student requests a slot and the tutor confirms it. A slot that overlaps one of the tutor's confirmed sessions is rejected, both when it's requested and again when it's confirmed |
-| Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited |
+| Google Calendar | Done | Confirmed sessions go into the tutor's linked Google Calendar (or the student's, if only the student linked one), and the other person is invited. Linking also adds upcoming confirmed sessions that aren't on a calendar yet |
 | Match relevance | Done | The API scores each tutor against the student's own requests (shared subject, shared campus area, completed sessions). "Top Tutors For You" ranks on it and the "% match" badge shows it; with nothing to match on, the section is just "Tutors on Campus" |
 | Session materials pack | Partly done | Tutors keep a private to-do list and notes for each session on the Session Prep screen |
 | Institutional structure | Done | Each user belongs to an institution and only sees that institution's tutors. Institution admins add tutor accounts and review verification documents through the API; the app has no admin screens yet |
