@@ -11,25 +11,23 @@ Everything a Google Play listing needs, ready as if the app were about to be pub
 | Content rating and data safety | Questionnaire answers | [content-rating-and-data-safety.md](content-rating-and-data-safety.md) |
 | Signed AAB and APK | Built with the team's keystore | Attached to the GitHub Release |
 
-**Privacy policy link:** [PRIVACY_POLICY_URL]
-
 **Category:** Education
 
 **Languages in the app:** English, Afrikaans, isiZulu
 
-## App name (up to 30 characters)
+## App name
 
 ```text
 TutorBridge
 ```
 
-## Short description (up to 80 characters)
+## Short description
 
 ```text
 Find a tutor at your institution, book sessions, chat and check in by QR code.
 ```
 
-## Full description (up to 4,000 characters)
+## Full description
 
 ```text
 TutorBridge connects students with the tutors available at their institution. Find the right tutor, agree on a time, meet on or off campus, and keep a record of every session, all in one app.
@@ -68,23 +66,3 @@ YOUR APP, YOUR WAY
 
 TutorBridge is for members of participating institutions. You can delete your account in Settings.
 ```
-
-## Screenshots to capture
-
-Take these on the physical phone, signed in with accounts that have real bookings and messages. Save them in a `screenshots` folder here as PNG or JPEG. Play needs each one's long side to be no more than twice its short side, so crop tall phone screenshots to 9:16 (for example 1080 x 1920).
-
-1. Student home, showing "Top Tutors For You" and a match badge
-2. A tutor profile with the booking option
-3. Calendar with confirmed sessions
-4. A chat conversation
-5. QR check-in code
-6. Tutor claim period with hours and earnings
-7. Settings, showing language, theme and notification options
-
-## Still to do
-
-- [ ] Add the screenshots above to `screenshots/`
-- [ ] Replace [CONTACT_EMAIL] in `privacy-policy.md` with a team address
-- [ ] Publish the privacy policy publicly and replace [PRIVACY_POLICY_URL] above
-- [ ] Confirm the minimum age of 13 in `privacy-policy.md` and `content-rating-and-data-safety.md`
-- [ ] Have the team read the policy and answers against the app once more
