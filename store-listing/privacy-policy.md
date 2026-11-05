@@ -4,7 +4,7 @@
 
 TutorBridge is a tutoring app that connects students with tutors at their institution. It was built by the TutorBridge team (DRPS Solutions) as an academic project. This policy explains what the app collects, why, and the choices you have.
 
-Questions or requests: [CONTACT_EMAIL]
+Questions or requests: st10439147@myemeris.edu.za
 
 ## What we collect
 
@@ -61,7 +61,7 @@ We keep your information while your account is open. You can delete your account
 
 We keep booking records after deletion because they are your institution's record of sessions and tutoring claims. Your name no longer appears on them once your profile is deleted. We also keep reports, including their copy of the messages, because they are safeguarding records.
 
-To ask for deletion without using the app, email [CONTACT_EMAIL] from your account's email address.
+To ask for deletion without using the app, email st10439147@myemeris.edu.za from your account's email address.
 
 ## Your rights
 
@@ -75,13 +75,13 @@ Our use of information received from Google APIs follows the [Google API Service
 
 TutorBridge can be used by students aged 13 and over at participating institutions, and is not intended for children under 13. Under South African law, anyone under 18 needs a parent or guardian's permission for us to process their personal information. When you create an account, you confirm that you are 18 or older, or that you are 13 to 17 and a parent or guardian has agreed. We record when you confirmed this, but we do not verify it. A parent or guardian can also use the app on a learner's behalf.
 
-Parents and guardians can ask to see, correct or delete a child's information by emailing [CONTACT_EMAIL]. If we learn that we hold information about a child under 13, or about a child under 18 without permission, we will delete it.
+Parents and guardians can ask to see, correct or delete a child's information by emailing st10439147@myemeris.edu.za. If we learn that we hold information about a child under 13, or about a child under 18 without permission, we will delete it.
 
 ## Reporting and blocking
 
 In any chat, you can report the other person or block them from the menu at the top of the screen. While either of you has blocked the other, neither of you can send messages in that chat.
 
-A report goes to your institution's administrators with your reason, any details you add, and a copy of up to the latest 50 messages in the chat. The person you report is not told. You can also report a concern by emailing [CONTACT_EMAIL].
+A report goes to your institution's administrators with your reason, any details you add, and a copy of up to the latest 50 messages in the chat. The person you report is not told. You can also report a concern by emailing st10439147@myemeris.edu.za.
 
 ## Changes
 
