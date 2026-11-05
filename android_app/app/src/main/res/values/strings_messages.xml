@@ -12,4 +12,25 @@
         <item quantity="one">Messages, %1$d unread</item>
         <item quantity="other">Messages, %1$d unread</item>
     </plurals>
+    <string name="chat_more_options">More options</string>
+    <string name="chat_cancel">Cancel</string>
+    <string name="chat_block">Block</string>
+    <string name="chat_unblock">Unblock</string>
+    <string name="chat_block_title">Block %1$s?</string>
+    <string name="chat_block_explanation">Neither of you will be able to send messages in this chat. Your existing sessions are not cancelled. You can unblock at any time.</string>
+    <string name="chat_blocked_notice">Blocked</string>
+    <string name="chat_unblocked_notice">Unblocked</string>
+    <string name="chat_you_blocked">You blocked this person. Unblock them from the menu to send messages.</string>
+    <string name="chat_cannot_send">You cannot send messages in this conversation.</string>
+    <string name="chat_report">Report</string>
+    <string name="chat_report_title">Report %1$s</string>
+    <string name="chat_report_explanation">Your institution will see this report and a copy of your latest messages in this chat. If you are in danger, contact someone you trust or emergency services.</string>
+    <string name="chat_report_harassment">Harassment or bullying</string>
+    <string name="chat_report_inappropriate">Inappropriate messages</string>
+    <string name="chat_report_unsafe">I feel unsafe</string>
+    <string name="chat_report_spam">Spam</string>
+    <string name="chat_report_other">Something else</string>
+    <string name="chat_report_details">Add details (optional)</string>
+    <string name="chat_report_send">Send report</string>
+    <string name="chat_report_sent">Report sent to your institution</string>
 </resources>

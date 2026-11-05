@@ -139,7 +139,9 @@ data class ThreadUi(
     val initials: String,
     val preview: String,
     val time: String,
-    val unread: Int
+    val unread: Int,
+    val blocked: Boolean = false,
+    val blockedByMe: Boolean = false
 )
 
 data class MessageUi(

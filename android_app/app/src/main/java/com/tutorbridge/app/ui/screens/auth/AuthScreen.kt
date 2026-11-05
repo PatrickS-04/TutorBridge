@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +39,7 @@ fun AuthScreen(
     onInstitutionSelect: (String) -> Unit,
     onSignIn: (String, String) -> Unit,
     onSignUp: (String, String, String) -> Unit, // fullName, email, password
-    onGoogleSignIn: (String) -> Unit,
+    onGoogleSignIn: (String, Boolean) -> Unit, // idToken, age confirmed
     onGoogleSignInError: (String) -> Unit,
     onToggleAuthMode: () -> Unit,
     onForgotPassword: (String) -> Unit = {}
@@ -45,6 +47,7 @@ fun AuthScreen(
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var ageConfirmed by remember { mutableStateOf(false) }
     var institutionDropdownExpanded by remember { mutableStateOf(false) }
     // Role is inferred from the email pattern in the real prototype;
     // default to student unless the user has already picked tutor elsewhere in the app.
@@ -58,7 +61,7 @@ fun AuthScreen(
         ?.name ?: uiState.institutionName
 
     val canSubmit = !uiState.isAuthLoading && email.isNotBlank() && password.isNotBlank() &&
-        (!isSignUp || (fullName.isNotBlank() && uiState.selectedSignupInstitutionId != null))
+        (!isSignUp || (fullName.isNotBlank() && uiState.selectedSignupInstitutionId != null && ageConfirmed))
 
     Column(
         modifier = Modifier
@@ -211,6 +214,21 @@ fun AuthScreen(
                 }
             }
         } else {
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = ageConfirmed, role = Role.Checkbox, onValueChange = { ageConfirmed = it }),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Checkbox(checked = ageConfirmed, onCheckedChange = null)
+                Text(
+                    stringResource(R.string.auth_age_confirmation),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
             Spacer(modifier = Modifier.height(18.dp))
         }
 
@@ -262,13 +280,14 @@ fun AuthScreen(
                     try {
                         val idToken = GoogleAuthentication.idTokenRequest(context, context.getString(R.string.google_web_client_id))
                         onRoleSelect(role)
-                        onGoogleSignIn(idToken)
+                        onGoogleSignIn(idToken, ageConfirmed)
                     } catch (exception: Exception) {
                         onGoogleSignInError(context.getString(R.string.auth_google_sign_in_failed))
                     }
                 }
             },
-            enabled = !uiState.isAuthLoading,
+            // On the sign-up form this creates an account too, so it needs the same declaration.
+            enabled = !uiState.isAuthLoading && (!isSignUp || ageConfirmed),
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
@@ -411,7 +430,7 @@ fun AuthScreenPreview() {
             onInstitutionSelect = {},
             onSignIn = { _, _ -> },
             onSignUp = { _, _, _ -> },
-            onGoogleSignIn = { _ -> },
+            onGoogleSignIn = { _, _ -> },
             onGoogleSignInError = { _ -> },
             onToggleAuthMode = {}
         )

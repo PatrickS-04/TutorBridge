@@ -80,6 +80,14 @@ export const translatedErrors: Record<string, Record<Language, string>> = {
     af: "Slegs die student wat die versoek geplaas het, kan die sessie skeduleer",
     zu: "Umfundi othumele isicelo kuphela ongahlela iseshini yaso",
   },
+  "You cannot send messages in this conversation": {
+    af: "Jy kan nie boodskappe in hierdie gesprek stuur nie",
+    zu: "Awukwazi ukuthumela imilayezo kule ngxoxo",
+  },
+  "Please confirm your age on the create account screen": {
+    af: "Bevestig asseblief jou ouderdom op die skerm om 'n rekening te skep",
+    zu: "Sicela uqinisekise iminyaka yakho esikrinini sokudala i-akhawunti",
+  },
   "Only the request owner can decide on applications": {
     af: "Slegs die eienaar van die versoek kan oor aansoeke besluit",
     zu: "Umnikazi wesicelo kuphela ongakhetha ngezicelo",

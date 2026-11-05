@@ -40,9 +40,10 @@ export const purgedCollections = [
  * Kept on purpose. A booking is the institution's record of a session and the
  * money behind it, and both timesheet paths already read the student as
  * `student?.fullName ?? ""` - so an erased profile reads as blank there
- * instead of taking a tutor's claim down with it.
+ * instead of taking a tutor's claim down with it. A Report is the institution's
+ * safeguarding record, and erasing an account must not erase a complaint about it.
  */
-export const keptCollections = ["Booking", "User"];
+export const keptCollections = ["Booking", "Report", "User"];
 
 export async function purgeUser(userId: Types.ObjectId, firebaseUid?: string): Promise<void> {
   // Threads are two-person, so erasing one side takes the conversation.

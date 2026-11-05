@@ -33,12 +33,12 @@ val apiBaseUrl: String = localProperties.getProperty(
 
 android {
     namespace = "com.tutorbridge.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tutorbridge.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         // CI numbers each build so a newer APK installs over an older one, and the
         // release tag matches versionName. Local builds stay at version 1.
         val ciRun = System.getenv("GITHUB_RUN_NUMBER")

@@ -13,4 +13,25 @@
         <item quantity="one">Boodskappe, %1$d ongelees</item>
         <item quantity="other">Boodskappe, %1$d ongelees</item>
     </plurals>
+    <string name="chat_more_options">Meer opsies</string>
+    <string name="chat_cancel">Kanselleer</string>
+    <string name="chat_block">Blokkeer</string>
+    <string name="chat_unblock">Ontblokkeer</string>
+    <string name="chat_block_title">Blokkeer %1$s?</string>
+    <string name="chat_block_explanation">Nie een van julle sal boodskappe in hierdie gesprek kan stuur nie. Julle bestaande sessies word nie gekanselleer nie. Jy kan enige tyd ontblokkeer.</string>
+    <string name="chat_blocked_notice">Geblokkeer</string>
+    <string name="chat_unblocked_notice">Ontblokkeer</string>
+    <string name="chat_you_blocked">Jy het hierdie persoon geblokkeer. Ontblokkeer hulle in die kieslys om boodskappe te stuur.</string>
+    <string name="chat_cannot_send">Jy kan nie boodskappe in hierdie gesprek stuur nie.</string>
+    <string name="chat_report">Rapporteer</string>
+    <string name="chat_report_title">Rapporteer %1$s</string>
+    <string name="chat_report_explanation">Jou instelling sal hierdie verslag en \'n afskrif van jou jongste boodskappe in hierdie gesprek sien. As jy in gevaar is, kontak iemand wat jy vertrou of die nooddienste.</string>
+    <string name="chat_report_harassment">Teistering of afknouery</string>
+    <string name="chat_report_inappropriate">Onvanpaste boodskappe</string>
+    <string name="chat_report_unsafe">Ek voel onveilig</string>
+    <string name="chat_report_spam">Strooipos</string>
+    <string name="chat_report_other">Iets anders</string>
+    <string name="chat_report_details">Voeg besonderhede by (opsioneel)</string>
+    <string name="chat_report_send">Stuur verslag</string>
+    <string name="chat_report_sent">Verslag is na jou instelling gestuur</string>
 </resources>

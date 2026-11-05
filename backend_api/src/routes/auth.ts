@@ -56,11 +56,19 @@ router.post(
       return res.status(200).json(toProfile(byEmail));
     }
 
-    const { institutionId, fullName } = req.body;
+    const { institutionId, fullName, ageConfirmed } = req.body;
     if (!institutionId) {
       return res
         .status(400)
         .json(apiError("VALIDATION_ERROR", "institutionId is required to create a new profile", "institutionId"));
+    }
+
+    // Only someone creating their own account is asked: a pre-created profile
+    // was vouched for by its institution, and a returning user has already answered.
+    if (ageConfirmed !== true) {
+      return res
+        .status(400)
+        .json(apiError("VALIDATION_ERROR", "Please confirm your age on the create account screen", "ageConfirmed"));
     }
 
     const user = await User.create({
@@ -72,6 +80,7 @@ router.post(
       authProvider: signInProvider === "google.com" ? AuthProvider.GOOGLE : AuthProvider.PASSWORD,
       verificationStatus: VerificationStatus.UNVERIFIED,
       profileCompleteness: 20,
+      ageConfirmedAt: new Date(),
     });
 
     res.status(201).json(toProfile(user));

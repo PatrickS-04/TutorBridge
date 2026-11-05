@@ -299,8 +299,16 @@ data class ThreadDto(
     val participants: List<UserBriefDto> = emptyList(),
     val lastMessagePreview: String? = null,
     val lastMessageAt: String? = null,
-    val unread: Int = 0
+    val unread: Int = 0,
+    val blocked: Boolean = false,
+    val blockedByMe: Boolean = false
 )
+
+/** POST and DELETE /threads/{id}/block. */
+data class ThreadBlockStateDto(val blocked: Boolean = false, val blockedByMe: Boolean = false)
+
+/** POST /threads/{id}/report - [reason] is one of ReportReason's names. */
+data class ReportThreadRequest(val reason: String, val details: String? = null)
 
 /** `senderId` is a bare id here - messages are not populated. */
 data class MessageDto(

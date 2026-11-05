@@ -17,6 +17,7 @@ export * from "./Application";
 export * from "./Booking";
 export * from "./Thread";
 export * from "./Message";
+export * from "./Report";
 export * from "./CalendarLink";
 export * from "./NotificationToken";
 export * from "./NotificationEvent";

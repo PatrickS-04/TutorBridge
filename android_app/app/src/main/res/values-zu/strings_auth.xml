@@ -51,4 +51,5 @@
     <string name="biometric_offer_yes">Vula</string>
     <string name="biometric_offer_no">Hhayi manje</string>
     <string name="session_expired">Iseshini yakho iphelelwe yisikhathi. Sicela ungene futhi.</string>
+    <string name="auth_age_confirmation">Ngineminyaka engu-18 noma ngaphezulu, noma ngineminyaka engu-13 kuya ku-17 futhi umzali noma umnakekeli wami uvumile ukuthi ngisebenzise i-TutorBridge.</string>
 </resources>
