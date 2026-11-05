@@ -8,7 +8,7 @@ import admin from "firebase-admin";
 import mongoose from "mongoose";
 import { routeMounts } from ".";
 import { errorHandler } from "../middleware/errors";
-import { User, UserRole, Thread, Message, NotificationEvent, NotificationToken, UserSettings } from "../models";
+import { User, UserRole, Thread, Message, Report, NotificationEvent, NotificationToken, UserSettings } from "../models";
 
 /**
  * The chat the app's Messages screens sit on: sending stores the message and
@@ -103,6 +103,77 @@ test("someone outside the conversation cannot read or write it", async () => {
   Thread.findOne = (() => Promise.resolve(null)) as any;
   assert.equal((await call("GET", `/threads/${id}/messages`)).status, 404);
   assert.equal((await call("POST", `/threads/${id}/messages`, { body: "x", clientMessageId: "c" })).status, 404);
+});
+
+test("nobody can send in a blocked conversation, but a retry still gets its stored message", async () => {
+  const thread = stubThread();
+  thread.blockedBy = [other];
+  Message.findOne = (() => Promise.resolve(null)) as any;
+
+  const refused = await call("POST", `/threads/${id}/messages`, { body: "hi", clientMessageId: "c2" });
+  assert.equal(refused.status, 403);
+  assert.equal(refused.body.error.code, "BLOCKED");
+  assert.equal(thread.saves, 0);
+
+  Message.findOne = (() => Promise.resolve({ _id: "stored", body: "before the block" })) as any;
+  const retried = await call("POST", `/threads/${id}/messages`, { body: "before the block", clientMessageId: "c1" });
+  assert.equal(retried.status, 201);
+  assert.equal(retried.body._id, "stored");
+});
+
+test("blocking and unblocking report my own state, and only touch my own block", async () => {
+  const updates: any[] = [];
+  let blockedBy: unknown[] = [me];
+  Thread.findOneAndUpdate = ((filter: any, update: any) => {
+    updates.push({ filter, update });
+    return Promise.resolve({ blockedBy });
+  }) as any;
+
+  const blocked = await call("POST", `/threads/${id}/block`);
+  assert.equal(blocked.status, 200);
+  assert.deepEqual(blocked.body, { blocked: true, blockedByMe: true });
+  assert.equal(String(updates[0].filter.participants), String(me));
+  assert.equal(String(updates[0].update.$addToSet.blockedBy), String(me));
+
+  blockedBy = [other];
+  const unblocked = await call("DELETE", `/threads/${id}/block`);
+  assert.deepEqual(unblocked.body, { blocked: true, blockedByMe: false });
+  assert.equal(String(updates[1].update.$pull.blockedBy), String(me));
+});
+
+test("someone outside the conversation cannot block or report it", async () => {
+  Thread.findOneAndUpdate = (() => Promise.resolve(null)) as any;
+  Thread.findOne = (() => Promise.resolve(null)) as any;
+  assert.equal((await call("POST", `/threads/${id}/block`)).status, 404);
+  assert.equal((await call("POST", `/threads/${id}/report`, { reason: "SPAM" })).status, 404);
+});
+
+test("a report names the other person and keeps a copy of the latest messages", async () => {
+  stubThread();
+  const sentAt = new Date("2026-11-05T10:00:00Z");
+  Message.find = (() => ({
+    sort: () => ({ limit: async () => [{ senderId: other, body: "Give me your address", sentAt, extra: "dropped" }] }),
+  })) as any;
+  let stored: any;
+  Report.create = (async (doc: any) => {
+    stored = doc;
+    return { _id: "r1", status: "OPEN" };
+  }) as any;
+
+  const { status, body } = await call("POST", `/threads/${id}/report`, { reason: "UNSAFE", details: "  Felt unsafe  " });
+
+  assert.equal(status, 201);
+  assert.deepEqual(body, { id: "r1", status: "OPEN" });
+  assert.equal(String(stored.reporterId), String(me));
+  assert.equal(String(stored.reportedUserId), String(other));
+  assert.equal(stored.details, "Felt unsafe");
+  assert.deepEqual(stored.messages, [{ senderId: other, body: "Give me your address", sentAt }]);
+});
+
+test("a report needs a known reason and reasonable details", async () => {
+  stubThread();
+  assert.equal((await call("POST", `/threads/${id}/report`, { reason: "NOPE" })).status, 400);
+  assert.equal((await call("POST", `/threads/${id}/report`, { reason: "SPAM", details: "x".repeat(1001) })).status, 400);
 });
 
 test("opening a conversation clears what was waiting for me", async () => {

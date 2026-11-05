@@ -77,6 +77,9 @@ data class TutorBridgeUiState(
     val threads: List<ThreadUi> = emptyList(),
     val selectedThreadId: String? = null,
     val selectedThreadName: String = "",
+    /** Either person has blocked the other, so neither can send. */
+    val selectedThreadBlocked: Boolean = false,
+    val selectedThreadBlockedByMe: Boolean = false,
     /** The open conversation, oldest first; grows upward as earlier pages load. */
     val chatMessages: List<MessageUi> = emptyList(),
     val chatPage: Int = 1,

@@ -171,6 +171,12 @@ class TutorBridgeRepository(
         call { api.sendMessage(threadId, SendMessageRequest(body, clientMessageId)) }
             .map { it.toMessageUi(selfId) }
 
+    suspend fun setThreadBlocked(threadId: String, block: Boolean): Result<ThreadBlockStateDto> =
+        call { if (block) api.blockThread(threadId) else api.unblockThread(threadId) }
+
+    suspend fun reportThread(threadId: String, reason: String, details: String): Result<Unit> =
+        call { api.reportThread(threadId, ReportThreadRequest(reason, details.trim().ifBlank { null })) }
+
     // ==================== NOTIFICATIONS ====================
 
     suspend fun notifications(): Result<List<NotificationUi>> =
@@ -412,7 +418,9 @@ fun ThreadDto.toThreadUi(selfId: String): ThreadUi {
         initials = initialsOf(other?.fullName),
         preview = lastMessagePreview.orEmpty(),
         time = chatTime(lastMessageAt),
-        unread = unread
+        unread = unread,
+        blocked = blocked,
+        blockedByMe = blockedByMe
     )
 }
 

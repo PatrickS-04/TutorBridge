@@ -10,6 +10,8 @@ export interface IThread extends Document {
   lastMessagePreview?: string;
   lastMessageAt?: Date;
   unreadCount: Map<string, number>;
+  /** Whoever has blocked the other person. While anyone is here, neither can send. */
+  blockedBy: Types.ObjectId[];
 }
 
 const ThreadSchema = new Schema<IThread>(
@@ -24,6 +26,7 @@ const ThreadSchema = new Schema<IThread>(
     lastMessagePreview: { type: String },
     lastMessageAt: { type: Date },
     unreadCount: { type: Map, of: Number, default: {} },
+    blockedBy: { type: [{ type: Schema.Types.ObjectId, ref: "User" }], default: [] },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

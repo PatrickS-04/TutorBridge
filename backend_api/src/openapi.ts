@@ -10,6 +10,8 @@
 import {
   ApplicationStatus,
   AuthProvider,
+  ReportReason,
+  ReportStatus,
   BookingStatus,
   DayOfWeek,
   DocumentType,
@@ -195,6 +197,11 @@ export const openapiSpec = {
             properties: {
               institutionId: objectId("Required only when creating a brand-new profile."),
               fullName: { type: "string", example: "Thabo Mokoena" },
+              ageConfirmed: {
+                type: "boolean",
+                description:
+                  "Required as true only when creating a brand-new profile: the user declares they are 18 or older, or 13 to 17 with a parent or guardian's permission.",
+              },
             },
           }),
         },
@@ -559,6 +566,31 @@ export const openapiSpec = {
         responses: {
           200: ok("A page of pending documents.", pageOf(ref("VerificationDocument"))),
           ...authErrors,
+        },
+      },
+    },
+    "/institutions/me/reports": {
+      get: {
+        tags: ["Institutions"],
+        summary: "Open reports about conversations",
+        description: "Institution admins only. Each report keeps a copy of the latest messages.",
+        parameters: [pageParam],
+        responses: {
+          200: ok("A page of open reports.", pageOf(ref("Report"))),
+          ...authErrors,
+        },
+      },
+    },
+    "/institutions/me/reports/{id}/review": {
+      put: {
+        tags: ["Institutions"],
+        summary: "Mark a report as reviewed",
+        description: "Institution admins only.",
+        parameters: [pathId("id", "Report id.")],
+        responses: {
+          200: ok("The reviewed report.", ref("Report")),
+          ...authErrors,
+          404: res.notFound,
         },
       },
     },
@@ -1249,6 +1281,58 @@ export const openapiSpec = {
         },
       },
     },
+    "/threads/{id}/block": {
+      post: {
+        tags: ["Threads"],
+        summary: "Block the other person",
+        description: "While either person has blocked the other, neither can send in this thread (`403 BLOCKED`).",
+        parameters: [pathId("id", "Thread id.")],
+        responses: {
+          200: ok("The block state.", ref("ThreadBlockState")),
+          ...authErrors,
+          404: res.notFound,
+        },
+      },
+      delete: {
+        tags: ["Threads"],
+        summary: "Lift your own block",
+        description: "A block the other person placed still stands.",
+        parameters: [pathId("id", "Thread id.")],
+        responses: {
+          200: ok("The block state.", ref("ThreadBlockState")),
+          ...authErrors,
+          404: res.notFound,
+        },
+      },
+    },
+    "/threads/{id}/report": {
+      post: {
+        tags: ["Threads"],
+        summary: "Report the other person to the institution",
+        description: "Stores a copy of the latest 50 messages for the institution's admins to review.",
+        parameters: [pathId("id", "Thread id.")],
+        requestBody: {
+          required: true,
+          ...json({
+            type: "object",
+            required: ["reason"],
+            properties: {
+              reason: enumOf(ReportReason),
+              details: { type: "string", maxLength: 1000 },
+            },
+          }),
+        },
+        responses: {
+          201: ok("The report was stored.", {
+            type: "object",
+            properties: { id: objectId("Report id."), status: enumOf(ReportStatus) },
+          }),
+          400: res.badRequest,
+          ...authErrors,
+          404: res.notFound,
+        },
+      },
+    },
 
     "/notifications": {
       get: {
@@ -1813,6 +1897,41 @@ export const openapiSpec = {
             additionalProperties: { type: "integer" },
             description: "Unread count per user id.",
           },
+        },
+      },
+      ThreadBlockState: {
+        type: "object",
+        properties: {
+          blocked: { type: "boolean", description: "Whether either person has blocked the other." },
+          blockedByMe: { type: "boolean", description: "Whether the caller has." },
+        },
+      },
+      Report: {
+        type: "object",
+        properties: {
+          _id: objectId("Report id."),
+          institutionId: objectId("Institution."),
+          threadId: objectId("Thread it is about."),
+          reporterId: ref("User"),
+          reportedUserId: ref("User"),
+          reason: enumOf(ReportReason),
+          details: { type: "string", maxLength: 1000 },
+          messages: {
+            type: "array",
+            description: "Copy of the latest messages when the report was made.",
+            items: {
+              type: "object",
+              properties: {
+                senderId: objectId("Who sent it."),
+                body: { type: "string" },
+                sentAt: dateTime("When it was sent."),
+              },
+            },
+          },
+          status: enumOf(ReportStatus),
+          reviewedAt: { ...dateTime("When it was reviewed."), nullable: true },
+          reviewedBy: { ...objectId("Admin who reviewed it."), nullable: true },
+          createdAt: dateTime("When it was reported."),
         },
       },
       Message: {

@@ -189,7 +189,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                 Firebase.auth.createUserWithEmailAndPassword(email.trim(), password).await()
                 val profileUpdate = UserProfileChangeRequest.Builder().setDisplayName(fullName).build()
                 Firebase.auth.currentUser?.updateProfile(profileUpdate)?.await()
-                finishSignIn(institutionId, fullName)
+                // The sign-up button stays disabled until the age box is ticked.
+                finishSignIn(institutionId, fullName, ageConfirmed = true)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(authErrorRes(exception))) }
             }
@@ -215,13 +216,13 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * (GoogleAuthentication.idTokenRequest), exchanged for a Firebase
      * session. Firebase is the session of record for TutorBridge.
      */
-    fun signInWithGoogle(idToken: String) {
+    fun signInWithGoogle(idToken: String, ageConfirmed: Boolean) {
         _uiState.update { it.copy(isAuthLoading = true, authErrorMessage = null) }
         viewModelScope.launch {
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 Firebase.auth.signInWithCredential(credential).await()
-                finishSignIn(_uiState.value.selectedSignupInstitutionId, fullName = null)
+                finishSignIn(_uiState.value.selectedSignupInstitutionId, fullName = null, ageConfirmed = ageConfirmed)
             } catch (exception: Exception) {
                 _uiState.update { it.copy(isAuthLoading = false, authErrorMessage = text(authErrorRes(exception))) }
             }
@@ -235,8 +236,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
      * or read, so we surface it rather than dropping the user into the app
      * with a default role.
      */
-    private suspend fun finishSignIn(institutionId: String?, fullName: String?) {
-        when (val result = authRepository.bootstrapProfile(institutionId, fullName)) {
+    private suspend fun finishSignIn(institutionId: String?, fullName: String?, ageConfirmed: Boolean? = null) {
+        when (val result = authRepository.bootstrapProfile(institutionId, fullName, ageConfirmed)) {
             is AuthResult.Success -> {
                 _uiState.update {
                     it.copy(
@@ -1622,6 +1623,8 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
             it.copy(
                 selectedThreadId = thread.id,
                 selectedThreadName = thread.otherName,
+                selectedThreadBlocked = thread.blocked,
+                selectedThreadBlockedByMe = thread.blockedByMe,
                 chatMessages = emptyList(),
                 chatPage = 1,
                 chatTotalPages = 1,
@@ -1728,6 +1731,35 @@ class TutorBridgeViewModel(application: Application) : AndroidViewModel(applicat
                     reportError(delivery.error)
                 }
             }
+        }
+    }
+
+    /** Block or unblock the other person in the open conversation. Needs a connection: nothing is queued. */
+    fun setThreadBlocked(block: Boolean) {
+        val threadId = _uiState.value.selectedThreadId ?: return
+        viewModelScope.launch {
+            repository.setThreadBlocked(threadId, block)
+                .onSuccess { state ->
+                    _uiState.update {
+                        it.copy(
+                            selectedThreadBlocked = state.blocked,
+                            selectedThreadBlockedByMe = state.blockedByMe,
+                            noticeMessage = text(if (block) R.string.chat_blocked_notice else R.string.chat_unblocked_notice)
+                        )
+                    }
+                    loadThreads()
+                }
+                .onFailure { reportError(it) }
+        }
+    }
+
+    /** Sends a report to the institution's admins. Needs a connection: a safety report should not sit unseen in a queue. */
+    fun reportThread(reason: String, details: String) {
+        val threadId = _uiState.value.selectedThreadId ?: return
+        viewModelScope.launch {
+            repository.reportThread(threadId, reason, details)
+                .onSuccess { _uiState.update { it.copy(noticeMessage = text(R.string.chat_report_sent)) } }
+                .onFailure { reportError(it) }
         }
     }
 

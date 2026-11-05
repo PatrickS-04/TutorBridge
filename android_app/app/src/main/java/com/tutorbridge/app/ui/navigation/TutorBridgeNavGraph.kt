@@ -202,7 +202,7 @@ fun TutorBridgeNavGraph(
                     onInstitutionSelect = { id -> viewModel.selectSignupInstitution(id) },
                     onSignIn = { email, password -> viewModel.signIn(email, password) },
                     onSignUp = { fullName, email, password -> viewModel.signUp(fullName, email, password) },
-                    onGoogleSignIn = { idToken -> viewModel.signInWithGoogle(idToken) },
+                    onGoogleSignIn = { idToken, ageConfirmed -> viewModel.signInWithGoogle(idToken, ageConfirmed) },
                     onGoogleSignInError = { message -> viewModel.setAuthError(message) },
                     onForgotPassword = { email -> viewModel.sendPasswordResetTo(email) },
                     onToggleAuthMode = {viewModel.setAuthMode(
@@ -334,7 +334,9 @@ fun TutorBridgeNavGraph(
                     onBack = { viewModel.navigateTo("messages") },
                     onDraftChange = { viewModel.setChatDraft(it) },
                     onSend = { viewModel.sendChatMessage() },
-                    onLoadEarlier = { viewModel.loadEarlierMessages() }
+                    onLoadEarlier = { viewModel.loadEarlierMessages() },
+                    onSetBlocked = { viewModel.setThreadBlocked(it) },
+                    onReport = { reason, details -> viewModel.reportThread(reason, details) }
                 )
 
                 // ===== Student requests flow =====

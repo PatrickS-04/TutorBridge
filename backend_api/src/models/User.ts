@@ -28,6 +28,9 @@ export interface IUser extends Document {
   profileCompleteness: number;
   locale: Locale;
   address?: string;
+  /** When a self-signed-up user confirmed they are 18+, or 13 to 17 with a
+   * parent or guardian's permission. Their own declaration: it is not verified. */
+  ageConfirmedAt?: Date;
   deletionScheduledFor?: Date;
   /** Set when an institution admin removes a tutor. Stops them being bookable
    * without ever purging the profile, so their bookings and claims survive. */
@@ -64,6 +67,7 @@ const UserSchema = new Schema<IUser>(
     profileCompleteness: { type: Number, min: 0, max: 100, default: 0 },
     locale: { type: String, enum: Object.values(Locale), default: Locale.EN },
     address: { type: String, select: false },
+    ageConfirmedAt: { type: Date },
     deletionScheduledFor: { type: Date },
     deactivatedAt: { type: Date },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },

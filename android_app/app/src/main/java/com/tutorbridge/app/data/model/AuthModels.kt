@@ -7,11 +7,13 @@ package com.tutorbridge.app.data.model
  * so the only things the server needs are the bits Firebase doesn't hold.
  *
  * [institutionId] is only read the first time a brand-new account signs in;
- * it is ignored for returning users and for admin-provisioned profiles.
+ * it is ignored for returning users and for admin-provisioned profiles. So is
+ * [ageConfirmed], the new user's declaration of their age.
  */
 data class BootstrapRequest(
     val institutionId: String? = null,
-    val fullName: String? = null
+    val fullName: String? = null,
+    val ageConfirmed: Boolean? = null
 )
 
 /** Body for POST /auth/change-password. */

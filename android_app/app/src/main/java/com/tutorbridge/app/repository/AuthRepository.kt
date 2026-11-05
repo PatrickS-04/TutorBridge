@@ -21,9 +21,9 @@ class AuthRepository(private val authApi: AuthApi) {
      * creates the profile on first sign-in, links an admin-provisioned one by
      * email, and otherwise just returns the existing profile.
      */
-    suspend fun bootstrapProfile(institutionId: String?, fullName: String?): AuthResult {
+    suspend fun bootstrapProfile(institutionId: String?, fullName: String?, ageConfirmed: Boolean? = null): AuthResult {
         return try {
-            val response = authApi.bootstrap(BootstrapRequest(institutionId, fullName))
+            val response = authApi.bootstrap(BootstrapRequest(institutionId, fullName, ageConfirmed))
             val body = response.body()
             if (response.isSuccessful && body != null) {
                 AuthResult.Success(body)

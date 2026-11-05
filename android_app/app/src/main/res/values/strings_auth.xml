@@ -50,4 +50,5 @@
     <string name="biometric_offer_yes">Turn on</string>
     <string name="biometric_offer_no">Not now</string>
     <string name="session_expired">Your session has expired. Please sign in again.</string>
+    <string name="auth_age_confirmation">I am 18 or older, or I am 13 to 17 and my parent or guardian has agreed that I can use TutorBridge.</string>
 </resources>

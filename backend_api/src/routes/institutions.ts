@@ -2,7 +2,7 @@ import { Router } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import admin from "firebase-admin";
-import { Institution, User, VerificationDocument, UserRole, AuthProvider, VerificationStatus } from "../models";
+import { Institution, Report, ReportStatus, User, VerificationDocument, UserRole, AuthProvider, VerificationStatus } from "../models";
 import { asyncHandler, apiError } from "../utils/asyncHandler";
 import { paginate } from "../utils/paginate";
 import { authenticate, requireRole, AuthRequest } from "../middleware/auth";
@@ -184,6 +184,34 @@ router.put(
     );
 
     res.status(200).json({ userId: user._id, status: user.verificationStatus, reviewedAt: new Date() });
+  })
+);
+
+router.get(
+  "/me/reports",
+  requireRole(UserRole.INSTITUTION_ADMIN),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const result = await paginate(
+      Report,
+      { institutionId: req.auth!.institutionId, status: ReportStatus.OPEN },
+      req,
+      { path: "reporterId reportedUserId", select: "fullName role email" }
+    );
+    res.status(200).json(result);
+  })
+);
+
+router.put(
+  "/me/reports/:id/review",
+  requireRole(UserRole.INSTITUTION_ADMIN),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const report = await Report.findOneAndUpdate(
+      { _id: req.params.id, institutionId: req.auth!.institutionId },
+      { $set: { status: ReportStatus.REVIEWED, reviewedAt: new Date(), reviewedBy: req.auth!.userId } },
+      { new: true }
+    );
+    if (!report) return res.status(404).json(apiError("NOT_FOUND", "Report not found"));
+    res.status(200).json(report);
   })
 );
 

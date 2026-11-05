@@ -6,20 +6,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,8 +51,14 @@ fun ChatScreen(
     onBack: () -> Unit,
     onDraftChange: (String) -> Unit,
     onSend: () -> Unit,
-    onLoadEarlier: () -> Unit
+    onLoadEarlier: () -> Unit,
+    onSetBlocked: (Boolean) -> Unit,
+    onReport: (String, String) -> Unit // reason, details
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
+    var confirmingBlock by remember { mutableStateOf(false) }
+    var reporting by remember { mutableStateOf(false) }
+
     val listState = rememberLazyListState()
     val hasEarlier = uiState.chatPage < uiState.chatTotalPages
 
@@ -72,7 +87,33 @@ fun ChatScreen(
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text(uiState.selectedThreadName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                uiState.selectedThreadName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.chat_more_options))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.chat_report)) },
+                        onClick = {
+                            menuOpen = false
+                            reporting = true
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (uiState.selectedThreadBlockedByMe) R.string.chat_unblock else R.string.chat_block)) },
+                        onClick = {
+                            menuOpen = false
+                            if (uiState.selectedThreadBlockedByMe) onSetBlocked(false) else confirmingBlock = true
+                        }
+                    )
+                }
+            }
         }
 
         LazyColumn(
@@ -103,30 +144,126 @@ fun ChatScreen(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = uiState.chatDraft,
-                onValueChange = onDraftChange,
-                placeholder = { Text(stringResource(R.string.chat_message)) },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(24.dp),
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { onSend() })
+        if (uiState.selectedThreadBlocked) {
+            Text(
+                stringResource(if (uiState.selectedThreadBlockedByMe) R.string.chat_you_blocked else R.string.chat_cannot_send),
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
             )
-            FilledIconButton(
-                onClick = onSend,
-                enabled = uiState.chatDraft.isNotBlank(),
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Send, contentDescription = stringResource(R.string.chat_send))
+                OutlinedTextField(
+                    value = uiState.chatDraft,
+                    onValueChange = onDraftChange,
+                    placeholder = { Text(stringResource(R.string.chat_message)) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(24.dp),
+                    maxLines = 4,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { onSend() })
+                )
+                FilledIconButton(
+                    onClick = onSend,
+                    enabled = uiState.chatDraft.isNotBlank(),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = stringResource(R.string.chat_send))
+                }
             }
         }
     }
+
+    if (confirmingBlock) {
+        AlertDialog(
+            onDismissRequest = { confirmingBlock = false },
+            title = { Text(stringResource(R.string.chat_block_title, uiState.selectedThreadName)) },
+            text = { Text(stringResource(R.string.chat_block_explanation)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmingBlock = false
+                    onSetBlocked(true)
+                }) { Text(stringResource(R.string.chat_block)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingBlock = false }) { Text(stringResource(R.string.chat_cancel)) }
+            }
+        )
+    }
+
+    if (reporting) {
+        ReportDialog(
+            name = uiState.selectedThreadName,
+            onDismiss = { reporting = false },
+            onSubmit = { reason, details ->
+                reporting = false
+                onReport(reason, details)
+            }
+        )
+    }
+}
+
+/** The API's ReportReason names, with the words shown for each. */
+private val reportReasons = listOf(
+    "HARASSMENT" to R.string.chat_report_harassment,
+    "INAPPROPRIATE" to R.string.chat_report_inappropriate,
+    "UNSAFE" to R.string.chat_report_unsafe,
+    "SPAM" to R.string.chat_report_spam,
+    "OTHER" to R.string.chat_report_other
+)
+
+private const val MAX_REPORT_DETAILS = 1000
+
+@Composable
+private fun ReportDialog(name: String, onDismiss: () -> Unit, onSubmit: (String, String) -> Unit) {
+    var reason by remember { mutableStateOf<String?>(null) }
+    var details by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.chat_report_title, name)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).selectableGroup(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(stringResource(R.string.chat_report_explanation), fontSize = 13.sp)
+                reportReasons.forEach { (value, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(selected = reason == value, role = Role.RadioButton, onClick = { reason = value }),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        RadioButton(selected = reason == value, onClick = null)
+                        Text(stringResource(label), fontSize = 14.sp)
+                    }
+                }
+                OutlinedTextField(
+                    value = details,
+                    onValueChange = { if (it.length <= MAX_REPORT_DETAILS) details = it },
+                    label = { Text(stringResource(R.string.chat_report_details)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 4
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { reason?.let { onSubmit(it, details) } },
+                enabled = reason != null
+            ) { Text(stringResource(R.string.chat_report_send)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.chat_cancel)) }
+        }
+    )
 }
 
 /** The day chip that sits above a day's messages and stays pinned to the top while they scroll by. */
@@ -203,7 +340,9 @@ fun ChatScreenPreview() {
             onBack = {},
             onDraftChange = {},
             onSend = {},
-            onLoadEarlier = {}
+            onLoadEarlier = {},
+            onSetBlocked = {},
+            onReport = { _, _ -> }
         )
     }
 }

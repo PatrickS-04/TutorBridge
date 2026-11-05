@@ -102,3 +102,16 @@ export enum InstitutionStatus {
   ACTIVE = "ACTIVE",
   SUSPENDED = "SUSPENDED",
 }
+
+export enum ReportReason {
+  HARASSMENT = "HARASSMENT",
+  INAPPROPRIATE = "INAPPROPRIATE",
+  UNSAFE = "UNSAFE",
+  SPAM = "SPAM",
+  OTHER = "OTHER",
+}
+
+export enum ReportStatus {
+  OPEN = "OPEN",
+  REVIEWED = "REVIEWED",
+}

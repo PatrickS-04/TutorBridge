@@ -143,6 +143,15 @@ interface TutorBridgeApi {
     @POST("threads/{id}/messages")
     suspend fun sendMessage(@Path("id") id: String, @Body body: SendMessageRequest): Response<MessageDto>
 
+    @POST("threads/{id}/block")
+    suspend fun blockThread(@Path("id") id: String): Response<ThreadBlockStateDto>
+
+    @DELETE("threads/{id}/block")
+    suspend fun unblockThread(@Path("id") id: String): Response<ThreadBlockStateDto>
+
+    @POST("threads/{id}/report")
+    suspend fun reportThread(@Path("id") id: String, @Body body: ReportThreadRequest): Response<Unit>
+
     // ==================== NOTIFICATIONS ====================
 
     @GET("notifications")

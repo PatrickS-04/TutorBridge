@@ -28,7 +28,7 @@ val localProperties = Properties().apply {
 //   Available at: https://developer.android.com/studio/run/emulator-networking [Accessed 21 September 2026].
 val apiBaseUrl: String = localProperties.getProperty(
     "API_BASE_URL",
-    "https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/"
+    "https://tutorbridge-a8bagke0erc8a2an.southafricanorth-01.azurewebsites.net/"
 )
 
 android {
@@ -39,8 +39,11 @@ android {
         applicationId = "com.tutorbridge.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        // CI numbers each build so a newer APK installs over an older one, and the
+        // release tag matches versionName. Local builds stay at version 1.
+        val ciRun = System.getenv("GITHUB_RUN_NUMBER")
+        versionCode = ciRun?.toInt() ?: 1
+        versionName = "1.0.${ciRun ?: 0}"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
@@ -52,6 +55,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

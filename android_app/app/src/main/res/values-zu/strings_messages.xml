@@ -13,4 +13,25 @@
         <item quantity="one">Imilayezo, %1$d engafundiwe</item>
         <item quantity="other">Imilayezo, %1$d engafundiwe</item>
     </plurals>
+    <string name="chat_more_options">Okunye okungakhethwa</string>
+    <string name="chat_cancel">Khansela</string>
+    <string name="chat_block">Vimba</string>
+    <string name="chat_unblock">Vulela</string>
+    <string name="chat_block_title">Vimba u-%1$s?</string>
+    <string name="chat_block_explanation">Akekho kini ozokwazi ukuthumela imilayezo kule ngxoxo. Izeshini enazo azikhanselwa. Ungavulela noma nini.</string>
+    <string name="chat_blocked_notice">Uvinjiwe</string>
+    <string name="chat_unblocked_notice">Uvulelwe</string>
+    <string name="chat_you_blocked">Uvimbe lo muntu. Muvulele kumenyu ukuze uthumele imilayezo.</string>
+    <string name="chat_cannot_send">Awukwazi ukuthumela imilayezo kule ngxoxo.</string>
+    <string name="chat_report">Bika</string>
+    <string name="chat_report_title">Bika u-%1$s</string>
+    <string name="chat_report_explanation">Isikhungo sakho sizobona lo mbiko nekhophi yemilayezo yakho yakamuva kule ngxoxo. Uma usengozini, xhumana nomuntu omethembayo noma nezinsizakalo eziphuthumayo.</string>
+    <string name="chat_report_harassment">Ukuhlukumeza noma ukuxhaphaza</string>
+    <string name="chat_report_inappropriate">Imilayezo engafanele</string>
+    <string name="chat_report_unsafe">Angizizwa ngiphephile</string>
+    <string name="chat_report_spam">Ugaxekile</string>
+    <string name="chat_report_other">Okunye</string>
+    <string name="chat_report_details">Engeza imininingwane (akuphoqelekile)</string>
+    <string name="chat_report_send">Thumela umbiko</string>
+    <string name="chat_report_sent">Umbiko uthunyelwe esikhungweni sakho</string>
 </resources>
