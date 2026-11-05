@@ -428,4 +428,5 @@ These are the images of workflows passing just to showcase the automated testing
 - GitHub. n.d. *Organizing information with tables*. [Online]. Available at: https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables [Accessed 21 September 2026].
 
 ### YouTube Video Link
-- https://youtu.be/15W6me7PNA4
+- https://youtu.be/ymuUFKd5Sdw
+
