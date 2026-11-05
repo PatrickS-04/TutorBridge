@@ -53,6 +53,21 @@ android {
         }
     }
 
+    // The keystore and its passwords come from the environment and never enter git.
+    // Without RELEASE_KEYSTORE, assembleRelease still works but the APK is unsigned.
+    // Reference: Android Developers. 2026. Sign your app. [Online].
+    //   Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+    signingConfigs {
+        System.getenv("RELEASE_KEYSTORE")?.let { keystore ->
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
