@@ -3,6 +3,8 @@
 /app/build/
 /build/
 /local.properties
+*.jks
+*.keystore
 /captures/
 .idea/
 hs_err_pid*.log

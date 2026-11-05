@@ -195,7 +195,7 @@ showcase the application needs as well as the group's best choices to make them.
 
 The system has four parts:
 * **Android app:** the client that students and tutors use.
-* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-api-gfa8a0e2cafghzct.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the free tier, so the first request after an idle spell is slow.
+* **TutorBridge API:** a Node.js/Express REST API hosted on Azure App Service at `https://tutorbridge-a8bagke0erc8a2an.southafricanorth-01.azurewebsites.net/`, with interactive docs at `/docs`. Pushes to `master` deploy it through GitHub Actions. It runs on the B1 plan.
 * **Database:** MongoDB Atlas, which only the API talks to.
 * **External services:** Firebase Authentication (sign-in), Firebase Cloud Messaging (push notifications) and the Google Calendar API.
 
@@ -319,7 +319,11 @@ Use `.\gradlew` on Windows. Outside Android Studio, Gradle needs JDK 17+: if `JA
 * The **backend** job installs the API's dependencies, compiles the TypeScript and runs the backend tests.
 * The **android** job runs the unit tests and lint, then builds a debug APK.
 * A passing run uploads the APK as the `tutorbridge-debug-apk` artifact. A failing Android run uploads the unit-test and lint reports instead.
-* A push to `master` also deploys the API to Azure App Service, once the backend tests pass.
+* When the keystore secrets are set, the **android** job also builds a signed release APK and uploads it as the `tutorbridge-release-apk` artifact.
+
+**CD:** a push to `master` also delivers both halves of the project:
+* The API deploys to Azure App Service, once the backend tests pass.
+* The **release** job publishes the signed APK as a GitHub Release tagged `v1.0.<run number>`, once both other jobs pass.
 
 <img width="1417" height="882" alt="image" src="https://github.com/user-attachments/assets/d0f10c98-df82-4216-809c-ed52b8e591bf" />
 
@@ -394,6 +398,9 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 - Wirtz, D. 2025. *bcrypt.js* (Version 3.0.3). [Computer program]. Available at: https://github.com/dcodeIO/bcrypt.js [Accessed 21 September 2026].
 
 ### Hosting and CI
+- Android Developers. 2026. *Sign your app*. [Online]. Available at: https://developer.android.com/studio/publish/app-signing [Accessed 4 November 2026].
+- GitHub. n.d. *Automatic token authentication*. [Online]. Available at: https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication [Accessed 4 November 2026].
+- GitHub. n.d. *gh release create*. [Online]. Available at: https://cli.github.com/manual/gh_release_create [Accessed 4 November 2026].
 - GitHub. n.d. *Building and testing Java with Gradle*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-gradle [Accessed 21 September 2026].
 - GitHub. n.d. *Building and testing Node.js*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs [Accessed 21 September 2026].
 - GitHub. n.d. *Store and share data with workflow artifacts*. [Online]. Available at: https://docs.github.com/en/actions/tutorials/store-and-share-data [Accessed 21 September 2026].
