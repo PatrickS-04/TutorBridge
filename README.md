@@ -333,6 +333,18 @@ A failed job puts a red cross next to the commit on GitHub, so the team can see 
 
 ---
 
+## GitHub Workflows Images
+These are the images of workflows passing just to showcase the automated testing that was done in the previous repo in case anything happens to the actions within this repo.
+
+<img width="1896" height="1030" alt="image" src="https://github.com/user-attachments/assets/422b2541-c577-43ed-9b2e-f98bf2e9fca0" />
+
+<img width="1887" height="1027" alt="image" src="https://github.com/user-attachments/assets/ce68d557-6acb-4ba8-9199-bf8485acf996" />
+
+<img width="1905" height="1037" alt="image" src="https://github.com/user-attachments/assets/144438a4-a6e0-4254-bdea-022aa442695e" />
+
+
+---
+
 ## References
 
 ### Android app
