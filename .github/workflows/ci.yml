@@ -107,7 +107,7 @@ jobs:
   #   Available at: https://cli.github.com/manual/gh_release_create [Accessed 4 November 2026].
   release:
     needs: [backend, android]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'DRPS-Solutions/TutorBridge'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: write
